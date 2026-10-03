@@ -37,6 +37,7 @@
     .pq-sel,.pq-inp{font:inherit;font-size:.85rem;border:1px solid var(--border);border-radius:6px;background:var(--paper);color:var(--ink);padding:6px 8px}
     .pq-collab-pill{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--paper);color:var(--muted)}
     .pq-collab-pill.on{border-color:var(--ok);color:var(--ok)}
+    .pq-tag{font-size:.66rem;font-weight:500;padding:1px 7px;border-radius:999px;border:1px solid var(--ok);color:var(--ok);margin-left:6px;vertical-align:middle}
     .pq-collab-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
     .pq-collab-pill.on .pq-collab-dot{background:var(--ok)}
     .pq-body{display:flex;flex:1;min-height:0;position:relative}
@@ -250,6 +251,19 @@
       </div>
       <div class="pq-proj-grid" id="pq-proj-grid"></div>
     </div>
+    <div class="pq-dash-card" id="pq-d-collab">
+      <strong>Collaborate</strong>
+      <p class="pq-help" id="pq-d-collab-status" style="margin:6px 0 8px"></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-d-share">Share this paper</button>
+      </div>
+      <label class="pq-lbl">Join with a code</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input class="pq-inp" id="pq-d-join-code" placeholder="PQ-XXXXXXXX" autocomplete="off" style="flex:1;min-width:150px">
+        <button type="button" class="pq-btn" id="pq-d-join">Join</button>
+      </div>
+      <p class="pq-help" style="margin:8px 0 0">Joining adds the shared paper to your list. Your current paper stays as it is.</p>
+    </div>
     <div class="pq-dash-card">
       <strong>Session goal</strong>
       <p class="pq-help" id="pq-session-line">0 / 500 words this session</p>
@@ -276,9 +290,6 @@
   <div class="pq-toast" id="pq-toast"></div>
 </div>
 <script type="module">
-import * as Y from 'https://cdn.jsdelivr.net/npm/yjs@13.6.18/+esm';
-import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+esm';
-
 (function(){
   const ROOT=document.getElementById('pq-root');
   const $= (s,el)=>(el||document).querySelector(s);
@@ -304,7 +315,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
   state.activeSectionId=state.sections[0].id;
 
   let fileHandle=null, diskName='', projectDirty=false, ltMatches=[], ignoredLT=new Set();
-  let ydoc=null,provider=null,yMap=null,roomCode=null,peerCount=0,applyingRemote=false,pushTimer=null;
+  let roomCode=null,applyingRemote=false,pushTimer=null,currentCollabCode=null;
 
   const editor=$('#pq-editor'), secTitle=$('#pq-sec-title'), worksBody=$('#pq-works-body'), worksHeading=$('#pq-works-heading');
   const acEl=$('#pq-ac'), dictEl=$('#pq-dict');
@@ -357,6 +368,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
 
   let saveTimer=null;
   function scheduleSave(){
+    if(!applyingRemote)state.rev=Date.now();
     clearTimeout(saveTimer);
     saveTimer=setTimeout(persist,400);
     scheduleCollabPush();
@@ -375,6 +387,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
         name,
         updatedAt:new Date().toISOString(),
         wordCount:totalWords(),
+        collabCode:currentCollabCode||null,
         state
       });
     }catch(e){}
@@ -393,6 +406,8 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     if(state.autoCap==null)state.autoCap=true;
     if(!state.notes)state.notes='';
     if(!state.annotations)state.annotations=[];
+    if(!state.deleted)state.deleted=[];
+    if(state.rev==null)state.rev=0;
     if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
     if(!state.sections.find(s=>s.id===state.activeSectionId))state.activeSectionId=state.sections[0].id;
   }
@@ -402,7 +417,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
       if(meta.projectId){
         const rec=await idbGet(meta.projectId);
         if(rec&&rec.state){
-          currentProjectId=rec.id;
+          currentProjectId=rec.id;currentCollabCode=rec.collabCode||null;
           Object.assign(state,rec.state);
         }
       }
@@ -429,10 +444,11 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     sessionBase=state.goals.sessionBase||totalWords();
   }
   async function switchProject(id){
+    leaveRoom();
     await persist();
     const rec=await idbGet(id);
     if(!rec||!rec.state)return toast('Project not found');
-    currentProjectId=id;
+    currentProjectId=id;currentCollabCode=rec.collabCode||null;
     state=Object.assign(emptyState(),rec.state);
     normalizeState();
     const meta=readMeta();meta.projectId=id;writeMeta(meta);
@@ -443,9 +459,10 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     toast('Opened: '+(state.paperTitle||rec.name||'paper'));
   }
   async function createProject(){
+    leaveRoom();
     await persist();
     const title=prompt('Paper title:','Untitled paper')||'Untitled paper';
-    currentProjectId=uid();
+    currentProjectId=uid();currentCollabCode=null;
     state=emptyState(title);
     if(readMeta().researcher)state.authorName=readMeta().researcher;
     sessionBase=0;state.goals.sessionBase=0;
@@ -460,6 +477,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     if(!confirm('Delete this paper from this browser?'))return;
     await idbDelete(id);
     if(currentProjectId===id){
+      leaveRoom();currentCollabCode=null;
       const all=await idbAll();
       if(all.length){
         await switchProject(all.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''))[0].id);
@@ -475,21 +493,24 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     let list=[];
     try{list=await idbAll()}catch(e){}
     list.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-    if(!list.length){grid.innerHTML='<p class="pq-help">No papers yet.</p>';return}
+    if(!list.length){grid.innerHTML='<p class="pq-help">No papers yet.</p>';renderCollabCard();return}
     grid.innerHTML=list.map(p=>{
       const w=p.wordCount!=null?p.wordCount:(p.state?/*approx*/0:0);
       const words=p.state&&p.state.sections?p.state.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0):w;
       return '<div class="pq-proj-card'+(p.id===currentProjectId?' active':'')+'" data-id="'+p.id+'">'+
-        '<h4>'+escapeHtml(p.name||'Untitled')+'</h4>'+
+        '<h4>'+escapeHtml(p.name||'Untitled')+(p.collabCode?'<span class="pq-tag">shared</span>':'')+'</h4>'+
         '<p>'+words.toLocaleString()+' words · '+(p.updatedAt?String(p.updatedAt).slice(0,10):'')+'</p>'+
         '<div style="margin-top:8px;display:flex;gap:6px">'+
         '<button type="button" class="pq-btn pq-open-p" data-id="'+p.id+'">Open</button>'+
+        (p.collabCode?'<button type="button" class="pq-btn pq-live-p" data-id="'+p.id+'">Go live</button>':'')+
         (list.length>1?'<button type="button" class="pq-btn pq-del-p" data-id="'+p.id+'">Delete</button>':'')+
         '</div></div>';
     }).join('');
     grid.querySelectorAll('.pq-open-p').forEach(b=>b.onclick=e=>{e.stopPropagation();switchProject(b.dataset.id)});
+    grid.querySelectorAll('.pq-live-p').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(b.dataset.id!==currentProjectId)await switchProject(b.dataset.id);goLive()});
     grid.querySelectorAll('.pq-del-p').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteProject(b.dataset.id)});
     grid.querySelectorAll('.pq-proj-card').forEach(c=>c.onclick=()=>switchProject(c.dataset.id));
+    renderCollabCard();
   }
   function updateSessionLine(){
     const el=$('#pq-session-line');if(!el)return;
@@ -500,7 +521,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
   function getActiveSection(){return state.sections.find(s=>s.id===state.activeSectionId)||state.sections[0]}
   function saveCurrent(){
     const sec=getActiveSection();if(!sec)return;
-    sec.title=secTitle.value||sec.title;sec.content=editor.innerHTML;projectDirty=true;
+    const t=secTitle.value||sec.title,c=editor.innerHTML;if(!applyingRemote&&(sec.content!==c||sec.title!==t))sec.mod=Date.now();sec.title=t;sec.content=c;projectDirty=true;
   }
 
   /* Auto capitalize */
@@ -790,48 +811,223 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     else{el.textContent='';btn.textContent='Save disk'}
   }
 
-  /* Collab — same as before */
-  function makeRoomCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='PQ-';for(let i=0;i<6;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
-  function updateCollabUI(){
-    const pill=$('#pq-collab-status'),label=$('#pq-collab-label');
-    if(roomCode&&provider){pill.classList.add('on');label.textContent=roomCode+(peerCount>1?' · '+peerCount+' online':' · waiting…')}
-    else{pill.classList.remove('on');label.textContent='Solo'}
+  /* Collaboration: serverless WebRTC (Trystero over public relays). A room code is bound to one paper. */
+  const COLLAB_APP='paperquill-collab-v2';
+  const RTC_CFG={iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'},
+    {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}
+  ]};
+  let trystero=null,room=null,acts={},peerInfo=new Map(),connState='idle',awaitingPaper=false,needSent=false,expectingFrom=null,holdPush=false,modalLocked=false,waitTimer=null;
+
+  function tomb(id){(state.deleted=state.deleted||[]).push(id)}
+  function makeRoomCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='PQ-';const r=new Uint32Array(8);crypto.getRandomValues(r);for(let i=0;i<8;i++)s+=a[r[i]%a.length];return s}
+  async function loadTransport(){
+    if(trystero)return trystero;
+    for(const u of ['https://cdn.jsdelivr.net/npm/trystero@0.21.5/+esm','https://esm.sh/trystero@0.21.5']){
+      try{const m=await import(u);if(m&&m.joinRoom){trystero=m;return m}}catch(e){console.warn('Collab library failed from',u,e)}
+    }
+    return null;
   }
-  function snapshotState(){saveCurrent();return {style:state.style,theme:state.theme,autoCap:state.autoCap,sections:state.sections,activeSectionId:state.activeSectionId,sources:state.sources,paperTitle:state.paperTitle,authorName:state.authorName,notes:state.notes,goals:state.goals,annotations:state.annotations||[]}}
-  function applyRemoteSnapshot(payload){
-    if(!payload||!payload.sections)return;applyingRemote=true;
+  function docHash(){
+    saveCurrent();
+    const j=JSON.stringify([state.paperTitle,state.notes,state.style,(state.sections||[]).map(x=>[x.id,x.title,x.content,x.status]),state.sources||[],state.annotations||[]]);
+    let h=5381;for(let i=0;i<j.length;i++)h=((h<<5)+h+j.charCodeAt(i))|0;return h;
+  }
+  function helloPayload(){return {code:roomCode,rev:state.rev||0,hash:docHash(),title:state.paperTitle||'Untitled paper',who:researcherLabel()}}
+  function snapshotState(){
+    saveCurrent();
+    return {rev:state.rev||0,deleted:state.deleted||[],style:state.style,paperTitle:state.paperTitle,notes:state.notes||'',
+      sources:state.sources||[],annotations:state.annotations||[],
+      sections:state.sections.map(s=>{const o=Object.assign({},s);delete o.snapshots;return o})};
+  }
+  function collabLine(){
+    if(!roomCode)return currentCollabCode?'Linked to '+currentCollabCode+'. Not connected.':'';
+    const n=peerInfo.size;
+    if(connState==='loading')return 'Connecting to '+roomCode+'…';
+    if(awaitingPaper)return n?'Receiving the paper…':'Looking for the paper. The person who shared it must have it open.';
+    return n?(n+1)+' people in '+roomCode+'.':'Live in '+roomCode+'. Waiting for others to join with this code.';
+  }
+  function updateCollabUI(){
+    const pill=$('#pq-collab-status'),label=$('#pq-collab-label');if(!pill)return;
+    if(roomCode){
+      pill.classList.add('on');const n=peerInfo.size;
+      label.textContent=roomCode+(connState==='loading'?' · connecting…':awaitingPaper?' · fetching paper…':n?' · '+(n+1)+' online':' · waiting for others…');
+    }else{pill.classList.remove('on');label.textContent=currentCollabCode?'Linked · offline':'Solo'}
+    renderCollabCard();
+  }
+  function renderCollabCard(){
+    const st=$('#pq-d-collab-status'),btn=$('#pq-d-share');if(!st||!btn)return;
+    if(roomCode){st.textContent=collabLine();btn.textContent='Show code'}
+    else if(currentCollabCode){st.textContent='“'+(state.paperTitle||'This paper')+'” is shared as '+currentCollabCode+'. Go live to sync with the people who joined.';btn.textContent='Go live'}
+    else{st.textContent='Share “'+(state.paperTitle||'this paper')+'” with a code. People who join get this paper in their own list.';btn.textContent='Share this paper'}
+  }
+
+  /* --- merging --- */
+  function mergeRemote(p){
+    if(!p||!Array.isArray(p.sections))return;
+    applyingRemote=true;
     try{
-      Object.assign(state,{style:payload.style,theme:payload.theme,autoCap:payload.autoCap,sections:payload.sections,sources:payload.sources||[],paperTitle:payload.paperTitle,authorName:payload.authorName,notes:payload.notes||'',goals:payload.goals||state.goals,annotations:payload.annotations||[]});normalizeState();
-      if(payload.activeSectionId&&state.sections.find(s=>s.id===payload.activeSectionId))state.activeSectionId=payload.activeSectionId;
-      renderAll();
+      saveCurrent();
+      const before=docHash(),activeBefore=getActiveSection()&&getActiveSection().content;
+      const dead=new Set([...(state.deleted||[]),...(p.deleted||[])]);state.deleted=[...dead];
+      const newer=(p.rev||0)>(state.rev||0);
+      const local=new Map(state.sections.map(x=>[x.id,x]));const seen=new Set();const out=[];
+      p.sections.forEach(rs=>{
+        if(dead.has(rs.id))return;seen.add(rs.id);const ls=local.get(rs.id);
+        if(!ls)out.push(Object.assign({status:'draft',snapshots:[]},rs));
+        else out.push((rs.mod||0)>(ls.mod||0)?Object.assign({},rs,{snapshots:ls.snapshots||[]}):ls);
+      });
+      state.sections.forEach(ls=>{if(!seen.has(ls.id)&&!dead.has(ls.id))out.push(ls)});
+      out.sort((a,b)=>(a.order||0)-(b.order||0));
+      if(out.length)state.sections=out;
+      const union=(mine,theirs)=>{const m=new Map();(mine||[]).forEach(x=>m.set(x.id,x));(theirs||[]).forEach(x=>{if(dead.has(x.id))return;if(!m.has(x.id)||newer)m.set(x.id,x)});return[...m.values()].filter(x=>!dead.has(x.id))};
+      state.sources=union(state.sources,p.sources);
+      state.annotations=union(state.annotations,p.annotations);
+      if(newer){state.paperTitle=p.paperTitle||state.paperTitle;state.notes=p.notes||'';state.style=p.style||state.style}
+      state.rev=Math.max(state.rev||0,p.rev||0);
+      normalizeState();
+      if(docHash()===before)return;
+      renderSections();renderSources();
+      const act=getActiveSection();
+      if(act&&act.content!==activeBefore)loadSection();
+      $('#pq-style').value=state.style;updateWc();
+      if(typeof renderAnnPanel==='function')try{renderAnnPanel()}catch(e){}
+      scheduleSave();
     }finally{applyingRemote=false}
   }
-  function scheduleCollabPush(){
-    if(!yMap||applyingRemote)return;clearTimeout(pushTimer);
-    pushTimer=setTimeout(()=>{if(!yMap||applyingRemote)return;yMap.set('paper',snapshotState())},400);
+  function adoptPaper(p){
+    applyingRemote=true;
+    try{
+      const oldSnaps=new Map((state.sections||[]).map(x=>[x.id,x.snapshots||[]]));
+      const keep={theme:state.theme,autoCap:state.autoCap,authorName:state.authorName,goals:state.goals,ltOn:state.ltOn};
+      const prevActive=state.activeSectionId;
+      state=Object.assign(emptyState(p.paperTitle),{
+        style:p.style||'mla9',paperTitle:p.paperTitle||'Untitled paper',notes:p.notes||'',sources:p.sources||[],annotations:p.annotations||[],
+        deleted:p.deleted||[],rev:p.rev||0,
+        sections:(p.sections||[]).map(x=>Object.assign({status:'draft'},x,{snapshots:oldSnaps.get(x.id)||[]}))
+      },keep);
+      state.activeSectionId=prevActive;
+      normalizeState();
+    }finally{applyingRemote=false}
   }
-  function leaveRoom(){try{provider&&provider.destroy()}catch(e){}try{ydoc&&ydoc.destroy()}catch(e){}provider=ydoc=yMap=null;roomCode=null;peerCount=0;updateCollabUI()}
-  function joinRoom(code,asHost){
-    code=String(code||'').trim().toUpperCase();
-    if(!/^PQ-[A-Z0-9]{6}$/.test(code)){toast('Invalid code');return false}
-    leaveRoom();roomCode=code;ydoc=new Y.Doc();yMap=ydoc.getMap('paperquill');
-    provider=new WebrtcProvider('paperquill-'+code,ydoc,{signaling:['wss://signaling.yjs.dev']});
-    yMap.observe(()=>{if(applyingRemote)return;const r=yMap.get('paper');if(r)applyRemoteSnapshot(r)});
-    provider.awareness.on('change',()=>{peerCount=provider.awareness.getStates().size;updateCollabUI()});
-    if(asHost)setTimeout(()=>{yMap&&yMap.set('paper',snapshotState())},400);
-    updateCollabUI();toast(asHost?'Room created':'Joined '+code);return true;
+  async function becomeGuestPaper(p){
+    await persist(); // current paper is saved untouched
+    currentProjectId=uid();currentCollabCode=roomCode;
+    state=emptyState(p.paperTitle);
+    adoptPaper(p);
+    state.activeSectionId=state.sections[0].id;
+    const meta=readMeta();meta.projectId=currentProjectId;writeMeta(meta);
+    if(meta.researcher)state.authorName=meta.researcher;
+    fileHandle=null;diskName='';sessionBase=totalWords();state.goals.sessionBase=sessionBase;
+    awaitingPaper=false;holdPush=false;
+    await persist();
+    renderAll();updateCollabUI();
+    $('#pq-dash').classList.remove('open');closeModal();
+    toast('Joined “'+(state.paperTitle||'paper')+'”');
+  }
+
+  /* --- handshake --- */
+  function handleHello(m,id){
+    if(!m||m.code!==roomCode)return;
+    peerInfo.set(id,m);updateCollabUI();
+    if(awaitingPaper){if(!needSent){needSent=true;acts.need&&acts.need({},id)}return}
+    if(m.hash===docHash())return;
+    if((m.rev||0)>(state.rev||0)&&!modalLocked&&expectingFrom==null)askUpdate(m,id);
+  }
+  function askUpdate(m,id){
+    holdPush=true;modalLocked=true;
+    openModal('<h3>Newer version available</h3><p class="pq-help"><strong>'+escapeHtml(m.who||'A collaborator')+'</strong> has a newer version of “'+escapeHtml(m.title||'this paper')+'” (edited '+escapeHtml(new Date(m.rev).toLocaleString())+'). Updating replaces your copy of this paper with theirs. Choosing “Keep mine” disconnects you from the room.</p>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-keep">Keep mine</button><button type="button" class="pq-btn pq-btn-primary" id="m-upd">Update my paper</button></div>');
+    $('#m-upd').onclick=()=>{
+      modalLocked=false;closeModal();expectingFrom=id;acts.need&&acts.need({},id);
+      setTimeout(()=>{if(expectingFrom===id){expectingFrom=null;holdPush=false;toast('No answer from collaborator. Still on your version.')}},20000);
+    };
+    $('#m-keep').onclick=()=>{modalLocked=false;closeModal();leaveRoom();toast('Kept your version. Disconnected.')};
+  }
+
+  function scheduleCollabPush(){
+    if(!room||applyingRemote||holdPush||awaitingPaper||!peerInfo.size)return;
+    clearTimeout(pushTimer);
+    pushTimer=setTimeout(()=>{if(room&&!holdPush&&!awaitingPaper&&acts.patch)acts.patch(snapshotState())},350);
+  }
+  function leaveRoom(){
+    clearTimeout(waitTimer);clearTimeout(pushTimer);
+    try{room&&room.leave()}catch(e){}
+    room=null;acts={};peerInfo.clear();roomCode=null;connState='idle';awaitingPaper=false;needSent=false;expectingFrom=null;holdPush=false;
+    updateCollabUI();
+  }
+  async function connect(code,mode){ // mode: 'linked' (paper already on this device) | 'fresh' (fetch paper from the room)
+    leaveRoom();
+    roomCode=code;connState='loading';awaitingPaper=mode==='fresh';holdPush=awaitingPaper;needSent=false;
+    updateCollabUI();
+    const t=await loadTransport();
+    if(roomCode!==code)return false;
+    if(!t){leaveRoom();toast('Could not load the collaboration library. Check your connection and try again.');return false}
+    try{room=t.joinRoom({appId:COLLAB_APP,rtcConfig:RTC_CFG},code)}
+    catch(e){console.error(e);leaveRoom();toast('Could not open the room.');return false}
+    const [sendHello,onHello]=room.makeAction('hello');
+    const [sendNeed,onNeed]=room.makeAction('need');
+    const [sendPaper,onPaper]=room.makeAction('paper');
+    const [sendPatch,onPatch]=room.makeAction('patch');
+    acts={hello:sendHello,need:sendNeed,paper:sendPaper,patch:sendPatch};
+    room.onPeerJoin(id=>{peerInfo.set(id,null);updateCollabUI();if(!awaitingPaper)sendHello(helloPayload(),id)});
+    room.onPeerLeave(id=>{peerInfo.delete(id);updateCollabUI()});
+    onHello(handleHello);
+    onNeed((_,id)=>{if(awaitingPaper)return;sendPaper(snapshotState(),id)});
+    onPaper(async(p,id)=>{
+      if(!p||!Array.isArray(p.sections))return;
+      if(awaitingPaper){await becomeGuestPaper(p)}
+      else if(expectingFrom===id){
+        expectingFrom=null;adoptPaper(p);holdPush=false;renderAll();updateCollabUI();scheduleSave();toast('Paper updated');
+      }
+    });
+    onPatch(p=>{if(awaitingPaper||holdPush)return;mergeRemote(p)});
+    connState='live';updateCollabUI();
+    clearTimeout(waitTimer);
+    waitTimer=setTimeout(()=>{if(roomCode===code&&!peerInfo.size)toast(awaitingPaper?'No one found for this code yet. Ask them to open the paper and click Go live.':'Nobody else has joined yet.')},25000);
+    return true;
+  }
+  async function goLive(){
+    saveCurrent();
+    if(!currentCollabCode)currentCollabCode=makeRoomCode();
+    await persist();
+    const ok=await connect(currentCollabCode,'linked');
+    if(ok)openCollabModal();
+    return ok;
+  }
+  async function joinByCode(raw){
+    const code=String(raw||'').trim().toUpperCase();
+    if(!/^PQ-[A-Z0-9]{8}$/.test(code)){toast('Codes look like PQ-ABCD2345');return false}
+    if(code===currentCollabCode)return connect(code,'linked');
+    let rec=null;try{rec=(await idbAll()).find(r=>r.collabCode===code)}catch(e){}
+    if(rec){ if(rec.id!==currentProjectId)await switchProject(rec.id); return connect(code,'linked') }
+    await persist();
+    const ok=await connect(code,'fresh');
+    if(ok)toast('Looking for the paper…');
+    return ok;
   }
   function openCollabModal(){
-    const on=!!(roomCode&&provider);
-    openModal('<h3>Live collaboration</h3><p class="pq-help">Share a room code. Peers join with the same code (Yjs + WebRTC). Highlights and comments sync with the paper.</p>'+
-      (on?('<div class="pq-code">'+escapeHtml(roomCode)+'</div><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-copy">Copy</button><button type="button" class="pq-btn" id="m-leave">Leave</button><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>')
-      :('<button type="button" class="pq-btn pq-btn-primary" id="m-create" style="width:100%;margin-bottom:10px">Create room</button><label class="pq-lbl">Join code</label><input class="pq-inp" id="m-join-code" style="width:100%" placeholder="PQ-XXXXXX"><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-join">Join</button></div>')));
+    const on=!!roomCode;
+    let h='<h3>Live collaboration</h3>';
+    if(on){
+      h+='<p class="pq-help">Share this code. Whoever joins gets this paper in their own list, and the same paper every time they use the code.</p><div class="pq-code">'+escapeHtml(roomCode)+'</div><p class="pq-help">'+escapeHtml(collabLine())+'</p>'+
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-copy">Copy code</button><button type="button" class="pq-btn" id="m-leave">Disconnect</button><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>';
+    }else{
+      h+=currentCollabCode
+        ?'<p class="pq-help">This paper is shared as <strong>'+escapeHtml(currentCollabCode)+'</strong>.</p><button type="button" class="pq-btn pq-btn-primary" id="m-live" style="width:100%;margin-bottom:6px">Go live</button><button type="button" class="pq-btn" id="m-unlink" style="width:100%;margin-bottom:10px">Stop sharing this paper</button>'
+        :'<p class="pq-help">Create a code for “'+escapeHtml(state.paperTitle||'this paper')+'”. Others join with it and receive this paper.</p><button type="button" class="pq-btn pq-btn-primary" id="m-live" style="width:100%;margin-bottom:10px">Share this paper</button>';
+      h+='<label class="pq-lbl">Join with a code</label><input class="pq-inp" id="m-join-code" style="width:100%" placeholder="PQ-XXXXXXXX" autocomplete="off"><p class="pq-help">The shared paper is added to your list. Your current paper is not replaced.</p><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-join">Join</button></div>';
+    }
+    openModal(h);
     $('#m-cancel').onclick=closeModal;
-    const c=$('#m-create');if(c)c.onclick=()=>{if(joinRoom(makeRoomCode(),true)){closeModal();openCollabModal()}};
-    const j=$('#m-join');if(j)j.onclick=()=>{if(joinRoom($('#m-join-code').value,false))closeModal()};
+    const lv=$('#m-live');if(lv)lv.onclick=()=>{closeModal();goLive()};
+    const un=$('#m-unlink');if(un)un.onclick=async()=>{if(!confirm('Unlink this paper from its code? Your copy stays; collaborators keep theirs.'))return;currentCollabCode=null;await persist();updateCollabUI();closeModal();renderProjectGrid()};
+    const j=$('#m-join');if(j)j.onclick=async()=>{const v=$('#m-join-code').value;closeModal();await joinByCode(v)};
     const l=$('#m-leave');if(l)l.onclick=()=>{leaveRoom();closeModal()};
     const cp=$('#m-copy');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);toast('Copied')}catch(e){toast(roomCode)}};
   }
+  $('#pq-d-share').onclick=()=>{if(roomCode)openCollabModal();else goLive()};
+  $('#pq-d-join').onclick=()=>joinByCode($('#pq-d-join-code').value);
 
   /* Citations — compact copies of prior logic */
   function authorLastFirst(a){a=(a||'').trim();if(!a)return'';if(a.includes(','))return a;const p=a.split(/\s+/);return p.length===1?p[0]:p[p.length-1]+', '+p.slice(0,-1).join(' ')}
@@ -876,7 +1072,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
     list.innerHTML=sorted.map(s=>'<div class="pq-item'+(s.id===state.activeSectionId?' active':'')+'" data-id="'+s.id+'"><span>'+escapeHtml(s.title)+'<span class="pq-status '+(s.status||'draft')+'">'+(s.status||'draft')+'</span></span>'+(s.key==='works'?'':'<button type="button" class="pq-del" data-id="'+s.id+'">×</button>')+'</div>').join('');
     list.querySelectorAll('.pq-item').forEach(el=>{el.onclick=e=>{if(e.target.classList.contains('pq-del'))return;switchSection(el.dataset.id)}});
-    list.querySelectorAll('.pq-del').forEach(btn=>{btn.onclick=e=>{e.stopPropagation();if(state.sections.length<=1)return;if(!confirm('Delete section?'))return;state.sections=state.sections.filter(s=>s.id!==btn.dataset.id);if(state.activeSectionId===btn.dataset.id){state.activeSectionId=state.sections[0].id;loadSection()}scheduleSave();renderSections()}});
+    list.querySelectorAll('.pq-del').forEach(btn=>{btn.onclick=e=>{e.stopPropagation();if(state.sections.length<=1)return;if(!confirm('Delete section?'))return;tomb(btn.dataset.id);state.sections=state.sections.filter(s=>s.id!==btn.dataset.id);if(state.activeSectionId===btn.dataset.id){state.activeSectionId=state.sections[0].id;loadSection()}scheduleSave();renderSections()}});
   }
   function renderSources(){
     const list=$('#pq-side-sources');
@@ -884,11 +1080,11 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     list.innerHTML=state.sources.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml((s.authors||'')+(s.year?' · '+s.year:''))+'</div><div class="pq-src-actions"><button type="button" class="pq-btn pq-cite-btn" data-id="'+s.id+'">Cite</button><button type="button" class="pq-btn pq-edit-src" data-id="'+s.id+'">Edit</button><button type="button" class="pq-btn pq-del-src" data-id="'+s.id+'">Del</button></div></div>').join('');
     list.querySelectorAll('.pq-cite-btn').forEach(b=>b.onclick=()=>insertCitation(b.dataset.id));
     list.querySelectorAll('.pq-edit-src').forEach(b=>b.onclick=()=>editSource(b.dataset.id));
-    list.querySelectorAll('.pq-del-src').forEach(b=>b.onclick=()=>{state.sources=state.sources.filter(s=>s.id!==b.dataset.id);scheduleSave();renderSources();rebuildWorksCited()});
+    list.querySelectorAll('.pq-del-src').forEach(b=>b.onclick=()=>{tomb(b.dataset.id);state.sources=state.sources.filter(s=>s.id!==b.dataset.id);scheduleSave();renderSources();rebuildWorksCited()});
   }
   function switchSection(id){saveCurrent();state.activeSectionId=id;loadSection();renderSections();scheduleSave()}
   function loadSection(){
-    const sec=getActiveSection();if(!sec)return;secTitle.value=sec.title||'';editor.innerHTML=sec.content||'';
+    const sec=getActiveSection();if(!sec)return;secTitle.value=sec.title||'';editor.innerHTML=sec.content||'';sec.content=editor.innerHTML;
     editor.style.display=(sec.key==='works')?'none':'';
     const st=$('#pq-sec-status');if(st)st.value=sec.status||'draft';
     rebuildWorksCited();updateWc();updateSessionLine();
@@ -1107,6 +1303,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     $('#m-cancel').onclick = closeModal;
     const del = $('#m-del-ann');
     if (del) del.onclick = () => {
+      tomb(ann.id);
       state.annotations = (state.annotations || []).filter(a => a.id !== ann.id);
       // unwrap marks in editor
       $$('[data-ann-id="' + ann.id + '"]', editor).forEach(el => {
@@ -1231,7 +1428,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
   $('#pq-disk-open').onclick=()=>openFromDisk();
   $('#pq-export').onclick=()=>exportDocx();
   $('#pq-refresh-bib').onclick=()=>{rebuildWorksCited();toast('Bibliography refreshed')};
-  $('#pq-add-section').onclick=()=>{const t=prompt('Section title','New Section');if(!t)return;saveCurrent();const sec={id:uid(),key:'custom',title:t,content:'',order:state.sections.length};state.sections.push(sec);state.activeSectionId=sec.id;scheduleSave();renderSections();loadSection()};
+  $('#pq-add-section').onclick=()=>{const t=prompt('Section title','New Section');if(!t)return;saveCurrent();const sec={id:uid(),key:'custom',title:t,content:'',order:state.sections.length,mod:Date.now()};state.sections.push(sec);state.activeSectionId=sec.id;scheduleSave();renderSections();loadSection()};
   secTitle.onchange=()=>{saveCurrent();scheduleSave();renderSections()};
 
   $$('.pq-side-tabs button').forEach(btn=>{btn.onclick=()=>{$$('.pq-side-tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
@@ -1254,7 +1451,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
 
 
   const secStatus=$('#pq-sec-status');
-  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;scheduleSave();renderSections()};
+  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Date.now();scheduleSave();renderSections()};
 
   $('#pq-dash-new').onclick=()=>createProject();
   $('#pq-session-set').onclick=()=>{
@@ -1316,7 +1513,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
     $$('.pq-rest').forEach(b=>b.onclick=()=>{
       const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
       if(!confirm('Replace current section text with this snapshot?'))return;
-      sec.content=snap.content;if(snap.title)sec.title=snap.title;loadSection();scheduleSave();closeModal();toast('Restored');
+      sec.content=snap.content;if(snap.title)sec.title=snap.title;sec.mod=Date.now();loadSection();scheduleSave();closeModal();toast('Restored');
     });
   }
   function openShortcuts(){
@@ -1349,7 +1546,7 @@ import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+es
 
     $('#pq-dash-save-name').onclick=()=>{const n=$('#pq-researcher').value.trim();const m=readMeta();m.researcher=n;writeMeta(m);state.authorName=n;scheduleSave();toast('Saved');$('#pq-dash-hello').textContent=n?'Welcome, '+n:'Welcome'};
   $('#pq-dash-continue').onclick=()=>$('#pq-dash').classList.remove('open');
-  $('#pq-modal-bg').onclick=e=>{if(e.target===$('#pq-modal-bg'))closeModal()};
+  $('#pq-modal-bg').onclick=e=>{if(e.target===$('#pq-modal-bg')&&!modalLocked)closeModal()};
   document.addEventListener('click',e=>{if(!e.target.closest('#pq-tools-menu')&&!e.target.closest('#cap-tools'))$('#pq-tools-menu').classList.remove('open');if(!e.target.closest('#pq-dict'))dictEl.classList.remove('open')});
 
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
