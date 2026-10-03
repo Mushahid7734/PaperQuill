@@ -827,8 +827,8 @@
       return false;
     })();
   }
-  function docHash(){
-    saveCurrent();
+  function docHash(){saveCurrent();return hashState()}
+  function hashState(){
     const j=JSON.stringify([state.paperTitle,state.notes,state.style,(state.sections||[]).map(x=>[x.id,x.title,x.content,x.status]),state.sources||[],state.annotations||[]]);
     let h=5381;for(let i=0;i<j.length;i++)h=((h<<5)+h+j.charCodeAt(i))|0;return h;
   }
@@ -867,13 +867,35 @@
     if(cb)cb.style.display=(roomCode&&awaitingPaper)?'':'none';
   }
 
+  function getCaret(){
+    try{
+      if(document.activeElement!==editor)return null;
+      const sel=window.getSelection();if(!sel||!sel.rangeCount)return null;
+      const r=sel.getRangeAt(0);if(!editor.contains(r.endContainer))return null;
+      const pre=r.cloneRange();pre.selectNodeContents(editor);pre.setEnd(r.endContainer,r.endOffset);
+      return pre.toString().length;
+    }catch(e){return null}
+  }
+  function setCaret(n){
+    if(n==null)return;
+    try{
+      const w=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);let left=n,node;
+      const r=document.createRange();
+      while((node=w.nextNode())){
+        if(left<=node.textContent.length){r.setStart(node,left);r.collapse(true);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);return}
+        left-=node.textContent.length;
+      }
+      r.selectNodeContents(editor);r.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
+    }catch(e){}
+  }
   /* --- merging --- */
   function mergeRemote(p){
     if(!p||!Array.isArray(p.sections))return;
     applyingRemote=true;
     try{
       saveCurrent();
-      const before=docHash(),activeBefore=getActiveSection()&&getActiveSection().content;
+      const before=hashState(),activeBefore=getActiveSection()&&getActiveSection().content;
+      const caret=getCaret();
       const dead=new Set([...(state.deleted||[]),...(p.deleted||[])]);state.deleted=[...dead];
       const newer=(p.rev||0)>(state.rev||0);
       const local=new Map(state.sections.map(x=>[x.id,x]));const seen=new Set();const out=[];
@@ -891,10 +913,10 @@
       if(newer){state.paperTitle=p.paperTitle||state.paperTitle;state.notes=p.notes||'';state.style=p.style||state.style}
       state.rev=Math.max(state.rev||0,p.rev||0);
       normalizeState();
-      if(docHash()===before)return;
+      if(hashState()===before)return;
       renderSections();renderSources();
       const act=getActiveSection();
-      if(act&&act.content!==activeBefore)loadSection();
+      if(act&&act.content!==activeBefore){loadSection();setCaret(caret)}
       $('#pq-style').value=state.style;updateWc();
       try{renderAnnPanel()}catch(e){}
       scheduleSave();
