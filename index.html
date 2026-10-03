@@ -165,6 +165,7 @@
     <button type="button" class="pq-btn" id="pq-ann-panel-btn" title="Annotations panel">Notes on text</button>
     <button type="button" class="pq-btn" id="pq-lt-toggle" title="LanguageTool">LT Check</button>
     <button type="button" class="pq-btn" id="pq-collab-btn">Collaborate</button>
+    <button type="button" class="pq-btn" id="pq-sync-btn" title="Fetch collaborators' changes and send yours">Sync</button>
     <span class="pq-collab-pill" id="pq-collab-status"><span class="pq-collab-dot"></span><span id="pq-collab-label">Solo</span></span>
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-disk-save" title="Save JSON to disk">Save disk</button>
@@ -218,6 +219,7 @@
     <button type="button" class="pq-btn" id="tool-json">Backup JSON</button>
     <button type="button" class="pq-btn" id="tool-ann">Annotations panel</button>
     <button type="button" class="pq-btn" id="tool-collab">Collaborate</button>
+    <button type="button" class="pq-btn" id="tool-sync">Sync with collaborators</button>
     <button type="button" class="pq-btn" id="tool-doi">Fetch by DOI</button>
   </div>
   <button type="button" class="pq-btn pq-focus-exit" id="pq-focus-exit">Exit focus</button>
@@ -365,7 +367,7 @@
 
   let saveTimer=null;
   function scheduleSave(){
-    if(!applyingRemote)state.rev=Date.now();
+    if(!applyingRemote)state.rev=Math.max(Date.now(),(state.rev||0)+1);
     clearTimeout(saveTimer);
     saveTimer=setTimeout(persist,400);
     scheduleCollabPush();
@@ -465,8 +467,8 @@
     sessionBase=0;state.goals.sessionBase=0;
     const meta=readMeta();meta.projectId=currentProjectId;writeMeta(meta);
     fileHandle=null;diskName='';
-    await persist();
     renderAll();
+    await persist();
     $('#pq-dash').classList.remove('open');
     toast('New paper created');
   }
@@ -518,7 +520,7 @@
   function getActiveSection(){return state.sections.find(s=>s.id===state.activeSectionId)||state.sections[0]}
   function saveCurrent(){
     const sec=getActiveSection();if(!sec)return;
-    const t=secTitle.value||sec.title,c=editor.innerHTML;if(!applyingRemote&&(sec.content!==c||sec.title!==t))sec.mod=Date.now();sec.title=t;sec.content=c;projectDirty=true;
+    const t=secTitle.value||sec.title,c=editor.innerHTML;if(!applyingRemote&&(sec.content!==c||sec.title!==t))sec.mod=Math.max(Date.now(),(sec.mod||0)+1);sec.title=t;sec.content=c;projectDirty=true;
   }
 
   /* Auto capitalize */
@@ -838,7 +840,14 @@
       sources:state.sources||[],annotations:state.annotations||[],
       sections:state.sections.map(s=>{const o=Object.assign({},s);delete o.snapshots;return o})};
   }
-  const sendTo=(c,o)=>{try{c.send(o)}catch(e){console.warn('send failed',e)}};
+  let nSent=0,nRecv=0,lastRecv=0,syncWait=0,hbTimer=null;const diag=[];const lastPush=new Map();
+  function dlog(m){
+    diag.push(new Date().toLocaleTimeString()+'  '+m);if(diag.length>14)diag.shift();
+    const el=$('#m-diag');if(el)el.textContent=diag.join('\n');
+    const st=$('#m-stats');if(st)st.textContent=statsLine();
+  }
+  const statsLine=()=>'Sent '+nSent+' · received '+nRecv+(lastRecv?' · last from others '+new Date(lastRecv).toLocaleTimeString():'');
+  const sendTo=(c,o)=>{try{c.send(JSON.stringify(o));nSent++}catch(e){dlog('send failed: '+(e&&e.message||e))}};
   const broadcast=(o,except)=>conns.forEach(c=>{if(c!==except)sendTo(c,o)});
   function peopleCount(){return isHub?conns.size+1:(conns.size?hubPeers:1)}
 
@@ -902,7 +911,9 @@
       p.sections.forEach(rs=>{
         if(dead.has(rs.id))return;seen.add(rs.id);const ls=local.get(rs.id);
         if(!ls)out.push(Object.assign({status:'draft',snapshots:[]},rs));
-        else out.push((rs.mod||0)>(ls.mod||0)?Object.assign({},rs,{snapshots:ls.snapshots||[]}):ls);
+        else{const rm=rs.mod||0,lm=ls.mod||0,rc=rs.content||'',lc=ls.content||'';
+          const take=rm>lm||(rm===lm&&rc!==lc&&rc>lc); // equal stamps: same deterministic winner on both sides
+          out.push(take?Object.assign({},ls,rs,{snapshots:ls.snapshots||[]}):ls)}
       });
       state.sections.forEach(ls=>{if(!seen.has(ls.id)&&!dead.has(ls.id))out.push(ls)});
       out.sort((a,b)=>(a.order||0)-(b.order||0));
@@ -947,9 +958,10 @@
     const meta=readMeta();meta.projectId=currentProjectId;writeMeta(meta);
     if(meta.researcher)state.authorName=meta.researcher;
     fileHandle=null;diskName='';sessionBase=totalWords();state.goals.sessionBase=sessionBase;
-    sessionSynced=true;holdPush=false;
-    await persist();
-    renderAll();updateCollabUI();
+    sessionSynced=true;
+    renderAll();            // load the new paper into the editor BEFORE saving, or the old editor text overwrites it
+    await persist();holdPush=false;
+    updateCollabUI();
     $('#pq-dash').classList.remove('open');closeModal();
     toast('Joined “'+(state.paperTitle||'paper')+'”');
   }
@@ -957,7 +969,17 @@
   /* --- messages --- */
   function myHello(){return {t:'hello',code:roomCode,rev:state.rev||0,hash:docHash(),title:state.paperTitle||'Untitled paper',who:researcherLabel(),aw:awaitingPaper}}
   function onData(m,c){
+    if(typeof m==='string'){try{m=JSON.parse(m)}catch(e){dlog('unreadable message');return}}
     if(!m||typeof m!=='object')return;
+    nRecv++;lastRecv=Date.now();
+    if(m.t!=='ping'&&m.t!=='peers')dlog('got '+m.t);
+    if(m.t==='ping')return handlePing(m,c);
+    if(m.t==='pull'){if(!awaitingPaper)sendTo(c,Object.assign({t:'pulled'},snapshotState()));return}
+    if(m.t==='pulled'){
+      if(awaitingPaper)return becomeGuestPaper(m);
+      if(!holdPush){mergeRemote(m);if(syncWait){syncWait=0;toast('Synced with collaborators');updateCollabUI()}}
+      return;
+    }
     if(m.t==='hello')return handleHello(m,c);
     if(m.t==='need'){if(!awaitingPaper)sendTo(c,Object.assign({t:'paper'},snapshotState()));return}
     if(m.t==='peers'){hubPeers=m.n||2;updateCollabUI();return}
@@ -997,6 +1019,30 @@
     };
     $('#m-keep').onclick=()=>{modalLocked=false;closeModal();leaveRoom();toast('Kept your version. Disconnected.')};
   }
+  function handlePing(m,c){
+    if(awaitingPaper||holdPush||modalLocked)return;
+    if(m.hash===docHash()){sessionSynced=true;return}
+    if((m.rev||0)>(state.rev||0)){sendTo(c,{t:'pull'});return}      // they are ahead: fetch
+    const last=lastPush.get(c.peer)||0;                               // we are ahead or tied: send ours
+    if(Date.now()-last>2500){lastPush.set(c.peer,Date.now());sendTo(c,Object.assign({t:'patch'},snapshotState()))}
+  }
+  function startHeartbeat(){
+    clearInterval(hbTimer);
+    hbTimer=setInterval(()=>{
+      if(!roomCode||!conns.size||awaitingPaper)return;
+      broadcast({t:'ping',hash:docHash(),rev:state.rev||0});
+    },3000);
+  }
+  function syncNow(){
+    if(!roomCode){toast('Not collaborating. Create a code in Collaborate, or join from Home.');return}
+    if(awaitingPaper){toast('Still waiting for the paper to arrive.');return}
+    if(!conns.size){toast('No one else is connected yet.');return}
+    holdPush=false;saveCurrent();
+    broadcast(Object.assign({t:'patch'},snapshotState()));
+    broadcast({t:'pull'});
+    syncWait=Date.now();toast('Syncing…');
+    setTimeout(()=>{if(syncWait&&Date.now()-syncWait>=5500){syncWait=0;toast('No response from collaborators. Check the Collaborate window for details.')}},6000);
+  }
   function scheduleCollabPush(){
     if(!roomCode||applyingRemote||holdPush||awaitingPaper||!conns.size)return;
     clearTimeout(pushTimer);
@@ -1011,7 +1057,7 @@
     peer=null;isHub=false;hubPeers=1;
   }
   function leaveRoom(){
-    session++;clearTimeout(pushTimer);destroyPeer();
+    session++;clearTimeout(pushTimer);clearInterval(hbTimer);destroyPeer();
     roomCode=null;connState='idle';lastErr='';awaitingPaper=false;needSent=false;expectingFrom=null;mergeMode=false;sessionSynced=false;holdPush=false;
     updateCollabUI();
   }
@@ -1034,11 +1080,12 @@
     const sigTimer=setTimeout(()=>{if(tok===session&&peer===p&&!p.open)failAndRetry(tok,'cannot reach the connection server (0.peerjs.com). Check your internet, VPN or firewall.')},12000);
     p.on('open',()=>{
       clearTimeout(sigTimer);if(tok!==session||peer!==p)return;
+      dlog('holding room');startHeartbeat();
       isHub=true;connState='live';updateCollabUI();
     });
     p.on('connection',c=>{
       if(tok!==session||peer!==p)return;
-      c.on('open',()=>{conns.set(c.peer,c);sendTo(c,myHello());broadcast({t:'peers',n:conns.size+1});updateCollabUI()});
+      c.on('open',()=>{conns.set(c.peer,c);dlog('someone connected');sendTo(c,myHello());broadcast({t:'peers',n:conns.size+1});updateCollabUI()});
       c.on('data',m=>onData(m,c));
       const gone=()=>{if(conns.get(c.peer)===c){conns.delete(c.peer);helloFrom.delete(c.peer);broadcast({t:'peers',n:conns.size+1});updateCollabUI()}};
       c.on('close',gone);c.on('error',gone);
@@ -1066,7 +1113,7 @@
       clearTimeout(sigTimer);if(tok!==session||peer!==p)return;
       const c=p.connect(hubId(roomCode),{reliable:true});
       linkTimer=setTimeout(()=>{if(tok===session&&peer===p&&!conns.size)failAndRetry(tok,'found the room but could not open a direct link. Your network may block peer-to-peer connections.',8000)},15000);
-      c.on('open',()=>{clearTimeout(linkTimer);if(tok!==session||peer!==p)return;conns.set(c.peer,c);connState='live';sendTo(c,myHello());updateCollabUI()});
+      c.on('open',()=>{clearTimeout(linkTimer);if(tok!==session||peer!==p)return;conns.set(c.peer,c);connState='live';dlog('connected to room holder');startHeartbeat();sendTo(c,myHello());updateCollabUI()});
       c.on('data',m=>onData(m,c));
       c.on('close',lost);c.on('error',lost);
     });
@@ -1114,8 +1161,8 @@
     const on=!!roomCode;
     let h='<h3>Live collaboration</h3>';
     if(on){
-      h+='<p class="pq-help">Share this code. People enter it under “Join a shared paper” on the Home screen and get this paper.</p><div class="pq-code">'+escapeHtml(roomCode)+'</div><p class="pq-help" id="m-status">'+escapeHtml(collabLine())+'</p>'+
-        '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-copy">Copy code</button><button type="button" class="pq-btn" id="m-leave">Disconnect</button><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>';
+      h+='<p class="pq-help">Share this code. People enter it under “Join a shared paper” on the Home screen and get this paper.</p><div class="pq-code">'+escapeHtml(roomCode)+'</div><p class="pq-help" id="m-status">'+escapeHtml(collabLine())+'</p><p class="pq-help" id="m-stats">'+escapeHtml(statsLine())+'</p><details><summary class="pq-help" style="cursor:pointer">Connection details</summary><pre id="m-diag" class="pq-help" style="white-space:pre-wrap;font-size:.7rem;max-height:140px;overflow:auto">'+escapeHtml(diag.join('\n'))+'</pre></details>'+
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-sync">Sync now</button><button type="button" class="pq-btn" id="m-copy">Copy code</button><button type="button" class="pq-btn" id="m-leave">Disconnect</button><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>';
     }else if(currentCollabCode){
       h+='<p class="pq-help">This paper is shared as</p><div class="pq-code">'+escapeHtml(currentCollabCode)+'</div><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-unlink">Stop sharing</button><button type="button" class="pq-btn" id="m-cancel">Close</button><button type="button" class="pq-btn pq-btn-primary" id="m-live">Go live</button></div>';
     }else{
@@ -1125,6 +1172,7 @@
     $('#m-cancel').onclick=closeModal;
     const lv=$('#m-live');if(lv)lv.onclick=()=>{closeModal();goLive()};
     const un=$('#m-unlink');if(un)un.onclick=async()=>{if(!confirm('Unlink this paper from its code? Your copy stays; collaborators keep theirs.'))return;currentCollabCode=null;await persist();updateCollabUI();closeModal();renderProjectGrid()};
+    const sy=$('#m-sync');if(sy)sy.onclick=()=>syncNow();
     const l=$('#m-leave');if(l)l.onclick=()=>{leaveRoom();closeModal()};
     const cp=$('#m-copy');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);toast('Copied')}catch(e){toast(roomCode)}};
   }
@@ -1547,6 +1595,8 @@
   $('#tool-theme').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');scheduleSave()};
   $('#tool-json').onclick=()=>{saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');toast('JSON downloaded')};
   $('#tool-collab').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openCollabModal()};
+  $('#tool-sync').onclick=()=>{$('#pq-tools-menu').classList.remove('open');syncNow()};
+  $('#pq-sync-btn').onclick=()=>syncNow();
   $('#tool-doi').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openDOIModal()};
   $('.pq-logo').style.cursor='pointer';
   $('.pq-logo').title='Rename paper';
@@ -1554,7 +1604,7 @@
 
 
   const secStatus=$('#pq-sec-status');
-  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Date.now();scheduleSave();renderSections()};
+  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Math.max(Date.now(),(sec.mod||0)+1);scheduleSave();renderSections()};
 
   $('#pq-dash-new').onclick=()=>createProject();
   $('#pq-session-set').onclick=()=>{
@@ -1616,7 +1666,7 @@
     $$('.pq-rest').forEach(b=>b.onclick=()=>{
       const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
       if(!confirm('Replace current section text with this snapshot?'))return;
-      sec.content=snap.content;if(snap.title)sec.title=snap.title;sec.mod=Date.now();loadSection();scheduleSave();closeModal();toast('Restored');
+      sec.content=snap.content;if(snap.title)sec.title=snap.title;sec.mod=Math.max(Date.now(),(sec.mod||0)+1);loadSection();scheduleSave();closeModal();toast('Restored');
     });
   }
   function openShortcuts(){
