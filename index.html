@@ -154,6 +154,18 @@
     .pq-tmpl-card:hover{border-color:var(--accent)}
     .pq-tmpl-card h4{margin:0 0 4px}
     .pq-tmpl-card p{margin:0;font-size:.78rem;color:var(--muted)}
+    .pq-progress-wrap{display:flex;align-items:center;gap:8px;min-width:120px;max-width:180px}
+    .pq-progress-bar{flex:1;height:6px;border-radius:999px;background:var(--border);overflow:hidden}
+    .pq-progress-bar>i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .3s}
+    .pq-dash-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:12px 0}
+    .pq-dash-tabs button{font:inherit;font-size:.8rem;padding:6px 12px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;cursor:pointer}
+    .pq-dash-tabs button.active{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+    .pq-dash-pane{display:none}
+    .pq-dash-pane.active{display:block}
+    .pq-ach{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--paper)}
+    .pq-ach.locked{opacity:.55}
+    .pq-ach .ico{font-size:1.4rem;line-height:1}
+    .pq-level-badge{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--accent);color:var(--paper);font-size:.75rem;font-weight:600}
     @media(max-width:800px){
       #pq-root{--sidebar:min(280px,85vw)}
       #pq-root:not(.pq-side-collapsed) .pq-sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.12);max-width:85vw}
@@ -171,7 +183,6 @@
   <div class="pq-top">
     <span class="pq-logo" title="Rename paper">PaperQuill</span>
     <div class="pq-sep"></div>
-    <button type="button" class="pq-btn pq-btn-icon" id="pq-toggle-side" title="Sections">☰</button>
     <button type="button" class="pq-btn pq-btn-icon" id="pq-bold"><b>B</b></button>
     <button type="button" class="pq-btn pq-btn-icon" id="pq-italic"><i>I</i></button>
     <div class="pq-sep"></div>
@@ -192,14 +203,15 @@
     <button type="button" class="pq-btn" id="pq-hl-btn" title="Highlight selection">Highlight</button>
     <button type="button" class="pq-btn" id="pq-comment-btn" title="Comment on selection">Comment</button>
     <button type="button" class="pq-btn" id="pq-ann-panel-btn" title="Annotations panel">Notes on text</button>
-    <button type="button" class="pq-btn" id="pq-lt-toggle" title="LanguageTool">LT Check</button>
-    <button type="button" class="pq-btn" id="pq-tutorial-btn" title="Toggle writing guidance">Tutorial</button>
     <div class="pq-sep"></div>
-    <button type="button" class="pq-btn" id="pq-templates" title="Publisher & structure templates">Templates</button>
     <button type="button" class="pq-btn" id="pq-disk-save" title="Save JSON to disk">Save disk</button>
     <button type="button" class="pq-btn" id="pq-disk-open">Open disk</button>
-    <button type="button" class="pq-btn" id="pq-export">DOCX</button>
+    <button type="button" class="pq-btn pq-btn-primary" id="pq-export">Export</button>
     <span class="pq-wc" id="pq-wc">0 words</span>
+    <div class="pq-progress-wrap" title="Daily writing goal" id="pq-daily-wrap">
+      <div class="pq-progress-bar"><i id="pq-daily-bar" style="width:0%"></i></div>
+      <span class="pq-wc" id="pq-daily-label">0/500</span>
+    </div>
   </div>
   <div class="pq-body">
     <aside class="pq-sidebar"><div class="pq-side-inner">
@@ -238,7 +250,9 @@
     <button type="button" class="pq-btn" id="cap-tools">Tools</button>
   </div>
   <div class="pq-tools-menu" id="pq-tools-menu">
-    <button type="button" class="pq-btn" id="tool-lt">Run LanguageTool</button>
+    <button type="button" class="pq-btn" id="tool-lt">LanguageTool check</button>
+    <button type="button" class="pq-btn" id="tool-tutorial">Tutorial guidance</button>
+    <button type="button" class="pq-btn" id="tool-templates">Templates</button>
     <button type="button" class="pq-btn" id="tool-audit">Citation audit</button>
     <button type="button" class="pq-btn" id="tool-readability">Readability</button>
     <button type="button" class="pq-btn" id="tool-findreplace">Find &amp; replace</button>
@@ -261,8 +275,6 @@
     <button type="button" class="pq-btn" id="tool-pomodoro">Focus timer</button>
     <button type="button" class="pq-btn" id="tool-wordlog">Word log / streak</button>
     <button type="button" class="pq-btn" id="tool-titlepage">Title page fields</button>
-    <button type="button" class="pq-btn" id="tool-exportmd">Export Markdown</button>
-    <button type="button" class="pq-btn" id="tool-exporthtml">Export HTML</button>
     <button type="button" class="pq-btn" id="tool-palette">Command palette</button>
     <button type="button" class="pq-btn" id="tool-autocap">Auto-capitalize: on</button>
     <button type="button" class="pq-btn" id="tool-theme">Toggle theme</button>
@@ -272,11 +284,6 @@
     <button type="button" class="pq-btn" id="tool-snaps">View snapshots</button>
     <button type="button" class="pq-btn" id="tool-shortcuts">Keyboard shortcuts</button>
     <button type="button" class="pq-btn" id="tool-json">Backup JSON</button>
-    <button type="button" class="pq-btn" id="tool-ann">Annotations panel</button>
-    <button type="button" class="pq-btn" id="tool-tutorial">Toggle tutorial</button>
-    <button type="button" class="pq-btn" id="tool-templates">Templates</button>
-    <button type="button" class="pq-btn" id="tool-doi">Fetch by DOI</button>
-    <button type="button" class="pq-btn" id="tool-findsrc">Find sources</button>
   </div>
   <button type="button" class="pq-btn pq-focus-exit" id="pq-focus-exit">Exit focus</button>
   <div class="pq-ann-panel" id="pq-lt-panel"><header><strong>Writing check</strong><button type="button" class="pq-btn" id="pq-lt-set">Settings</button><button type="button" class="pq-btn" id="pq-lt-close">Close</button></header><div class="pq-ann-list" id="pq-lt-list"></div></div>
@@ -294,7 +301,7 @@
   </div>
   <div class="pq-dash" id="pq-dash"><div class="pq-dash-inner">
     <h2 id="pq-dash-hello">Welcome</h2>
-    <p class="pq-help">Your private research desk. Multiple papers, IndexedDB storage, optional disk link. Built for solo researchers — no accounts, no servers for your writing.</p>
+    <p class="pq-help" id="pq-dash-sub">Your private research desk — offline-first, no accounts.</p>
     <div class="pq-dash-card">
       <label class="pq-lbl">Researcher name</label>
       <input class="pq-inp" id="pq-researcher" style="width:100%" placeholder="Your name">
@@ -303,32 +310,66 @@
         <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue">Continue writing</button>
       </div>
     </div>
-    <div class="pq-dash-card">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
-        <strong>Your papers</strong>
-        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-new">+ New paper</button>
-      </div>
-      <div class="pq-proj-grid" id="pq-proj-grid"></div>
+    <div class="pq-dash-tabs" id="pq-dash-tabs">
+      <button type="button" class="active" data-pane="papers">Papers</button>
+      <button type="button" data-pane="progress">Progress</button>
+      <button type="button" data-pane="achievements">Achievements</button>
+      <button type="button" data-pane="about">About</button>
     </div>
-    <div class="pq-dash-card">
-      <strong>Session goal</strong>
-      <p class="pq-help" id="pq-session-line">0 / 500 words this session</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input class="pq-inp" id="pq-session-target" type="number" min="0" value="500" style="width:100px">
-        <button type="button" class="pq-btn" id="pq-session-set">Set goal</button>
-        <button type="button" class="pq-btn" id="pq-session-reset">Reset count</button>
+    <div class="pq-dash-pane active" id="pane-papers">
+      <div class="pq-dash-card">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+          <strong>Your papers</strong>
+          <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-new">+ New paper</button>
+        </div>
+        <div class="pq-proj-grid" id="pq-proj-grid"></div>
+      </div>
+      <div class="pq-dash-card">
+        <strong>Session &amp; daily goals</strong>
+        <p class="pq-help" id="pq-session-line">0 / 500 words this session</p>
+        <p class="pq-help" id="pq-daily-line">0 / 500 words today</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <input class="pq-inp" id="pq-session-target" type="number" min="0" value="500" style="width:100px" title="Session target">
+          <button type="button" class="pq-btn" id="pq-session-set">Set session goal</button>
+          <button type="button" class="pq-btn" id="pq-session-reset">Reset session</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <input class="pq-inp" id="pq-daily-target" type="number" min="0" value="500" style="width:100px" title="Daily target">
+          <button type="button" class="pq-btn" id="pq-daily-set">Set daily goal</button>
+        </div>
       </div>
     </div>
-    <div class="pq-dash-card">
-      <strong>Quick tips for researchers</strong>
-      <ul class="pq-help" style="margin:8px 0 0;padding-left:18px">
-        <li>Switch papers from Home — everything autosaves to this browser.</li>
-        <li>Fetch sources by DOI or search OpenAlex · Cite with @ · change style anytime (all citations update).</li>
-        <li>Turn on <strong>Tutorial</strong> for section-by-section research writing guidance.</li>
-        <li>Drag sections in the sidebar to reorder · use Templates for publisher structures.</li>
-        <li>Snapshots before big cuts · LT Check for grammar · double-click words for synonyms.</li>
-        <li>Export clean DOCX with page numbers and hanging bibliography.</li>
-      </ul>
+    <div class="pq-dash-pane" id="pane-progress">
+      <div class="pq-dash-card">
+        <strong>Writing stats</strong>
+        <p class="pq-help" id="pq-stat-total">Total words stored: —</p>
+        <p class="pq-help" id="pq-stat-month">Words this month: —</p>
+        <p class="pq-help" id="pq-stat-streak">Streak: —</p>
+        <p class="pq-help" id="pq-stat-level">Level: —</p>
+      </div>
+      <div class="pq-dash-card">
+        <strong>Papers progress</strong>
+        <div id="pq-progress-papers"></div>
+      </div>
+    </div>
+    <div class="pq-dash-pane" id="pane-achievements">
+      <div class="pq-dash-card">
+        <p class="pq-help">Earn badges as you write. Levels rise with lifetime words across all papers on this device.</p>
+        <div id="pq-ach-list"></div>
+      </div>
+    </div>
+    <div class="pq-dash-pane" id="pane-about">
+      <div class="pq-dash-card">
+        <strong>About PaperQuill</strong>
+        <p class="pq-help">A private research writing studio for solo researchers. Your drafts stay in this browser (IndexedDB) with optional disk JSON backups. No accounts, no tracking servers for your prose.</p>
+        <ul class="pq-help" style="padding-left:18px;line-height:1.7">
+          <li>Citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver) with live re-render</li>
+          <li>Shared source library across papers · DOI &amp; OpenAlex · BibTeX/RIS import</li>
+          <li>Tutorial mode, templates, LanguageTool, quote bank, snapshots</li>
+          <li>Export DOCX, PDF (print), Markdown, HTML</li>
+        </ul>
+        <p class="pq-help" style="margin-top:10px">Tip: open <strong>Tools</strong> for LanguageTool, Tutorial, Templates, and the rest of the studio toolkit.</p>
+      </div>
     </div>
   </div></div>
   <div class="pq-ac" id="pq-ac"></div>
@@ -702,9 +743,12 @@
       const key='paperquill-wordlog';
       const log=JSON.parse(localStorage.getItem(key)||'{}')||{};
       const day=new Date().toISOString().slice(0,10);
-      log[day]=totalWords();
-      // keep 90 days
-      const keys=Object.keys(log).sort();
+      // Track peak words observed for the active paper on this day, plus session gains
+      const sessionGain=Math.max(0,totalWords()-(state.goals&&state.goals.sessionBase!=null?state.goals.sessionBase:sessionBase));
+      const prev=log[day]||0;
+      log[day]=Math.max(prev,sessionGain,Math.min(prev+Math.max(0,totalWords()-(log['_last_'+currentProjectId]||0)),prev+5000));
+      log['_last_'+currentProjectId]=totalWords();
+      const keys=Object.keys(log).filter(k=>!k.startsWith('_')).sort();
       while(keys.length>90){delete log[keys.shift()]}
       localStorage.setItem(key,JSON.stringify(log));
     }catch(e){}
@@ -826,11 +870,238 @@
     grid.querySelectorAll('.pq-del-p').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteProject(b.dataset.id)});
     grid.querySelectorAll('.pq-proj-card').forEach(c=>c.onclick=()=>switchProject(c.dataset.id));
   }
+  function getDailyTarget(){const m=readMeta();return m.dailyTarget||500}
+  function getDailyWords(){
+    try{
+      const log=JSON.parse(localStorage.getItem('paperquill-wordlog')||'{}')||{};
+      const day=new Date().toISOString().slice(0,10);
+      // approximate: use max of stored day total and current totalWords for active paper is imperfect across papers
+      // Better: track delta. We store per-day peak of sum of all paper words when persisting.
+      return log[day]||0;
+    }catch(e){return 0}
+  }
   function updateSessionLine(){
-    const el=$('#pq-session-line');if(!el)return;
+    const el=$('#pq-session-line');
     const target=(state.goals&&state.goals.sessionTarget)||500;
     const now=Math.max(0,totalWords()-(state.goals&&state.goals.sessionBase!=null?state.goals.sessionBase:sessionBase));
-    el.textContent=now.toLocaleString()+' / '+target.toLocaleString()+' words this session';
+    if(el)el.textContent=now.toLocaleString()+' / '+target.toLocaleString()+' words this session';
+    updateDailyBar();
+  }
+  function updateDailyBar(){
+    const target=getDailyTarget();
+    const now=getDailyWords();
+    const pct=target?Math.min(100,Math.round(100*now/target)):0;
+    const bar=$('#pq-daily-bar'),lab=$('#pq-daily-label'),line=$('#pq-daily-line');
+    if(bar)bar.style.width=pct+'%';
+    if(lab)lab.textContent=now.toLocaleString()+'/'+target.toLocaleString();
+    if(line)line.textContent=now.toLocaleString()+' / '+target.toLocaleString()+' words today';
+  }
+  function getStreak(){
+    let log={};try{log=JSON.parse(localStorage.getItem('paperquill-wordlog')||'{}')||{}}catch(e){}
+    let streak=0;const today=new Date();
+    for(let i=0;i<60;i++){
+      const d=new Date(today);d.setDate(d.getDate()-i);
+      const key=d.toISOString().slice(0,10);
+      if(log[key]&&log[key]>0)streak++;else if(i>0)break;
+    }
+    return streak;
+  }
+  function getMonthWords(){
+    let log={};try{log=JSON.parse(localStorage.getItem('paperquill-wordlog')||'{}')||{}}catch(e){}
+    const prefix=new Date().toISOString().slice(0,7);
+    return Object.keys(log).filter(k=>k.startsWith(prefix)).reduce((n,k)=>n+(log[k]||0),0);
+  }
+  function levelFromWords(w){
+    // Level 1 at 0, then every ~2000 words
+    return Math.max(1,Math.floor(w/2000)+1);
+  }
+  const ACHIEVEMENTS=[
+    {id:'first_words',title:'First ink',desc:'Write at least 50 words',ico:'✍️',test:s=>s.total>=50},
+    {id:'hundred',title:'Century',desc:'Reach 100 words in the library',ico:'📄',test:s=>s.total>=100},
+    {id:'thousand',title:'Thousand club',desc:'1,000 words stored',ico:'📚',test:s=>s.total>=1000},
+    {id:'five_k',title:'Deep draft',desc:'5,000 words across papers',ico:'🏔️',test:s=>s.total>=5000},
+    {id:'cite_one',title:'In conversation',desc:'Add at least one source',ico:'🔗',test:s=>s.sources>=1},
+    {id:'cite_ten',title:'Well read',desc:'10 sources in a paper',ico:'📖',test:s=>s.sources>=10},
+    {id:'streak_3',title:'Three-day streak',desc:'Write on 3 consecutive days',ico:'🔥',test:s=>s.streak>=3},
+    {id:'streak_7',title:'Week of focus',desc:'7-day writing streak',ico:'⭐',test:s=>s.streak>=7},
+    {id:'multi',title:'Portfolio',desc:'Keep 3 or more papers',ico:'🗂️',test:s=>s.papers>=3},
+    {id:'snapshot',title:'Time traveler',desc:'Save a paper snapshot',ico:'💾',test:s=>s.snapshots>=1},
+    {id:'level_5',title:'Level 5',desc:'Reach researcher level 5',ico:'🎓',test:s=>s.level>=5},
+    {id:'month_2k',title:'Productive month',desc:'2,000 words logged this month',ico:'📈',test:s=>s.month>=2000}
+  ];
+  async function gatherStats(){
+    let list=[];try{list=await idbAll()}catch(e){}
+    let total=0;
+    list.forEach(p=>{
+      if(p.wordCount!=null)total+=p.wordCount;
+      else if(p.state&&p.state.sections)total+=p.state.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0);
+    });
+    const sources=(state.sources||[]).length;
+    const snapshots=(state.paperSnapshots||[]).length;
+    const streak=getStreak();
+    const month=getMonthWords();
+    const level=levelFromWords(total);
+    return {total,sources,snapshots,streak,month,level,papers:list.length,list};
+  }
+  async function renderProgressPane(){
+    const s=await gatherStats();
+    const t=$('#pq-stat-total'),m=$('#pq-stat-month'),st=$('#pq-stat-streak'),lv=$('#pq-stat-level');
+    if(t)t.textContent='Total words stored: '+s.total.toLocaleString();
+    if(m)m.textContent='Words this month: '+s.month.toLocaleString();
+    if(st)st.textContent='Streak: '+s.streak+' day'+(s.streak===1?'':'s');
+    if(lv)lv.innerHTML='Level: <span class="pq-level-badge">'+s.level+'</span> · next level at '+(s.level*2000).toLocaleString()+' words';
+    const box=$('#pq-progress-papers');if(!box)return;
+    if(!s.list.length){box.innerHTML='<p class="pq-help">No papers yet.</p>';return}
+    box.innerHTML=s.list.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).map(p=>{
+      let words=p.wordCount||0;
+      if(p.state&&p.state.sections)words=p.state.sections.reduce((n,sec)=>{const t=(sec.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0);
+      const secs=p.state&&p.state.sections?p.state.sections.length:0;
+      const done=p.state&&p.state.sections?p.state.sections.filter(x=>x.status==='done').length:0;
+      const pct=secs?Math.round(100*done/secs):0;
+      return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:.85rem"><strong>'+escapeHtml(p.name||'Untitled')+'</strong><span class="pq-help">'+words.toLocaleString()+' words</span></div>'+
+        '<div class="pq-progress-bar" style="margin-top:4px"><i style="width:'+pct+'%"></i></div>'+
+        '<p class="pq-help" style="margin:4px 0 0">'+done+'/'+secs+' sections marked done</p></div>';
+    }).join('');
+  }
+  async function renderAchievements(){
+    const s=await gatherStats();
+    const box=$('#pq-ach-list');if(!box)return;
+    box.innerHTML='<p class="pq-help" style="margin-bottom:10px">Level <span class="pq-level-badge">'+s.level+'</span> · '+s.total.toLocaleString()+' lifetime words</p>'+
+      ACHIEVEMENTS.map(a=>{
+        const ok=a.test(s);
+        return '<div class="pq-ach'+(ok?'':' locked')+'"><div class="ico">'+(ok?a.ico:'🔒')+'</div><div><strong>'+escapeHtml(a.title)+'</strong><div class="pq-help">'+escapeHtml(a.desc)+'</div></div></div>';
+      }).join('');
+  }
+  const GREETINGS=[
+    'Ready when you are.',
+    'One clear paragraph at a time.',
+    'Your sources are waiting.',
+    'Protect the deep-work block.',
+    'Draft ugly. Revise sharp.',
+    'The gap in the literature will not fill itself.',
+    'Citations situate; arguments convince.',
+    'Welcome back to the desk.',
+    'Small sessions compound.',
+    'Write the section you are avoiding.'
+  ];
+  function pickGreeting(name){
+    const i=Math.floor(Date.now()/86400000)%GREETINGS.length;
+    const g=GREETINGS[i];
+    return name?('Welcome, '+name+' — '+g):('Welcome — '+g);
+  }
+  function openExportMenu(){
+    openModal('<h3>Export</h3><p class="pq-help">Choose a format for the current paper.</p>'+
+      '<div class="pq-modal-actions" style="justify-content:flex-start;flex-direction:column;align-items:stretch">'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-docx">DOCX (Word)</button>'+
+      '<button type="button" class="pq-btn" id="m-pdf">PDF (print dialog)</button>'+
+      '<button type="button" class="pq-btn" id="m-md">Markdown</button>'+
+      '<button type="button" class="pq-btn" id="m-html">HTML</button>'+
+      '<button type="button" class="pq-btn" id="m-json">JSON backup</button>'+
+      '<button type="button" class="pq-btn" id="m-cancel">Cancel</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-docx').onclick=()=>{closeModal();exportDocx()};
+    $('#m-pdf').onclick=()=>{closeModal();exportPdf()};
+    $('#m-md').onclick=()=>{closeModal();exportMarkdown()};
+    $('#m-html').onclick=()=>{closeModal();exportHtml()};
+    $('#m-json').onclick=()=>{closeModal();saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');toast('JSON downloaded')};
+  }
+  function getExportLayout(style){
+    // Academic page layout rules by citation style family
+    const base={
+      font:'Times New Roman',
+      sizePt:12,
+      sizeHalfPoints:24, // docx uses half-points
+      headingSize:24,
+      titleSize:24,
+      line:480, // 240=single, 360=1.5, 480=double
+      lineCss:2,
+      marginInch:1,
+      indentInch:0.5,
+      justify:true,
+      bibAlign:'left',
+      headingCenter:false,
+      runningHead:!!(style==='apa7')
+    };
+    if(style==='mla9'){
+      return Object.assign({},base,{headingCenter:true,line:480,lineCss:2});
+    }
+    if(style==='apa7'){
+      return Object.assign({},base,{headingCenter:false,line:480,lineCss:2,runningHead:true});
+    }
+    if(style==='chicago-ad'||style==='chicago-nb'){
+      return Object.assign({},base,{line:480,lineCss:2});
+    }
+    if(style==='harvard'){
+      return Object.assign({},base,{line:360,lineCss:1.5});
+    }
+    if(style==='ieee'){
+      return Object.assign({},base,{sizePt:10,sizeHalfPoints:20,headingSize:20,titleSize:22,line:360,lineCss:1.5,marginInch:0.75,indentInch:0.25});
+    }
+    if(style==='vancouver'){
+      return Object.assign({},base,{sizePt:11,sizeHalfPoints:22,headingSize:22,line:360,lineCss:1.5});
+    }
+    return base;
+  }
+  function htmlToParagraphs(html){
+    // Split section HTML into plain-text paragraphs (citations already rendered in text)
+    const tmp=document.createElement('div');
+    tmp.innerHTML=html||'';
+    // Convert block breaks to newlines
+    tmp.querySelectorAll('br').forEach(br=>br.replaceWith('\n'));
+    tmp.querySelectorAll('p,div,li,h1,h2,h3,h4,blockquote').forEach(el=>{
+      el.insertAdjacentText('afterend','\n\n');
+    });
+    const text=(tmp.innerText||tmp.textContent||'').replace(/\r/g,'');
+    return text.split(/\n+/).map(s=>s.replace(/[ \t]+\n/g,'\n').replace(/[ \t]{2,}/g,' ').trim()).filter(Boolean);
+  }
+  function exportPdf(){
+    saveCurrent();reRenderAllCitations();rebuildWorksCited();
+    const style=state.style;
+    const L=getExportLayout(style);
+    const disamb=buildDisambiguation();
+    const margin=L.marginInch+'in';
+    const indent=(L.indentInch)+'in';
+    let h='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+escapeHtml(state.paperTitle||'')+'</title><style>\n'+
+      '@page{margin:'+margin+'}\n'+
+      'html,body{margin:0;padding:0;background:#fff;color:#000}\n'+
+      'body{font-family:"'+L.font+'",Times,serif;font-size:'+L.sizePt+'pt;line-height:'+L.lineCss+';'+
+      'max-width:none;margin:0;padding:0;text-align:'+(L.justify?'justify':'left')+';-webkit-print-color-adjust:exact}\n'+
+      'h1.title{font-size:'+(L.titleSize/2+2)+'pt;font-weight:bold;text-align:center;margin:0 0 0.75em;line-height:'+L.lineCss+'}\n'+
+      '.meta{text-align:center;margin:0 0 0.25em;line-height:'+L.lineCss+'}\n'+
+      'h2{font-family:"'+L.font+'",Times,serif;font-size:'+L.sizePt+'pt;font-weight:bold;'+
+      'text-align:'+(L.headingCenter?'center':'left')+';margin:1.25em 0 0.75em;line-height:'+L.lineCss+';page-break-after:avoid}\n'+
+      'p.body{margin:0;text-align:'+(L.justify?'justify':'left')+';line-height:'+L.lineCss+'}\n'+
+      'p.body.first{text-indent:0}\n'+
+      'p.body.indent{text-indent:'+indent+'}\n'+
+      'p.bib{margin:0 0 0.5em;padding-left:'+indent+';text-indent:-'+indent+';text-align:left;line-height:'+L.lineCss+'}\n'+
+      'h2.bib-title{text-align:center;margin-top:1.5em}\n'+
+      '@media print{body{padding:0}}\n'+
+      '</style></head><body>';
+    h+='<h1 class="title">'+escapeHtml(state.paperTitle||'Untitled')+'</h1>';
+    if(state.authorName)h+='<p class="meta">'+escapeHtml(state.authorName)+'</p>';
+    if(state.institution)h+='<p class="meta">'+escapeHtml(state.institution)+'</p>';
+    if(state.course)h+='<p class="meta">'+escapeHtml(state.course)+'</p>';
+    state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
+      if(sec.key==='works')return;
+      h+='<h2>'+escapeHtml(sec.title)+'</h2>';
+      const paras=htmlToParagraphs(sec.content);
+      paras.forEach((para,idx)=>{
+        h+='<p class="body '+(idx===0?'first':'indent')+'">'+escapeHtml(para)+'</p>';
+      });
+    });
+    h+='<h2 class="bib-title">'+escapeHtml(bibliographyTitle(style))+'</h2>';
+    let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
+    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b))||yearOf(a).localeCompare(yearOf(b)));
+    list.forEach((s,i)=>{
+      const tmp=document.createElement('div');
+      tmp.innerHTML=formatBibliographyEntry(s,style,i,disamb);
+      h+='<p class="bib">'+escapeHtml(tmp.innerText||'')+'</p>';
+    });
+    h+='<script>onload=function(){setTimeout(function(){print()},250)}<\/script></body></html>';
+    const w=window.open('','_blank');
+    if(!w){toast('Allow pop-ups to export PDF');return}
+    w.document.open();w.document.write(h);w.document.close();
+    toast('Print dialog → Destination: Save as PDF');
   }
   function getActiveSection(){return state.sections.find(s=>s.id===state.activeSectionId)||state.sections[0]}
   function saveCurrent(){
@@ -897,7 +1168,10 @@
     Object.keys(g).forEach(k=>{if(g[k].length)CSS.highlights.set('pq-lt-'+k,new Highlight(...g[k]))});
   }
   function ltKind(m){const c=(m.rule&&m.rule.category&&m.rule.category.id)||'';return c==='TYPOS'?'spell':(c==='STYLE'||c==='REDUNDANCY'||c==='PLAIN_ENGLISH'||c==='TYPOGRAPHY'||c==='STYLE_COMPLEXITY')?'style':'gram'}
-  function updateLTBtn(){const b=$('#pq-lt-toggle');b.classList.toggle('on',!!state.ltOn);b.textContent=state.ltOn?('LT Check'+(ltItems.length?' ('+ltItems.length+')':' ✓')):'LT Check'}
+  function updateLTBtn(){
+    const b=$('#tool-lt');
+    if(b)b.textContent=state.ltOn?('LanguageTool'+(ltItems.length?' ('+ltItems.length+')':' ✓')):'LanguageTool check';
+  }
   async function runLanguageTool(){
     saveCurrent();const my=++ltRun;const map=ltMap();
     if(!map.text.trim()){ltItems=[];ltPaint();state.ltOn=true;updateLTBtn();return toast('Nothing to check')}
@@ -1345,7 +1619,7 @@
     const disamb=buildDisambiguation();
     let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
     if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b))||yearOf(a).localeCompare(yearOf(b)));
-    worksBody.innerHTML=list.length?list.map((s,i)=>'<div class="pq-bib-entry">'+formatBibliographyEntry(s,style,i,disamb)+'</div>').join(''):'<p class="pq-help" style="text-indent:0;padding:0">No citations yet. Cite sources to build the bibliography.</p>';
+    worksBody.innerHTML=list.length?list.map((s,i)=>'<div class="pq-bib-entry">'+formatBibliographyEntry(s,style,i,disamb)+(state.annBib&&s.note?' <em style="text-indent:0;display:block;margin-top:4px;font-size:.9em">'+escapeHtml(s.note)+'</em>':'')+'</div>').join(''):'<p class="pq-help" style="text-indent:0;padding:0">No citations yet. Cite sources to build the bibliography.</p>';
   }
 
   /* Re-render all in-text citations when style changes */
@@ -1483,13 +1757,15 @@
       '<label class="pq-lbl">Publisher</label><input class="pq-inp" id="m-pub" style="width:100%" value="'+escapeHtml(src.publisher||'')+'">'+
       '<div style="display:flex;gap:6px;margin-top:4px"><input class="pq-inp" id="m-vol" placeholder="Vol" value="'+escapeHtml(src.volume||'')+'"><input class="pq-inp" id="m-iss" placeholder="Issue" value="'+escapeHtml(src.issue||'')+'"><input class="pq-inp" id="m-pages" placeholder="Pages" value="'+escapeHtml(src.pages||'')+'"></div>'+
       '<label class="pq-lbl">URL / DOI</label><input class="pq-inp" id="m-url" style="width:100%" value="'+escapeHtml(src.url||src.doi||'')+'">'+
+      '<label class="pq-lbl">Annotation / note (optional — for annotated bibliography)</label><textarea class="pq-inp" id="m-note" style="width:100%;min-height:60px">'+escapeHtml(src.note||'')+'</textarea>'+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-save">Save</button></div>');
     $('#m-cancel').onclick=closeModal;
     $('#m-save').onclick=()=>{
-      const next={id:src.id,type:$('#m-type').value,authors:$('#m-authors').value.trim(),title:$('#m-title').value.trim(),year:$('#m-year').value.trim(),container:$('#m-container').value.trim(),publisher:$('#m-pub').value.trim(),volume:$('#m-vol').value.trim(),issue:$('#m-iss').value.trim(),pages:$('#m-pages').value.trim(),url:$('#m-url').value.trim()};
+      const next={id:src.id,type:$('#m-type').value,authors:$('#m-authors').value.trim(),title:$('#m-title').value.trim(),year:$('#m-year').value.trim(),container:$('#m-container').value.trim(),publisher:$('#m-pub').value.trim(),volume:$('#m-vol').value.trim(),issue:$('#m-iss').value.trim(),pages:$('#m-pages').value.trim(),url:$('#m-url').value.trim(),note:$('#m-note').value.trim()};
       if(next.url&&next.url.match(/^10\.\d/)) {next.doi=next.url;next.url='https://doi.org/'+next.url}
       if(!next.title)return toast('Title required');
       const i=state.sources.findIndex(s=>s.id===next.id);if(i>=0)state.sources[i]=next;else state.sources.push(next);
+      libPut(next).catch(()=>{});
       scheduleSave();closeModal();renderSources();reRenderAllCitations();
     };
   }
@@ -1546,8 +1822,8 @@
 
   /* Tutorial */
   function updateTutorialBtn(){
-    const b=$('#pq-tutorial-btn');
-    if(b){b.classList.toggle('on',!!state.tutorial);b.textContent=state.tutorial?'Tutorial ✓':'Tutorial'}
+    const b=$('#tool-tutorial');
+    if(b)b.textContent=state.tutorial?'Tutorial guidance ✓':'Tutorial guidance';
   }
   function renderGuide(){
     const g=$('#pq-guide');
@@ -1822,48 +2098,81 @@
   /* Export DOCX with richer formatting */
   async function exportDocx(){
     if(typeof docx==='undefined')return toast('DOCX unavailable');
-    saveCurrent();rebuildWorksCited();
-    const{Document,Packer,Paragraph,TextRun,HeadingLevel,AlignmentType,Header,Footer,PageNumber,BorderStyle}=docx;
-    const children=[];
+    saveCurrent();reRenderAllCitations();rebuildWorksCited();
+    const{Document,Packer,Paragraph,TextRun,HeadingLevel,AlignmentType,Header,Footer,PageNumber,PageBreak}=docx;
     const style=state.style;
+    const L=getExportLayout(style);
     const disamb=buildDisambiguation();
-    // Title
-    if(state.paperTitle){
-      children.push(new Paragraph({
-        children:[new TextRun({text:state.paperTitle,bold:true,font:'Times New Roman',size:28})],
-        alignment:AlignmentType.CENTER,
-        spacing:{after:200}
-      }));
-    }
+    const font=L.font;
+    const sz=L.sizeHalfPoints;
+    const line=L.line;
+    const indentTwip=Math.round(L.indentInch*1440);
+    const marginTwip=Math.round(L.marginInch*1440);
+    const bodyAlign=L.justify?AlignmentType.BOTH:AlignmentType.LEFT;
+    const children=[];
+
+    const bodyPara=(text,isFirst)=>{
+      return new Paragraph({
+        children:[new TextRun({text:text||' ',font,size:sz})],
+        alignment:bodyAlign,
+        spacing:{line,type:'auto',after:0,before:0},
+        indent:isFirst?{}:{firstLine:indentTwip}
+      });
+    };
+
+    // Title block
+    children.push(new Paragraph({
+      children:[new TextRun({text:state.paperTitle||'Untitled',bold:true,font,size:L.titleSize})],
+      alignment:AlignmentType.CENTER,
+      spacing:{line,type:'auto',after:0,before:0}
+    }));
     if(state.authorName){
       children.push(new Paragraph({
-        children:[new TextRun({text:state.authorName,font:'Times New Roman',size:24})],
+        children:[new TextRun({text:state.authorName,font,size:sz})],
         alignment:AlignmentType.CENTER,
-        spacing:{after:400}
+        spacing:{line,type:'auto',after:0,before:0}
       }));
     }
+    if(state.institution){
+      children.push(new Paragraph({
+        children:[new TextRun({text:state.institution,font,size:sz})],
+        alignment:AlignmentType.CENTER,
+        spacing:{line,type:'auto',after:0,before:0}
+      }));
+    }
+    if(state.course){
+      children.push(new Paragraph({
+        children:[new TextRun({text:state.course,font,size:sz})],
+        alignment:AlignmentType.CENTER,
+        spacing:{line,type:'auto',after:0,before:0}
+      }));
+    }
+    // blank line after title block
+    children.push(new Paragraph({
+      children:[new TextRun({text:' ',font,size:sz})],
+      spacing:{line,type:'auto'}
+    }));
+
     state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
       if(sec.key==='works')return;
       children.push(new Paragraph({
-        text:sec.title,
-        heading:HeadingLevel.HEADING_1,
-        spacing:{before:360,after:200}
+        children:[new TextRun({text:sec.title||'Section',bold:true,font,size:L.headingSize})],
+        alignment:L.headingCenter?AlignmentType.CENTER:AlignmentType.LEFT,
+        spacing:{line,type:'auto',before:line,after:0}
       }));
-      // Simple paragraph split; preserve basic line breaks
-      const text=stripHtml(sec.content);
-      text.split(/\n+/).forEach(line=>{
-        children.push(new Paragraph({
-          children:[new TextRun({text:line||' ',font:'Times New Roman',size:24})],
-          spacing:{after:200,line:480}
-        }));
-      });
+      const paras=htmlToParagraphs(sec.content);
+      if(!paras.length){
+        children.push(bodyPara(' ',true));
+      }else{
+        paras.forEach((para,idx)=>children.push(bodyPara(para,idx===0)));
+      }
     });
+
     // Bibliography
     children.push(new Paragraph({
-      text:bibliographyTitle(style),
-      heading:HeadingLevel.HEADING_1,
+      children:[new TextRun({text:bibliographyTitle(style),bold:true,font,size:L.headingSize})],
       alignment:AlignmentType.CENTER,
-      spacing:{before:480,after:240}
+      spacing:{line,type:'auto',before:line,after:0}
     }));
     let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
     if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b))||yearOf(a).localeCompare(yearOf(b)));
@@ -1872,43 +2181,53 @@
       tmp.innerHTML=formatBibliographyEntry(src,style,i,disamb);
       const entryText=tmp.innerText||'';
       children.push(new Paragraph({
-        children:[new TextRun({text:entryText,font:'Times New Roman',size:24})],
-        indent:{left:720,hanging:720},
-        spacing:{after:200,line:480}
+        children:[new TextRun({text:entryText,font,size:sz})],
+        alignment:AlignmentType.LEFT,
+        indent:{left:indentTwip,hanging:indentTwip},
+        spacing:{line,type:'auto',after:0,before:0}
       }));
     });
+
+    const headerText=(style==='apa7'&&state.runningHead)
+      ? state.runningHead.toUpperCase()
+      : (state.paperTitle||'');
+
     const doc=new Document({
       styles:{
-        default:{document:{styles:[{id:'Normal',run:{font:'Times New Roman',size:24}}]}},
+        default:{
+          document:{
+            styles:[{id:'Normal',run:{font,size:sz}}]
+          }
+        },
         paragraphStyles:[
           {id:'Heading1',name:'Heading 1',basedOn:'Normal',next:'Normal',quickStyle:true,
-            run:{size:28,bold:true,font:'Times New Roman'},
-            paragraph:{spacing:{before:360,after:200},outlineLevel:0}}
+            run:{size:L.headingSize,bold:true,font},
+            paragraph:{spacing:{line,type:'auto'},outlineLevel:0}}
         ]
       },
       sections:[{
         properties:{
           page:{
-            margin:{top:1440,right:1440,bottom:1440,left:1440} // 1 inch
+            margin:{top:marginTwip,right:marginTwip,bottom:marginTwip,left:marginTwip}
           }
         },
         headers:{
           default:new Header({
             children:[new Paragraph({
-              children:[new TextRun({text:state.paperTitle||'PaperQuill',italics:true,size:18,font:'Times New Roman',color:'666666'})],
-              alignment:AlignmentType.RIGHT
+              children:[
+                new TextRun({text:headerText.slice(0,60),font,size:sz}),
+                new TextRun({text:'\t',font,size:sz}),
+                new TextRun({children:[PageNumber.CURRENT],font,size:sz})
+              ],
+              tabStops:[{type:'right',position:Math.round((8.5-2*L.marginInch)*1440)}],
+              spacing:{line:240,type:'auto'}
             })]
           })
         },
         footers:{
           default:new Footer({
             children:[new Paragraph({
-              children:[
-                new TextRun({text:'Page ',size:18,font:'Times New Roman'}),
-                new TextRun({children:[PageNumber.CURRENT],size:18,font:'Times New Roman'}),
-                new TextRun({text:' of ',size:18,font:'Times New Roman'}),
-                new TextRun({children:[PageNumber.TOTAL_PAGES],size:18,font:'Times New Roman'})
-              ],
+              children:[new TextRun({text:'',font,size:18})],
               alignment:AlignmentType.CENTER
             })]
           })
@@ -1918,11 +2237,634 @@
     });
     const blob=await Packer.toBlob(doc);
     if(typeof saveAs==='function')saveAs(blob,(state.paperTitle||'paperquill').replace(/[^\w\-]+/g,'_')+'.docx');
-    toast('DOCX ready (with page numbers)');
+    toast('DOCX exported · '+style.toUpperCase()+' layout');
   }
 
+  /* ========== New studio features ========== */
+  function closeTools(){$('#pq-tools-menu').classList.remove('open')}
+
+  /* Citation audit */
+  function openCitationAudit(){
+    saveCurrent();
+    const cited=citedSourceIds();
+    const orphan=[];
+    const re=/data-source-id="([^"]+)"/g;
+    const htmlAll=state.sections.map(s=>s.content||'').join(' ');
+    let m;const seen=new Set();
+    while((m=re.exec(htmlAll))){
+      if(seen.has(m[1]))continue;seen.add(m[1]);
+      if(!state.sources.find(s=>s.id===m[1]))orphan.push(m[1]);
+    }
+    const unused=state.sources.filter(s=>!cited.includes(s.id));
+    openModal('<h3>Citation audit</h3>'+
+      '<p class="pq-help"><strong>'+cited.length+'</strong> cited · <strong>'+unused.length+'</strong> unused in library · <strong>'+orphan.length+'</strong> orphan markers</p>'+
+      (orphan.length?'<p class="pq-help" style="color:var(--danger)">Orphan citation IDs (source deleted): '+orphan.map(escapeHtml).join(', ')+'</p>':'')+
+      (unused.length?'<h4 style="margin:12px 0 6px;font-size:.9rem">Unused sources</h4>'+unused.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml(s.authors||'')+'</div><button type="button" class="pq-btn pq-del-unused" data-id="'+s.id+'">Remove from paper</button></div>').join(''):'<p class="pq-help">All sources are cited.</p>')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.pq-del-unused').forEach(b=>b.onclick=()=>{
+      state.sources=state.sources.filter(s=>s.id!==b.dataset.id);
+      scheduleSave();renderSources();openCitationAudit();
+    });
+  }
+
+  /* Readability */
+  function openReadability(){
+    saveCurrent();
+    const text=state.sections.map(s=>stripHtml(s.content)).join(' ').replace(/\s+/g,' ').trim();
+    const words=text?text.split(/\s+/).length:0;
+    const sentences=(text.match(/[.!?]+/g)||[]).length||1;
+    const syllables=text.toLowerCase().split(/[^a-z]+/).filter(Boolean).reduce((n,w)=>{
+      const m=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'').match(/[aeiouy]{1,2}/g);
+      return n+(m?m.length:1);
+    },0);
+    const asl=words/sentences,asw=syllables/Math.max(words,1);
+    const flesch=Math.max(0,Math.min(100,Math.round(206.835-1.015*asl-84.6*asw)));
+    const longSent=state.sections.flatMap(s=>stripHtml(s.content).split(/[.!?]+/).map(x=>x.trim()).filter(x=>x.split(/\s+/).length>35));
+    openModal('<h3>Readability</h3>'+
+      '<p class="pq-help">Whole paper (approximate).</p>'+
+      '<ul class="pq-help" style="padding-left:18px;line-height:1.7">'+
+      '<li>Words: <strong>'+words.toLocaleString()+'</strong></li>'+
+      '<li>Sentences: <strong>'+sentences+'</strong></li>'+
+      '<li>Avg words/sentence: <strong>'+asl.toFixed(1)+'</strong></li>'+
+      '<li>Flesch Reading Ease: <strong>'+flesch+'</strong> (60–70 ≈ plain English; academic often lower)</li>'+
+      '<li>Very long sentences (&gt;35 words): <strong>'+longSent.length+'</strong></li>'+
+      '</ul>'+
+      (longSent.length?'<p class="pq-help">Consider splitting the densest sentences in Discussion/Literature Review.</p>':'')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+  }
+
+  /* Find & replace */
+  function openFindReplace(){
+    openModal('<h3>Find &amp; replace</h3>'+
+      '<label class="pq-lbl">Find</label><input class="pq-inp" id="m-find" style="width:100%">'+
+      '<label class="pq-lbl">Replace with</label><input class="pq-inp" id="m-rep" style="width:100%">'+
+      '<label style="display:block;margin:10px 0"><input type="checkbox" id="m-allsec" checked> All sections</label>'+
+      '<label style="display:block;margin:0 0 10px"><input type="checkbox" id="m-nocite"> Skip citation markers</label>'+
+      '<p class="pq-help" id="m-fr-status"></p>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-go">Replace all</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-go').onclick=()=>{
+      const find=$('#m-find').value;if(!find)return;
+      const rep=$('#m-rep').value;
+      const all=$('#m-allsec').checked;const nocite=$('#m-nocite').checked;
+      saveCurrent();
+      let count=0;
+      const doSec=sec=>{
+        let html=sec.content||'';
+        if(nocite){
+          const parts=html.split(/(<span class="pq-cite"[^>]*>.*?<\/span>)/gi);
+          for(let i=0;i<parts.length;i++){
+            if(parts[i].startsWith('<span class="pq-cite"'))continue;
+            const n=(parts[i].match(new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;
+            count+=n;parts[i]=parts[i].split(find).join(rep);
+          }
+          sec.content=parts.join('');
+        }else{
+          const n=(html.match(new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;
+          count+=n;sec.content=html.split(find).join(rep);
+        }
+      };
+      if(all)state.sections.forEach(doSec);else doSec(getActiveSection());
+      loadSection();scheduleSave();
+      $('#m-fr-status').textContent=count+' replacement(s).';
+      toast(count+' replaced');
+    };
+  }
+
+  /* Outline view */
+  function openOutline(){
+    saveCurrent();
+    const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    openModal('<h3>Outline</h3>'+
+      sorted.map(s=>{
+        const w=wordCount(s.content);
+        const first=stripHtml(s.content).trim().slice(0,80);
+        const tgt=s.wordTarget?(' / '+s.wordTarget+' target'):'';
+        return '<button type="button" class="pq-btn" style="display:block;width:100%;text-align:left;margin-bottom:6px" data-id="'+s.id+'">'+
+          '<strong>'+escapeHtml(s.title)+'</strong> <span class="pq-help">'+w+tgt+' words · '+(s.status||'draft')+'</span>'+
+          (first?'<div class="pq-help" style="margin:2px 0 0">'+escapeHtml(first)+(stripHtml(s.content).length>80?'…':'')+'</div>':'')+
+          '</button>';
+      }).join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('#pq-modal [data-id]').forEach(b=>b.onclick=()=>{closeModal();switchSection(b.dataset.id)});
+  }
+
+  /* Argument vocabulary */
+  const VOCAB=[
+    'However,','In contrast,','Conversely,','Nevertheless,','That said,','Building on this,',
+    'This suggests that','This implies that','A possible explanation is','In tension with',
+    'Consistent with','Contrary to','Underpinned by','Premised on','Drawing on',
+    'This study addresses','Little is known about','Taken together,'
+  ];
+  function openVocab(){
+    openModal('<h3>Argument vocabulary</h3><p class="pq-help">Click to insert at the cursor.</p>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">'+VOCAB.map((v,i)=>'<button type="button" class="pq-btn" data-v="'+i+'">'+escapeHtml(v)+'</button>').join('')+'</div>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('#pq-modal [data-v]').forEach(b=>b.onclick=()=>{
+      const v=VOCAB[+b.dataset.v];
+      closeModal();editor.focus();
+      try{document.execCommand('insertText',false,v+' ')}catch(e){editor.innerHTML+=v+' '}
+      saveCurrent();scheduleSave();
+    });
+  }
+
+  /* Claims checklist */
+  function openClaims(){
+    const sec=getActiveSection();
+    openModal('<h3>Claim → evidence</h3><p class="pq-help">Track claims in <strong>'+escapeHtml(sec.title)+'</strong>. A citation supports a claim; it does not prove it by authority alone.</p>'+
+      '<div id="m-claims"></div>'+
+      '<label class="pq-lbl">New claim</label><input class="pq-inp" id="m-claim" style="width:100%" placeholder="e.g. X mediates the effect of Y on Z">'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button><button type="button" class="pq-btn pq-btn-primary" id="m-add">Add claim</button></div>');
+    const render=()=>{
+      const list=(state.claims||[]).filter(c=>c.sectionId===sec.id);
+      $('#m-claims').innerHTML=list.length?list.map(c=>'<div class="pq-src-card"><div>'+escapeHtml(c.text)+'</div>'+
+        '<label style="font-size:.78rem;display:block;margin-top:6px"><input type="checkbox" data-id="'+c.id+'" class="m-ev"'+(c.hasEvidence?' checked':'')+'> Has data / evidence</label>'+
+        '<label style="font-size:.78rem;display:block"><input type="checkbox" data-id="'+c.id+'" class="m-cit"'+(c.hasCitation?' checked':'')+'> Supported by citation(s)</label>'+
+        '<button type="button" class="pq-btn m-cdel" data-id="'+c.id+'" style="margin-top:6px">Remove</button></div>').join(''):'<p class="pq-help">No claims yet for this section.</p>';
+      $$('.m-ev').forEach(cb=>cb.onchange=()=>{const c=state.claims.find(x=>x.id===cb.dataset.id);if(c){c.hasEvidence=cb.checked;scheduleSave()}});
+      $$('.m-cit').forEach(cb=>cb.onchange=()=>{const c=state.claims.find(x=>x.id===cb.dataset.id);if(c){c.hasCitation=cb.checked;scheduleSave()}});
+      $$('.m-cdel').forEach(b=>b.onclick=()=>{state.claims=state.claims.filter(x=>x.id!==b.dataset.id);scheduleSave();render()});
+    };
+    render();
+    $('#m-cancel').onclick=closeModal;
+    $('#m-add').onclick=()=>{
+      const t=$('#m-claim').value.trim();if(!t)return;
+      state.claims=state.claims||[];
+      state.claims.push({id:uid(),sectionId:sec.id,text:t,hasEvidence:false,hasCitation:false});
+      $('#m-claim').value='';scheduleSave();render();
+    };
+  }
+
+  /* Quote bank */
+  function saveQuoteFromSelection(){
+    const q=getSelectionQuote();
+    if(!q)return toast('Select text first');
+    const srcId=state.sources[0]?state.sources[0].id:'';
+    openModal('<h3>Save to quote bank</h3>'+
+      '<p class="pq-help" style="font-style:italic">“'+escapeHtml(q.text.slice(0,200))+'”</p>'+
+      '<label class="pq-lbl">Source</label><select class="pq-sel" id="m-qsrc" style="width:100%"><option value="">— none —</option>'+
+      state.sources.map(s=>'<option value="'+s.id+'">'+escapeHtml((s.title||'').slice(0,60))+'</option>').join('')+'</select>'+
+      '<label class="pq-lbl">Page</label><input class="pq-inp" id="m-qpage" style="width:100%" placeholder="optional">'+
+      '<label class="pq-lbl">Your note</label><input class="pq-inp" id="m-qnote" style="width:100%" placeholder="why this matters">'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-save">Save quote</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-save').onclick=()=>{
+      state.quotes=state.quotes||[];
+      state.quotes.unshift({id:uid(),text:q.text,sourceId:$('#m-qsrc').value||'',page:$('#m-qpage').value.trim(),note:$('#m-qnote').value.trim(),createdAt:new Date().toISOString()});
+      scheduleSave();closeModal();toast('Quote saved');
+    };
+  }
+  function openQuoteBank(){
+    const list=state.quotes||[];
+    openModal('<h3>Quote bank</h3>'+
+      (list.length?list.map(q=>{
+        const src=state.sources.find(s=>s.id===q.sourceId);
+        return '<div class="pq-src-card"><div style="font-style:italic">“'+escapeHtml(q.text.slice(0,180))+'”</div>'+
+          '<div class="pq-src-meta">'+(src?escapeHtml(src.title):'No source')+(q.page?' p.'+escapeHtml(q.page):'')+(q.note?' · '+escapeHtml(q.note):'')+'</div>'+
+          '<div class="pq-src-actions"><button type="button" class="pq-btn pq-btn-primary m-insq" data-id="'+q.id+'">Insert</button>'+
+          '<button type="button" class="pq-btn m-delq" data-id="'+q.id+'">Delete</button></div></div>';
+      }).join(''):'<p class="pq-help">No quotes yet. Select text → Tools → Save selection as quote.</p>')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-insq').forEach(b=>b.onclick=()=>{
+      const q=list.find(x=>x.id===b.dataset.id);if(!q)return;
+      closeModal();editor.focus();
+      const text='"'+q.text+'"'+(q.page?' ('+q.page+')':'');
+      try{document.execCommand('insertText',false,text+' ')}catch(e){editor.innerHTML+=text}
+      if(q.sourceId)insertCitation(q.sourceId);
+      saveCurrent();scheduleSave();
+    });
+    $$('.m-delq').forEach(b=>b.onclick=()=>{state.quotes=state.quotes.filter(x=>x.id!==b.dataset.id);scheduleSave();openQuoteBank()});
+  }
+
+  /* Footnote */
+  function insertFootnote(){
+    const body=prompt('Footnote text:','');
+    if(body==null||!body.trim())return;
+    state.footnotes=state.footnotes||[];
+    const n=state.footnotes.length+1;
+    state.footnotes.push({id:uid(),n,text:body.trim(),sectionId:state.activeSectionId});
+    const html='<sup class="pq-fn" data-fn="'+n+'" contenteditable="false" title="'+escapeHtml(body.trim())+'">['+n+']</sup>\u00a0';
+    editor.focus();
+    try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
+    saveCurrent();scheduleSave();toast('Footnote '+n);
+  }
+
+  /* Table */
+  function insertTable(){
+    const cols=Math.min(8,Math.max(2,parseInt(prompt('Columns:','3'),10)||3));
+    const rows=Math.min(20,Math.max(2,parseInt(prompt('Rows (incl. header):','3'),10)||3));
+    let html='<table style="border-collapse:collapse;width:100%;margin:12px 0"><thead><tr>';
+    for(let c=0;c<cols;c++)html+='<th style="border:1px solid var(--border);padding:6px 8px;background:var(--bg)">Header '+(c+1)+'</th>';
+    html+='</tr></thead><tbody>';
+    for(let r=1;r<rows;r++){
+      html+='<tr>';
+      for(let c=0;c<cols;c++)html+='<td style="border:1px solid var(--border);padding:6px 8px"> </td>';
+      html+='</tr>';
+    }
+    html+='</tbody></table><p></p>';
+    editor.focus();
+    try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
+    saveCurrent();scheduleSave();toast('Table inserted');
+  }
+
+  /* Cross-reference */
+  function insertXref(){
+    const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    openModal('<h3>Cross-reference section</h3>'+
+      sorted.map((s,i)=>'<button type="button" class="pq-btn" style="display:block;width:100%;margin-bottom:4px;text-align:left" data-id="'+s.id+'" data-i="'+(i+1)+'">§'+(i+1)+' · '+escapeHtml(s.title)+'</button>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('#pq-modal [data-id]').forEach(b=>b.onclick=()=>{
+      const label='(see §'+b.dataset.i+' '+state.sections.find(s=>s.id===b.dataset.id).title+')';
+      closeModal();editor.focus();
+      const html='<span class="pq-xref" data-section-id="'+b.dataset.id+'" contenteditable="false">'+escapeHtml(label)+'</span>\u00a0';
+      try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
+      saveCurrent();scheduleSave();
+    });
+  }
+
+  /* Shared library */
+  async function openLibrary(){
+    let all=[];try{all=await libAll()}catch(e){}
+    all.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+    const inPaper=new Set((state.sources||[]).map(s=>s.id));
+    openModal('<h3>Shared source library</h3><p class="pq-help">Sources from all papers on this device. Add any to the current paper.</p>'+
+      (all.length?all.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml((s.authors||'')+(s.year?' · '+s.year:''))+'</div>'+
+        '<div class="pq-src-actions">'+
+        (inPaper.has(s.id)?'<span class="pq-tag">in paper</span>':'<button type="button" class="pq-btn pq-btn-primary m-addlib" data-id="'+s.id+'">Add to paper</button>')+
+        '<button type="button" class="pq-btn m-dellib" data-id="'+s.id+'">Remove from library</button></div></div>').join(''):'<p class="pq-help">Library empty. Sources you add are saved here automatically.</p>')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-addlib').forEach(b=>b.onclick=async()=>{
+      const src=all.find(s=>s.id===b.dataset.id);if(!src)return;
+      if(state.sources.some(s=>s.id===src.id||sourceFingerprint(s)===sourceFingerprint(src))){toast('Already in paper');return}
+      state.sources.push(Object.assign({},src));scheduleSave();renderSources();toast('Added to paper');openLibrary();
+    });
+    $$('.m-dellib').forEach(b=>b.onclick=async()=>{await libDelete(b.dataset.id);openLibrary()});
+  }
+
+  /* Import BibTeX / RIS */
+  function parseBibTeX(text){
+    const out=[];
+    const entries=text.split(/@/).slice(1);
+    entries.forEach(block=>{
+      const typeM=block.match(/^(\w+)\s*\{\s*([^,]+)/);
+      if(!typeM)return;
+      const fields={};let m;const re=/(\w+)\s*=\s*\{([^}]*)\}/g;
+      while((m=re.exec(block)))fields[m[1].toLowerCase()]=m[2].trim();
+      const authors=(fields.author||'').split(/\s+and\s+/i).map(a=>{
+        if(a.includes(','))return a.trim();
+        const p=a.trim().split(/\s+/);return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):a;
+      }).join('; ');
+      out.push({id:uid(),type:(typeM[1]||'article').toLowerCase()==='article'?'article':'book',
+        authors,title:fields.title||'',year:(fields.year||'').slice(0,4),container:fields.journal||fields.booktitle||'',
+        volume:fields.volume||'',issue:fields.number||'',pages:fields.pages||'',publisher:fields.publisher||'',
+        url:fields.url||'',doi:(fields.doi||'').replace(/^https?:\/\/(dx\.)?doi\.org\//i,'')});
+    });
+    return out;
+  }
+  function parseRIS(text){
+    const out=[];let cur=null;
+    text.split(/\r?\n/).forEach(line=>{
+      const m=line.match(/^([A-Z][A-Z0-9])  - (.*)$/);
+      if(!m)return;
+      const tag=m[1],val=m[2].trim();
+      if(tag==='TY'){if(cur)out.push(cur);cur={id:uid(),type:val==='JOUR'?'article':'book',authors:'',title:'',year:'',container:'',pages:'',volume:'',issue:'',publisher:'',url:'',doi:''}}
+      if(!cur)return;
+      if(tag==='AU'||tag==='A1')cur.authors+=(cur.authors?'; ':'')+val;
+      if(tag==='TI'||tag==='T1')cur.title=val;
+      if(tag==='PY'||tag==='Y1')cur.year=val.slice(0,4);
+      if(tag==='JO'||tag==='T2'||tag==='JF')cur.container=val;
+      if(tag==='VL')cur.volume=val;
+      if(tag==='IS')cur.issue=val;
+      if(tag==='SP')cur.pages=val+(cur.pages?'': '');
+      if(tag==='EP')cur.pages=(cur.pages?cur.pages+'-':'')+val;
+      if(tag==='PB')cur.publisher=val;
+      if(tag==='UR')cur.url=val;
+      if(tag==='DO')cur.doi=val;
+      if(tag==='ER'&&cur){out.push(cur);cur=null}
+    });
+    if(cur)out.push(cur);
+    return out;
+  }
+  function openImportSources(){
+    openModal('<h3>Import sources</h3><p class="pq-help">Paste BibTeX or RIS (from Zotero, Mendeley, etc.).</p>'+
+      '<textarea class="pq-inp" id="m-imp" style="width:100%;min-height:160px;font-family:ui-monospace,monospace;font-size:.78rem" placeholder="@article{...} or TY  - JOUR"></textarea>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-go">Import</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-go').onclick=async()=>{
+      const text=$('#m-imp').value.trim();if(!text)return;
+      let parsed=[];
+      if(text.includes('@'))parsed=parseBibTeX(text);
+      else if(/^TY\s+-/m.test(text)||text.includes('TY  -'))parsed=parseRIS(text);
+      else{toast('Could not detect BibTeX or RIS');return}
+      if(!parsed.length){toast('No entries found');return}
+      let added=0;
+      const fps=new Set(state.sources.map(sourceFingerprint));
+      parsed.forEach(s=>{
+        const fp=sourceFingerprint(s);
+        if(fps.has(fp))return;
+        fps.add(fp);state.sources.push(s);added++;
+      });
+      scheduleSave();renderSources();await syncSourcesToLibrary();
+      closeModal();toast('Imported '+added+' source(s)');
+    };
+  }
+
+  /* Export sources */
+  function toBibTeX(src){
+    const type=(src.type==='article'||src.type==='journal')?'article':'book';
+    const key=(inTextAuthor(src)+yearOf(src)).replace(/\W/g,'')||'ref';
+    const authors=(src.authors||'').split(/;\s*/).map(a=>a.includes(',')?a:a).join(' and ');
+    let b='@'+type+'{'+key+',\n  title = {'+(src.title||'')+'},\n  author = {'+authors+'},\n  year = {'+yearOf(src)+'}';
+    if(src.container)b+=',\n  journal = {'+src.container+'}';
+    if(src.volume)b+=',\n  volume = {'+src.volume+'}';
+    if(src.issue)b+=',\n  number = {'+src.issue+'}';
+    if(src.pages)b+=',\n  pages = {'+src.pages+'}';
+    if(src.publisher)b+=',\n  publisher = {'+src.publisher+'}';
+    if(src.doi)b+=',\n  doi = {'+src.doi+'}';
+    if(src.url)b+=',\n  url = {'+src.url+'}';
+    return b+'\n}\n';
+  }
+  function openExportSources(){
+    openModal('<h3>Export sources</h3><p class="pq-help">Download the current paper’s library.</p>'+
+      '<div class="pq-modal-actions" style="justify-content:flex-start">'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-bib">BibTeX</button>'+
+      '<button type="button" class="pq-btn" id="m-ris">RIS</button>'+
+      '<button type="button" class="pq-btn" id="m-json">CSL-JSON</button>'+
+      '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-bib').onclick=()=>{
+      const t=state.sources.map(toBibTeX).join('\n');
+      if(typeof saveAs==='function')saveAs(new Blob([t],{type:'text/plain'}),'sources.bib');
+      toast('BibTeX downloaded');
+    };
+    $('#m-ris').onclick=()=>{
+      const t=state.sources.map(s=>{
+        let r='TY  - '+(s.type==='article'?'JOUR':'BOOK')+'\n';
+        (s.authors||'').split(/;\s*/).forEach(a=>{if(a)r+='AU  - '+a+'\n'});
+        r+='TI  - '+(s.title||'')+'\n';
+        if(s.year)r+='PY  - '+s.year+'\n';
+        if(s.container)r+='JO  - '+s.container+'\n';
+        if(s.volume)r+='VL  - '+s.volume+'\n';
+        if(s.issue)r+='IS  - '+s.issue+'\n';
+        if(s.pages)r+='SP  - '+s.pages+'\n';
+        if(s.doi)r+='DO  - '+s.doi+'\n';
+        if(s.url)r+='UR  - '+s.url+'\n';
+        return r+'ER  - \n';
+      }).join('\n');
+      if(typeof saveAs==='function')saveAs(new Blob([t],{type:'text/plain'}),'sources.ris');
+      toast('RIS downloaded');
+    };
+    $('#m-json').onclick=()=>{
+      const csl=state.sources.map(s=>({
+        id:s.id,type:s.type==='article'?'article-journal':'book',
+        title:s.title,author:(s.authors||'').split(/;\s*/).filter(Boolean).map(a=>{
+          if(a.includes(',')){const[f,...r]=a.split(',');return{family:f.trim(),given:r.join(',').trim()}}
+          const p=a.split(/\s+/);return{family:p[p.length-1],given:p.slice(0,-1).join(' ')};
+        }),
+        issued:s.year?{'date-parts':[[+s.year]]}:undefined,
+        'container-title':s.container,volume:s.volume,issue:s.issue,page:s.pages,DOI:s.doi,URL:s.url
+      }));
+      if(typeof saveAs==='function')saveAs(new Blob([JSON.stringify(csl,null,2)],{type:'application/json'}),'sources.csl.json');
+      toast('CSL-JSON downloaded');
+    };
+  }
+
+  /* Duplicates */
+  function openDuplicates(){
+    const groups=new Map();
+    state.sources.forEach(s=>{
+      const fp=sourceFingerprint(s);
+      if(!groups.has(fp))groups.set(fp,[]);
+      groups.get(fp).push(s);
+    });
+    const dups=[...groups.values()].filter(g=>g.length>1);
+    openModal('<h3>Duplicate sources</h3>'+
+      (dups.length?dups.map(g=>'<div class="pq-src-card"><div class="pq-help">'+g.length+' copies</div>'+
+        g.map(s=>'<div style="margin:4px 0"><strong>'+escapeHtml(s.title)+'</strong> · '+escapeHtml(s.authors||'')+
+        ' <button type="button" class="pq-btn m-kept" data-id="'+s.id+'">Keep only this</button></div>').join('')+'</div>').join(''):
+        '<p class="pq-help">No duplicates detected (by DOI or title+year+author).</p>')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-kept').forEach(b=>b.onclick=()=>{
+      const keep=b.dataset.id;
+      const fp=sourceFingerprint(state.sources.find(s=>s.id===keep));
+      const remove=state.sources.filter(s=>sourceFingerprint(s)===fp&&s.id!==keep).map(s=>s.id);
+      // re-point citations
+      state.sections.forEach(sec=>{
+        remove.forEach(id=>{sec.content=(sec.content||'').split('data-source-id="'+id+'"').join('data-source-id="'+keep+'"')});
+      });
+      state.sources=state.sources.filter(s=>!remove.includes(s.id));
+      scheduleSave();renderSources();reRenderAllCitations();openDuplicates();toast('Merged duplicates');
+    });
+  }
+
+  /* Section word target */
+  function setSectionTarget(){
+    const sec=getActiveSection();
+    const v=prompt('Word target for “'+sec.title+'” (0 = none):',String(sec.wordTarget||0));
+    if(v==null)return;
+    sec.wordTarget=Math.max(0,parseInt(v,10)||0);
+    scheduleSave();updateWc();toast(sec.wordTarget?'Target: '+sec.wordTarget+' words':'Target cleared');
+  }
+
+  /* Paper snapshots */
+  function takePaperSnapshot(){
+    saveCurrent();
+    const name=prompt('Paper snapshot name:','Before major revision')||('Snapshot '+new Date().toLocaleString());
+    state.paperSnapshots=state.paperSnapshots||[];
+    state.paperSnapshots.unshift({
+      id:uid(),name,at:new Date().toISOString(),
+      sections:JSON.parse(JSON.stringify(state.sections)),
+      sources:JSON.parse(JSON.stringify(state.sources)),
+      paperTitle:state.paperTitle,style:state.style
+    });
+    if(state.paperSnapshots.length>15)state.paperSnapshots=state.paperSnapshots.slice(0,15);
+    scheduleSave();toast('Paper snapshot saved');
+  }
+  function viewPaperSnapshots(){
+    const snaps=state.paperSnapshots||[];
+    if(!snaps.length)return toast('No paper snapshots yet');
+    openModal('<h3>Paper snapshots</h3>'+
+      snaps.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.name)+'</strong><p class="pq-help">'+escapeHtml(String(s.at).slice(0,19))+' · '+(s.sections||[]).length+' sections</p>'+
+        '<button type="button" class="pq-btn pq-btn-primary m-rest" data-id="'+s.id+'">Restore</button></div>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-rest').forEach(b=>b.onclick=()=>{
+      const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
+      if(!confirm('Restore this full-paper snapshot? Current content will be replaced.'))return;
+      state.sections=JSON.parse(JSON.stringify(snap.sections));
+      state.sources=JSON.parse(JSON.stringify(snap.sources||state.sources));
+      if(snap.paperTitle)state.paperTitle=snap.paperTitle;
+      if(snap.style)state.style=snap.style;
+      state.activeSectionId=state.sections[0].id;
+      normalizeState();renderAll();scheduleSave();closeModal();toast('Paper restored');
+    });
+  }
+
+  /* Pomodoro */
+  function openPomodoro(){
+    openModal('<h3>Focus timer</h3><p class="pq-help" id="m-pomo">'+(pomoRunning?Math.floor(pomoLeft/60)+':'+String(pomoLeft%60).padStart(2,'0')+' left':'Not running')+'</p>'+
+      '<div class="pq-modal-actions" style="justify-content:flex-start">'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-25">25 min</button>'+
+      '<button type="button" class="pq-btn" id="m-15">15 min</button>'+
+      '<button type="button" class="pq-btn" id="m-5">5 min break</button>'+
+      '<button type="button" class="pq-btn" id="m-stop">Stop</button>'+
+      '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    const start=(mins)=>{
+      clearInterval(pomoTimer);pomoLeft=mins*60;pomoRunning=true;
+      pomoTimer=setInterval(()=>{
+        pomoLeft--;
+        if(pomoLeft<=0){clearInterval(pomoTimer);pomoRunning=false;toast('Timer done — stretch and review your goal');try{new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2OnJ6qjX1pX1dJPDQyPD9HVGJwdoCIk5uen5yWjIF0Y1hLPDE0O0NLV2Rsdn6GjpOYnJ6enZuWjYJ1ZVpQQzgxNDtBSE9VX2hvdn2CiI2RlJibnJ2dm5iTi4F2Z11TRTkyNDk/R09XW2JpbXR6gISHjI+Sk5WWl5iYl5aUkY2IgXhsYlhOQjYxMzY7QUdNU1phZ210eX6BhYmLj5GTlJaXmJmZmZiXlpSRjYqGf3ZrYVdMQDQxMzY6QEVKT1ZcYmhtc3h9gYSHi46QkpSVl5eYmJiYl5aUkY6Lh4J7cGdbUkg9NDA=').play()}catch(e){}}
+        const el=$('#m-pomo');if(el)el.textContent=Math.floor(pomoLeft/60)+':'+String(Math.max(0,pomoLeft)%60).padStart(2,'0')+' left';
+      },1000);
+      toast(mins+'-minute timer started');
+    };
+    $('#m-25').onclick=()=>start(25);
+    $('#m-15').onclick=()=>start(15);
+    $('#m-5').onclick=()=>start(5);
+    $('#m-stop').onclick=()=>{clearInterval(pomoTimer);pomoRunning=false;toast('Timer stopped');const el=$('#m-pomo');if(el)el.textContent='Not running'};
+  }
+
+  /* Word log */
+  function openWordLog(){
+    let log={};try{log=JSON.parse(localStorage.getItem('paperquill-wordlog')||'{}')||{}}catch(e){}
+    const days=Object.keys(log).sort().reverse().slice(0,14);
+    let streak=0;const today=new Date();
+    for(let i=0;i<60;i++){
+      const d=new Date(today);d.setDate(d.getDate()-i);
+      const key=d.toISOString().slice(0,10);
+      if(log[key]&&log[key]>0)streak++;else if(i>0)break;
+    }
+    openModal('<h3>Word log</h3><p class="pq-help">Current paper total is stored per day (local). Streak: <strong>'+streak+'</strong> day(s).</p>'+
+      (days.length?'<ul class="pq-help" style="padding-left:18px">'+days.map(d=>'<li>'+d+': '+(log[d]||0).toLocaleString()+' words</li>').join('')+'</ul>':'<p class="pq-help">No history yet.</p>')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+  }
+
+  /* Title page fields */
+  function openTitlePage(){
+    openModal('<h3>Title page &amp; running head</h3>'+
+      '<label class="pq-lbl">Paper title</label><input class="pq-inp" id="m-title" style="width:100%" value="'+escapeHtml(state.paperTitle||'')+'">'+
+      '<label class="pq-lbl">Author</label><input class="pq-inp" id="m-author" style="width:100%" value="'+escapeHtml(state.authorName||'')+'">'+
+      '<label class="pq-lbl">Institution</label><input class="pq-inp" id="m-inst" style="width:100%" value="'+escapeHtml(state.institution||'')+'">'+
+      '<label class="pq-lbl">Course / journal</label><input class="pq-inp" id="m-course" style="width:100%" value="'+escapeHtml(state.course||'')+'">'+
+      '<label class="pq-lbl">Running head (APA)</label><input class="pq-inp" id="m-run" style="width:100%" value="'+escapeHtml(state.runningHead||'')+'" placeholder="SHORT TITLE">'+
+      '<label style="display:block;margin:10px 0"><input type="checkbox" id="m-annbib"'+(state.annBib?' checked':'')+'> Show source annotations in bibliography</label>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-save">Save</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-save').onclick=()=>{
+      state.paperTitle=$('#m-title').value.trim()||'Untitled paper';
+      state.authorName=$('#m-author').value.trim();
+      state.institution=$('#m-inst').value.trim();
+      state.course=$('#m-course').value.trim();
+      state.runningHead=$('#m-run').value.trim();
+      state.annBib=$('#m-annbib').checked;
+      scheduleSave();rebuildWorksCited();closeModal();toast('Title fields saved');
+    };
+  }
+
+  /* Markdown / HTML export */
+  function exportMarkdown(){
+    saveCurrent();rebuildWorksCited();
+    const disamb=buildDisambiguation();
+    let md='# '+(state.paperTitle||'Untitled')+'\n\n';
+    if(state.authorName)md+='*'+state.authorName+'*\n\n';
+    state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
+      if(sec.key==='works')return;
+      md+='## '+sec.title+'\n\n'+stripHtml(sec.content).trim()+'\n\n';
+    });
+    md+='## '+bibliographyTitle(state.style)+'\n\n';
+    let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
+    if(state.style!=='ieee'&&state.style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b)));
+    list.forEach((s,i)=>{
+      const tmp=document.createElement('div');tmp.innerHTML=formatBibliographyEntry(s,state.style,i,disamb);
+      md+='- '+tmp.innerText+'\n';
+    });
+    if(typeof saveAs==='function')saveAs(new Blob([md],{type:'text/markdown'}),(state.paperTitle||'paper').replace(/[^\w\-]+/g,'_')+'.md');
+    toast('Markdown exported');
+  }
+  function exportHtml(){
+    saveCurrent();rebuildWorksCited();
+    const disamb=buildDisambiguation();
+    let h='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+escapeHtml(state.paperTitle||'')+'</title>'+
+      '<style>body{font-family:Georgia,serif;max-width:42em;margin:2rem auto;line-height:1.7;padding:0 1rem}h1,h2{font-weight:600}.bib{padding-left:2em;text-indent:-2em;margin:0 0 0.8em}</style></head><body>';
+    h+='<h1>'+escapeHtml(state.paperTitle||'')+'</h1>';
+    if(state.authorName)h+='<p><em>'+escapeHtml(state.authorName)+'</em></p>';
+    state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
+      if(sec.key==='works')return;
+      h+='<h2>'+escapeHtml(sec.title)+'</h2><div>'+(sec.content||'')+'</div>';
+    });
+    h+='<h2>'+escapeHtml(bibliographyTitle(state.style))+'</h2>';
+    let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
+    if(state.style!=='ieee'&&state.style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b)));
+    list.forEach((s,i)=>{h+='<p class="bib">'+formatBibliographyEntry(s,state.style,i,disamb)+'</p>'});
+    h+='</body></html>';
+    if(typeof saveAs==='function')saveAs(new Blob([h],{type:'text/html'}),(state.paperTitle||'paper').replace(/[^\w\-]+/g,'_')+'.html');
+    toast('HTML exported');
+  }
+
+  /* Command palette */
+  function openPalette(){
+    const cmds=[
+      ['Citation audit','audit'],['Readability','read'],['Find & replace','fr'],['Outline','outline'],
+      ['Quote bank','quotes'],['Shared library','lib'],['Import sources','imp'],['Export sources','expsrc'],
+      ['LanguageTool','lt'],['Templates','tmpl'],['Focus timer','pomo'],['Toggle tutorial','tut'],
+      ['Snapshot paper','psnap'],['Export Markdown','md'],['Export DOCX','docx'],['Search paper','search']
+    ];
+    openModal('<h3>Command palette</h3><input class="pq-inp" id="m-pal" style="width:100%" placeholder="Type to filter…" autofocus>'+
+      '<div id="m-pal-list" style="margin-top:8px;max-height:50vh;overflow:auto"></div>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    const run=()=>{
+      const q=($('#m-pal').value||'').toLowerCase();
+      const hits=cmds.filter(c=>c[0].toLowerCase().includes(q));
+      $('#m-pal-list').innerHTML=hits.map(c=>'<button type="button" class="pq-btn" style="display:block;width:100%;text-align:left;margin-bottom:4px" data-c="'+c[1]+'">'+escapeHtml(c[0])+'</button>').join('');
+      $$('#m-pal-list [data-c]').forEach(b=>b.onclick=()=>{closeModal();runCmd(b.dataset.c)});
+    };
+    run();
+    $('#m-pal').oninput=run;
+    $('#m-pal').onkeydown=e=>{if(e.key==='Enter'){const first=$('#m-pal-list [data-c]');if(first){closeModal();runCmd(first.dataset.c)}}};
+    $('#m-cancel').onclick=closeModal;
+  }
+  function runCmd(c){
+    const map={audit:openCitationAudit,read:openReadability,fr:openFindReplace,outline:openOutline,quotes:openQuoteBank,
+      lib:openLibrary,imp:openImportSources,expsrc:openExportSources,lt:runLanguageTool,tmpl:openTemplates,pomo:openPomodoro,
+      tut:toggleTutorial,psnap:takePaperSnapshot,md:exportMarkdown,docx:exportDocx,search:openSearch};
+    if(map[c])map[c]();
+  }
+
+  /* Paste cleanup */
+  editor.addEventListener('paste',e=>{
+    if(!cleanPaste&&!(e.clipboardData&&e.shiftKey))return;
+    // always offer plain when cleanPaste on
+    if(!cleanPaste)return;
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData('text/plain');
+    try{document.execCommand('insertText',false,text)}catch(err){
+      const sel=window.getSelection();if(sel.rangeCount){sel.getRangeAt(0).deleteContents();sel.getRangeAt(0).insertNode(document.createTextNode(text))}
+    }
+  });
+
+  /* Update word count line with section target */
+  const _updateWc=updateWc;
+  updateWc=function(){
+    _updateWc();
+    const sec=getActiveSection();
+    if(sec&&sec.wordTarget){
+      const w=wordCount(sec.content);
+      $('#pq-wc').textContent=totalWords().toLocaleString()+' words · section '+w+'/'+sec.wordTarget;
+    }
+  };
+
   /* Wire UI */
-  $('#pq-toggle-side').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
   $('#pq-bold').onclick=()=>{document.execCommand('bold');editor.focus()};
   $('#pq-italic').onclick=()=>{document.execCommand('italic');editor.focus()};
   $('#pq-style').onchange=()=>{
@@ -1946,14 +2888,11 @@
   $('#pq-ann-filter-all').onclick=()=>{annFilter='all';renderAnnPanel()};
   $('#pq-ann-filter-comments').onclick=()=>{annFilter='comments';renderAnnPanel()};
   $('#pq-ann-filter-hl').onclick=()=>{annFilter='highlights';renderAnnPanel()};
-  $('#pq-lt-toggle').onclick=()=>{if(state.ltOn){clearLT();toast('Writing check off')}else runLanguageTool()};
   $('#pq-lt-close').onclick=()=>$('#pq-lt-panel').classList.remove('open');
   $('#pq-lt-set').onclick=openLTSettings;
-  $('#pq-tutorial-btn').onclick=()=>toggleTutorial();
-  $('#pq-templates').onclick=()=>openTemplates();
   $('#pq-disk-save').onclick=()=>saveToDisk(false);
   $('#pq-disk-open').onclick=()=>openFromDisk();
-  $('#pq-export').onclick=()=>exportDocx();
+  $('#pq-export').onclick=()=>openExportMenu();
   $('#pq-refresh-bib').onclick=()=>{rebuildWorksCited();toast('Bibliography refreshed')};
   $('#pq-add-section').onclick=()=>{
     const t=prompt('Section title','New Section');if(!t)return;
@@ -1976,25 +2915,66 @@
   $('#cap-home').onclick=async()=>{
     $('#pq-dash').classList.add('open');
     const m=readMeta();
-    $('#pq-researcher').value=m.researcher||state.authorName||'';
-    $('#pq-dash-hello').textContent=m.researcher||state.authorName?('Welcome, '+(m.researcher||state.authorName)):'Welcome, researcher';
+    const name=m.researcher||state.authorName||'';
+    $('#pq-researcher').value=name;
+    $('#pq-dash-hello').textContent=pickGreeting(name);
     $('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;
+    const dt=$('#pq-daily-target');if(dt)dt.value=getDailyTarget();
     updateSessionLine();
     await renderProjectGrid();
+    await renderProgressPane();
+    await renderAchievements();
+  };
+  $$('#pq-dash-tabs button').forEach(btn=>{
+    btn.onclick=async()=>{
+      $$('#pq-dash-tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      $$('.pq-dash-pane').forEach(p=>p.classList.remove('active'));
+      const pane=$('#pane-'+btn.dataset.pane);
+      if(pane)pane.classList.add('active');
+      if(btn.dataset.pane==='progress')await renderProgressPane();
+      if(btn.dataset.pane==='achievements')await renderAchievements();
+    };
+  });
+  const dailySet=$('#pq-daily-set');
+  if(dailySet)dailySet.onclick=()=>{
+    const v=parseInt($('#pq-daily-target').value,10)||500;
+    const m=readMeta();m.dailyTarget=v;writeMeta(m);
+    updateDailyBar();toast('Daily goal: '+v+' words');
   };
   $('#cap-sections').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
   $('#cap-focus').onclick=()=>ROOT.classList.add('pq-focus');
   $('#pq-focus-exit').onclick=()=>ROOT.classList.remove('pq-focus');
   $('#cap-tools').onclick=()=>$('#pq-tools-menu').classList.toggle('open');
-  $('#tool-lt').onclick=()=>{$('#pq-tools-menu').classList.remove('open');runLanguageTool()};
+  $('#tool-lt').onclick=()=>{closeTools();if(state.ltOn){clearLT();toast('LanguageTool off')}else runLanguageTool()};
+  $('#tool-audit').onclick=()=>{closeTools();openCitationAudit()};
+  $('#tool-readability').onclick=()=>{closeTools();openReadability()};
+  $('#tool-findreplace').onclick=()=>{closeTools();openFindReplace()};
+  $('#tool-outline').onclick=()=>{closeTools();openOutline()};
+  $('#tool-vocab').onclick=()=>{closeTools();openVocab()};
+  $('#tool-claims').onclick=()=>{closeTools();openClaims()};
+  $('#tool-quote').onclick=()=>{closeTools();saveQuoteFromSelection()};
+  $('#tool-quotes').onclick=()=>{closeTools();openQuoteBank()};
+  $('#tool-footnote').onclick=()=>{closeTools();insertFootnote()};
+  $('#tool-table').onclick=()=>{closeTools();insertTable()};
+  $('#tool-xref').onclick=()=>{closeTools();insertXref()};
+  $('#tool-library').onclick=()=>{closeTools();openLibrary()};
+  $('#tool-import').onclick=()=>{closeTools();openImportSources()};
+  $('#tool-exportsrc').onclick=()=>{closeTools();openExportSources()};
+  $('#tool-dups').onclick=()=>{closeTools();openDuplicates()};
+  $('#tool-pasteclean').onclick=()=>{closeTools();cleanPaste=!cleanPaste;$('#tool-pasteclean').textContent=cleanPaste?'Clean paste: on':'Clean paste mode';toast('Clean paste '+(cleanPaste?'on':'off'))};
+  $('#tool-sectarget').onclick=()=>{closeTools();setSectionTarget()};
+  $('#tool-papersnap').onclick=()=>{closeTools();takePaperSnapshot()};
+  $('#tool-papersnaps').onclick=()=>{closeTools();viewPaperSnapshots()};
+  $('#tool-pomodoro').onclick=()=>{closeTools();openPomodoro()};
+  $('#tool-wordlog').onclick=()=>{closeTools();openWordLog()};
+  $('#tool-titlepage').onclick=()=>{closeTools();openTitlePage()};
+  $('#tool-palette').onclick=()=>{closeTools();openPalette()};
   $('#tool-autocap').onclick=()=>{state.autoCap=!state.autoCap;scheduleSave();$('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off');toast('Auto-cap '+(state.autoCap?'on':'off'))};
   $('#tool-theme').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');scheduleSave()};
   $('#tool-json').onclick=()=>{saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');toast('JSON downloaded')};
-  $('#tool-ann').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openAnnPanel()};
-  $('#tool-tutorial').onclick=()=>{$('#pq-tools-menu').classList.remove('open');toggleTutorial()};
-  $('#tool-templates').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openTemplates()};
-  $('#tool-doi').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openDOIModal()};
-  $('#tool-findsrc').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openSearchSources()};
+  $('#tool-tutorial').onclick=()=>{closeTools();toggleTutorial()};
+  $('#tool-templates').onclick=()=>{closeTools();openTemplates()};
 
   $('.pq-logo').onclick=()=>{const t=prompt('Paper title',state.paperTitle||'');if(t!=null){state.paperTitle=t.trim()||'Untitled paper';scheduleSave();toast('Title updated')}};
 
@@ -2068,6 +3048,7 @@
     openModal('<h3>Keyboard shortcuts</h3><ul class="pq-help" style="padding-left:18px;line-height:1.7">'+
       '<li><strong>Ctrl/Cmd+S</strong> — Save disk</li>'+
       '<li><strong>Ctrl/Cmd+K</strong> — Search paper</li>'+
+      '<li><strong>Ctrl/Cmd+Shift+P</strong> — Command palette</li>'+
       '<li><strong>Ctrl/Cmd+Shift+L</strong> — LanguageTool</li>'+
       '<li><strong>Ctrl/Cmd+Shift+F</strong> — Focus mode</li>'+
       '<li><strong>@</strong> — Cite source while typing</li>'+
@@ -2086,6 +3067,7 @@
     const mod=e.metaKey||e.ctrlKey;
     if(mod&&e.key==='s'){e.preventDefault();saveToDisk(false)}
     if(mod&&e.key==='k'){e.preventDefault();openSearch()}
+    if(mod&&e.shiftKey&&(e.key==='P'||e.key==='p')){e.preventDefault();openPalette()}
     if(mod&&e.shiftKey&&(e.key==='L'||e.key==='l')){e.preventDefault();runLanguageTool()}
     if(mod&&e.shiftKey&&(e.key==='F'||e.key==='f')){e.preventDefault();ROOT.classList.toggle('pq-focus')}
   });
@@ -2125,11 +3107,14 @@
     ROOT.classList.add('pq-side-collapsed');
     renderAll();updateSessionLine();
     const m=readMeta();
-    $('#pq-researcher').value=m.researcher||state.authorName||'';
+    const name=m.researcher||state.authorName||'';
+    $('#pq-researcher').value=name;
     $('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;
+    const dt=$('#pq-daily-target');if(dt)dt.value=getDailyTarget();
     await renderProjectGrid();
-    if(!m.researcher){$('#pq-dash').classList.add('open');$('#pq-dash-hello').textContent='Welcome, researcher'}
-    else {$('#pq-dash-hello').textContent='Welcome, '+m.researcher}
+    $('#pq-dash-hello').textContent=pickGreeting(name);
+    if(!m.researcher)$('#pq-dash').classList.add('open');
+    updateDailyBar();
   })();
 })();
 </script>
