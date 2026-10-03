@@ -81,6 +81,16 @@
     .pq-ann-card .meta{color:var(--muted);font-size:.72rem;margin-bottom:4px}
     .pq-ann-card .quote{font-style:italic;opacity:.85;margin-bottom:6px;border-left:2px solid var(--border);padding-left:6px}
     .pq-ann-toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg)}
+    ::highlight(pq-lt-spell){text-decoration:underline wavy #d9534f;text-decoration-thickness:1.5px}
+    ::highlight(pq-lt-gram){text-decoration:underline wavy #3b82c4;text-decoration-thickness:1.5px}
+    ::highlight(pq-lt-style){text-decoration:underline dotted #8a6fc7;text-decoration-thickness:2px}
+    .pq-pop{position:fixed;z-index:1100;background:var(--paper);color:var(--ink);border:1px solid var(--border);border-radius:10px;padding:10px;width:min(300px,92vw);box-shadow:0 8px 28px rgba(0,0,0,.18);font-size:.82rem}
+    .pq-pop p{margin:4px 0}.pq-pop .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .pq-pop .th{border-left:2px solid var(--border);padding:2px 8px;margin:6px 0}
+    .pq-gutter{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+    .pq-cm-ico{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1px solid var(--accent);background:var(--paper);color:var(--accent);cursor:pointer;font-size:.68rem;font-weight:600;padding:0}
+    .pq-cm-ico.done{border-color:var(--border);color:var(--muted)}.pq-cm-ico.new{background:var(--accent);color:var(--paper)}
+    .pq-editor-wrap{position:relative}
     .pq-lt-err{border-bottom:2px wavy var(--danger);cursor:pointer;background:color-mix(in srgb,var(--danger) 8%,transparent)}
     .pq-works{max-width:42em;margin:32px auto 48px;padding-top:24px;border-top:2px solid var(--border)}
     .pq-works h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.2rem;text-align:center;margin:0 0 16px}
@@ -223,6 +233,7 @@
     <button type="button" class="pq-btn" id="tool-doi">Fetch by DOI</button>
   </div>
   <button type="button" class="pq-btn pq-focus-exit" id="pq-focus-exit">Exit focus</button>
+  <div class="pq-ann-panel" id="pq-lt-panel"><header><strong>Writing check</strong><button type="button" class="pq-btn" id="pq-lt-set">Settings</button><button type="button" class="pq-btn" id="pq-lt-close">Close</button></header><div class="pq-ann-list" id="pq-lt-list"></div></div>
   <div class="pq-ann-panel" id="pq-ann-panel">
     <header>
       <strong>Annotations</strong>
@@ -548,109 +559,122 @@
     }
   }
 
-  /* LanguageTool */
-  async function runLanguageTool(){
-    saveCurrent();
-    const text=stripHtml(editor.innerHTML);
-    if(!text.trim())return toast('Nothing to check');
-    toast('Checking with LanguageTool…');
-    try{
-      const body=new URLSearchParams({language:'en-US',text:text.slice(0,20000)});
-      const res=await fetch('https://api.languagetool.org/v2/check',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-      if(!res.ok)throw new Error('LT request failed');
-      const data=await res.json();
-      ltMatches=(data.matches||[]).filter(m=>{
-        const key=m.offset+'|'+m.length+'|'+(m.rule&&m.rule.id);
-        return !ignoredLT.has(key);
+  /* LanguageTool: underlines are drawn with the CSS Highlight API, so the paper's HTML is never changed */
+  let ltItems=[],ltTimer=null,ltRun=0,ltPop=null;
+  const LT_BLOCK=new Set(['P','DIV','LI','H1','H2','H3','H4','H5','H6','BLOCKQUOTE','TR','BR']);
+  function ltDict(){return readMeta().userDict||[]}
+  function ltIgnored(){return state.ltIgnore||(state.ltIgnore=[])}
+  function ltMap(){ // plain text + segment table that maps text offsets back to DOM text nodes
+    let text='';const segs=[];const cites=[];
+    (function walk(n){
+      n.childNodes.forEach(c=>{
+        if(c.nodeType===3){segs.push({node:c,start:text.length,len:c.data.length});text+=c.data}
+        else if(c.nodeType===1){
+          const blk=LT_BLOCK.has(c.tagName);
+          if(blk&&text&&!text.endsWith('\n'))text+='\n';
+          const st=text.length;walk(c);
+          if(c.classList&&c.classList.contains('pq-cite'))cites.push([st,text.length]);
+          if(blk&&c.tagName!=='BR'&&text&&!text.endsWith('\n'))text+='\n';
+          if(c.tagName==='BR'&&!text.endsWith('\n'))text+='\n';
+        }
       });
-      applyLTHighlights(text,ltMatches);
-      state.ltOn=true;
-      $('#pq-lt-toggle').classList.toggle('on',true);
-      toast(ltMatches.length?ltMatches.length+' issue(s) found':'No issues found');
-    }catch(e){
-      toast('LanguageTool unavailable (network or rate limit)');
-    }
+    })(editor);
+    return {text,segs,cites};
   }
-  function clearLT(){
-    ltMatches=[];
-    // strip marks by reloading section plain structure — keep content
-    saveCurrent();
-    const sec=getActiveSection();
-    const tmp=document.createElement('div');tmp.innerHTML=sec.content||'';
-    tmp.querySelectorAll('.pq-lt-err').forEach(el=>{
-      const t=document.createTextNode(el.textContent);el.replaceWith(t);
-    });
-    sec.content=tmp.innerHTML;editor.innerHTML=sec.content;
-    state.ltOn=false;$('#pq-lt-toggle').classList.remove('on');
+  function ltRange(map,off,len){
+    const find=(o,isEnd)=>map.segs.find(g=>isEnd?(o>g.start&&o<=g.start+g.len):(o>=g.start&&o<g.start+g.len));
+    const s0=find(off,false),e0=find(off+len,true);if(!s0||!e0)return null;
+    const r=document.createRange();r.setStart(s0.node,off-s0.start);r.setEnd(e0.node,off+len-e0.start);return r;
   }
-  function applyLTHighlights(plain,matches){
-    // Rebuild editor from plain + citation spans is hard; highlight by wrapping in plain text mode approximation
-    // Use mark over plain text only when editor has mostly text
-    const sorted=matches.slice().sort((a,b)=>b.offset-a.offset);
-    let html=escapeHtml(plain);
-    // work on escaped plain — loses formatting temporarily for LT pass
-    // Better approach: only mark if no complex HTML
-    const hasCite=editor.querySelector('.pq-cite');
-    if(hasCite){
-      // store matches for click via overlay list instead of destroying cites
-      showLTList(matches);
-      return;
-    }
-    sorted.forEach((m,idx)=>{
-      const start=m.offset,end=m.offset+m.length;
-      const before=html.slice(0,start),mid=html.slice(start,end),after=html.slice(end);
-      const key=m.offset+'|'+m.length+'|'+(m.rule&&m.rule.id);
-      html=before+'<span class="pq-lt-err" data-lt="'+idx+'" data-key="'+escapeHtml(key)+'">'+mid+'</span>'+after;
-    });
-    editor.innerHTML=html.replace(/\n/g,'<br>');
-    wireLTClicks(matches);
+  function clearLTMarks(){['spell','gram','style'].forEach(k=>{try{CSS.highlights.delete('pq-lt-'+k)}catch(e){}})}
+  function ltPaint(){
+    clearLTMarks();if(!window.CSS||!CSS.highlights||typeof Highlight==='undefined')return;
+    const g={spell:[],gram:[],style:[]};ltItems.forEach(i=>g[i.kind].push(i.range));
+    Object.keys(g).forEach(k=>{if(g[k].length)CSS.highlights.set('pq-lt-'+k,new Highlight(...g[k]))});
   }
-  function showLTList(matches){
-    openModal('<h3>LanguageTool results</h3><p class="pq-help">Your text has citations, so issues are listed here instead of inline marks.</p>'+
-      matches.slice(0,40).map((m,i)=>'<div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px">'+
-        '<strong>'+escapeHtml((m.rule&&m.rule.category&&m.rule.category.name)||'Issue')+'</strong>'+
-        '<p class="pq-help" style="margin:4px 0">'+escapeHtml(m.message)+'</p>'+
-        '<p style="font-size:.85rem"><code>'+escapeHtml(stripHtml(editor.innerHTML).slice(m.offset,m.offset+m.length))+'</code></p>'+
-        (m.replacements&&m.replacements[0]?'<button type="button" class="pq-btn pq-btn-primary pq-lt-fix" data-i="'+i+'" data-rep="'+escapeHtml(m.replacements[0].value)+'">Fix: '+escapeHtml(m.replacements[0].value)+'</button> ':'')+
-        '<button type="button" class="pq-btn pq-lt-ign" data-i="'+i+'">Ignore</button></div>').join('')+
-      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
-    $('#m-cancel').onclick=closeModal;
-    $$('.pq-lt-fix').forEach(b=>b.onclick=()=>{
-      const m=matches[+b.dataset.i];const rep=b.dataset.rep;
-      applyReplacement(m.offset,m.length,rep);closeModal();runLanguageTool();
-    });
-    $$('.pq-lt-ign').forEach(b=>b.onclick=()=>{
-      const m=matches[+b.dataset.i];
-      ignoredLT.add(m.offset+'|'+m.length+'|'+(m.rule&&m.rule.id));
-      b.closest('div').remove();
-    });
+  function ltKind(m){const c=(m.rule&&m.rule.category&&m.rule.category.id)||'';return c==='TYPOS'?'spell':(c==='STYLE'||c==='REDUNDANCY'||c==='PLAIN_ENGLISH'||c==='TYPOGRAPHY'||c==='STYLE_COMPLEXITY')?'style':'gram'}
+  function updateLTBtn(){const b=$('#pq-lt-toggle');b.classList.toggle('on',!!state.ltOn);b.textContent=state.ltOn?('LT Check'+(ltItems.length?' ('+ltItems.length+')':' ✓')):'LT Check'}
+  async function runLanguageTool(){
+    saveCurrent();const my=++ltRun;const map=ltMap();
+    if(!map.text.trim()){ltItems=[];ltPaint();state.ltOn=true;updateLTBtn();return toast('Nothing to check')}
+    state.ltOn=true;updateLTBtn();
+    const m0=readMeta(),lang=m0.ltLang||'en-US';
+    try{
+      const chunks=[];let cur=0;const T=map.text;
+      while(cur<T.length){let end=Math.min(T.length,cur+15000);if(end<T.length){const nl=T.lastIndexOf('\n',end);if(nl>cur+2000)end=nl}chunks.push([cur,end]);cur=end}
+      let all=[];
+      for(const [c0,c1] of chunks){
+        const body=new URLSearchParams({language:lang,text:T.slice(c0,c1)});
+        const res=await fetch('https://api.languagetool.org/v2/check',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+        if(!res.ok)throw new Error('LT '+res.status);
+        const d=await res.json();all=all.concat((d.matches||[]).map(x=>Object.assign(x,{offset:x.offset+c0})));
+      }
+      if(my!==ltRun)return;
+      const now=ltMap();if(now.text!==map.text){clearTimeout(ltTimer);ltTimer=setTimeout(runLanguageTool,300);return} // text changed meanwhile
+      const ign=new Set(ltIgnored()),dict=new Set(ltDict().map(w=>w.toLowerCase())),skipStyle=m0.ltNoStyle;
+      ltItems=[];
+      all.forEach(m=>{
+        const word=map.text.substr(m.offset,m.length),rule=(m.rule&&m.rule.id)||'',kind=ltKind(m);
+        if(ign.has('rule|'+rule)||ign.has(rule+'|'+word)||(kind==='spell'&&dict.has(word.toLowerCase()))||(skipStyle&&kind==='style'))return;
+        if(map.cites.some(c=>m.offset<c[1]&&m.offset+m.length>c[0]))return; // never flag citations
+        const range=ltRange(map,m.offset,m.length);if(!range)return;
+        ltItems.push({m,word,rule,kind,range});
+      });
+      ltPaint();updateLTBtn();renderLTPanel();
+      toast(ltItems.length?ltItems.length+' issue(s) found':'No issues found');
+    }catch(e){console.warn(e);toast('LanguageTool unavailable (network or rate limit). Try again in a minute.')}
   }
-  function wireLTClicks(matches){
-    $$('.pq-lt-err',editor).forEach(el=>{
-      el.onclick=()=>{
-        const m=matches[+el.dataset.lt];if(!m)return;
-        openModal('<h3>'+escapeHtml((m.rule&&m.rule.category&&m.rule.category.name)||'LanguageTool')+'</h3>'+
-          '<p class="pq-help">'+escapeHtml(m.message)+'</p>'+
-          (m.rule&&m.rule.description?'<p class="pq-help">'+escapeHtml(m.rule.description)+'</p>':'')+
-          '<p style="font-size:.9rem">“'+escapeHtml(el.textContent)+'”</p>'+
-          '<div class="pq-modal-actions">'+
-          (m.replacements||[]).slice(0,5).map(r=>'<button type="button" class="pq-btn pq-btn-primary pq-lt-rep" data-v="'+escapeHtml(r.value)+'">'+escapeHtml(r.value)+'</button>').join('')+
-          '<button type="button" class="pq-btn" id="m-ignore">Ignore</button>'+
-          '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
-        $('#m-cancel').onclick=closeModal;
-        $('#m-ignore').onclick=()=>{ignoredLT.add(el.dataset.key);el.classList.remove('pq-lt-err');closeModal()};
-        $$('.pq-lt-rep').forEach(b=>b.onclick=()=>{
-          el.replaceWith(document.createTextNode(b.dataset.v));
-          saveCurrent();scheduleSave();closeModal();
-        });
-      };
-    });
+  function clearLT(){clearTimeout(ltTimer);ltRun++;ltItems=[];clearLTMarks();state.ltOn=false;updateLTBtn();closeLTPop();$('#pq-lt-panel').classList.remove('open')}
+  function recheckSoon(ms){if(!state.ltOn)return;clearTimeout(ltTimer);ltTimer=setTimeout(runLanguageTool,ms||1800)}
+  function closeLTPop(){if(ltPop){ltPop.remove();ltPop=null}}
+  function ltApply(it,rep){
+    closeLTPop();editor.focus();const sel=window.getSelection();sel.removeAllRanges();sel.addRange(it.range);
+    if(!document.execCommand('insertText',false,rep)){it.range.deleteContents();it.range.insertNode(document.createTextNode(rep));editor.dispatchEvent(new Event('input',{bubbles:true}))}
+    ltItems=ltItems.filter(x=>x!==it);ltPaint();updateLTBtn();recheckSoon(700);
   }
-  function applyReplacement(offset,length,replacement){
-    const plain=stripHtml(editor.innerHTML);
-    const next=plain.slice(0,offset)+replacement+plain.slice(offset+length);
-    editor.innerHTML=escapeHtml(next).replace(/\n/g,'<br>');
-    saveCurrent();scheduleSave();
+  function ltIgnore(it,mode){
+    const l=ltIgnored();
+    if(mode==='rule')l.push('rule|'+it.rule);else if(mode==='dict'){const m=readMeta();m.userDict=(m.userDict||[]).concat(it.word);writeMeta(m)}else l.push(it.rule+'|'+it.word);
+    closeLTPop();ltItems=ltItems.filter(x=>x!==it&&(mode!=='rule'||x.rule!==it.rule));ltPaint();updateLTBtn();renderLTPanel();scheduleSave();
+  }
+  function ltCardHtml(it,i){
+    const cat=(it.m.rule&&it.m.rule.category&&it.m.rule.category.name)||'Issue';
+    return '<strong>'+escapeHtml(cat)+'</strong><p class="pq-help">'+escapeHtml(it.m.message||'')+'</p><p>“'+escapeHtml(it.word)+'”</p><div class="row">'+
+      (it.m.replacements||[]).slice(0,4).map((r,k)=>'<button type="button" class="pq-btn pq-btn-primary" data-act="fix" data-i="'+i+'" data-k="'+k+'">'+escapeHtml(r.value||'(delete)')+'</button>').join('')+
+      '<button type="button" class="pq-btn" data-act="ign" data-i="'+i+'">Ignore</button><button type="button" class="pq-btn" data-act="rule" data-i="'+i+'">Ignore rule</button>'+
+      (it.kind==='spell'?'<button type="button" class="pq-btn" data-act="dict" data-i="'+i+'">Add to dictionary</button>':'')+'</div>';
+  }
+  function ltWire(root){root.querySelectorAll('[data-act]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();const it=ltItems[+b.dataset.i];if(!it)return;const a=b.dataset.act;
+    if(a==='fix')ltApply(it,it.m.replacements[+b.dataset.k].value);else ltIgnore(it,a);
+  })}
+  function ltOpenPop(it){
+    closeLTPop();const i=ltItems.indexOf(it);const r=it.range.getBoundingClientRect();
+    ltPop=document.createElement('div');ltPop.className='pq-pop';ltPop.innerHTML=ltCardHtml(it,i);ROOT.appendChild(ltPop);
+    ltPop.style.left=Math.max(8,Math.min(r.left,innerWidth-310))+'px';ltPop.style.top=Math.min(r.bottom+6,innerHeight-220)+'px';ltWire(ltPop);
+  }
+  function renderLTPanel(){
+    const el=$('#pq-lt-panel');if(!el)return;const list=$('#pq-lt-list');
+    list.innerHTML=ltItems.length?ltItems.map((it,i)=>'<div class="pq-ann-card" data-go="'+i+'">'+ltCardHtml(it,i)+'</div>').join(''):'<p class="pq-help" style="padding:8px">No issues in this section.</p>';
+    ltWire(list);list.querySelectorAll('[data-go]').forEach(c=>c.onclick=()=>{const it=ltItems[+c.dataset.go];if(!it)return;const sel=getSelection();sel.removeAllRanges();sel.addRange(it.range);it.range.startContainer.parentElement&&it.range.startContainer.parentElement.scrollIntoView({block:'center'})});
+    el.classList.add('open');
+  }
+  editor.addEventListener('click',()=>{
+    if(!ltItems.length)return;const sel=getSelection();if(!sel.rangeCount)return;const n=sel.anchorNode,o=sel.anchorOffset;
+    const hit=ltItems.find(it=>{try{return it.range.isPointInRange(n,o)}catch(e){return false}});
+    if(hit)ltOpenPop(hit);else closeLTPop();
+  });
+  editor.addEventListener('input',()=>{if(state.ltOn)recheckSoon(2200)});
+  document.addEventListener('mousedown',e=>{if(ltPop&&!e.target.closest('.pq-pop'))closeLTPop()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLTPop();closeCmPop()}});
+  function openLTSettings(){
+    const m=readMeta();
+    openModal('<h3>Writing check settings</h3><label class="pq-lbl">Language</label><select class="pq-sel" id="m-lang" style="width:100%"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="en-AU">English (Australia)</option><option value="en-CA">English (Canada)</option><option value="auto">Detect automatically</option></select>'+
+      '<label style="display:block;margin:10px 0"><input type="checkbox" id="m-nostyle"> Hide style suggestions (spelling and grammar only)</label>'+
+      '<p class="pq-help">Your dictionary: '+escapeHtml((m.userDict||[]).join(', ')||'empty')+'</p><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-reset">Reset ignored items</button><button type="button" class="pq-btn pq-btn-primary" id="m-ok">Save and re-check</button></div>');
+    $('#m-lang').value=m.ltLang||'en-US';$('#m-nostyle').checked=!!m.ltNoStyle;
+    $('#m-reset').onclick=()=>{state.ltIgnore=[];const x=readMeta();x.userDict=[];writeMeta(x);toast('Ignored items cleared');closeModal();runLanguageTool()};
+    $('#m-ok').onclick=()=>{const x=readMeta();x.ltLang=$('#m-lang').value;x.ltNoStyle=$('#m-nostyle').checked;writeMeta(x);closeModal();runLanguageTool()};
   }
 
   /* Dictionary Datamuse */
@@ -929,7 +953,7 @@
       const act=getActiveSection();
       if(act&&act.content!==activeBefore){loadSection();setCaret(caret)}
       $('#pq-style').value=state.style;updateWc();
-      try{renderAnnPanel()}catch(e){}
+      try{renderAnnPanel();layoutCm()}catch(e){}
       scheduleSave();
     }finally{applyingRemote=false}
   }
@@ -1238,8 +1262,9 @@
     const sec=getActiveSection();if(!sec)return;secTitle.value=sec.title||'';editor.innerHTML=sec.content||'';sec.content=editor.innerHTML;
     editor.style.display=(sec.key==='works')?'none':'';
     const st=$('#pq-sec-status');if(st)st.value=sec.status||'draft';
+    if(sec.content&&sec.content.indexOf('pq-lt-err')>=0){const t=document.createElement('div');t.innerHTML=sec.content;t.querySelectorAll('.pq-lt-err').forEach(x=>x.replaceWith(document.createTextNode(x.textContent)));sec.content=editor.innerHTML=t.innerHTML}
     rebuildWorksCited();updateWc();updateSessionLine();
-    wireAnnotationClicks();
+    wireAnnotationClicks();layoutCm();if(state.ltOn){ltItems=[];clearLTMarks();recheckSoon(500)}
   }
   function updateWc(){saveCurrent();$('#pq-wc').textContent=totalWords().toLocaleString()+' words'}
   function renderAll(){$('#pq-style').value=state.style;ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');renderSections();renderSources();loadSection();updateWc();updateDiskStatus();$('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off')}
@@ -1384,6 +1409,7 @@
   function addComment() {
     const q = getSelectionQuote();
     if (!q) return toast('Select text to comment on');
+    const keepRange = q.range;
     openModal(
       '<h3>Add comment</h3>' +
       '<p class="pq-help">On: “' + escapeHtml(q.text.slice(0, 120)) + (q.text.length > 120 ? '…' : '') + '”</p>' +
@@ -1401,6 +1427,7 @@
       // restore selection if possible — user may have lost it; still store annotation
       const sel = window.getSelection();
       let wrapped = false;
+      try { editor.focus(); sel.removeAllRanges(); sel.addRange(keepRange); } catch (e) {}  // the dialog had stolen the selection
       if (sel && !sel.isCollapsed) wrapped = wrapSelection('pq-ann-mark', id);
       saveCurrent();
       state.annotations = state.annotations || [];
@@ -1419,8 +1446,8 @@
       wireAnnotationClicks();
       renderAnnPanel();
       closeModal();
-      toast(wrapped ? 'Comment added' : 'Comment saved (select text again next time to mark in place)');
-      openAnnPanel();
+      toast(wrapped ? 'Comment added' : 'Comment saved, but the text could not be marked. Select within one paragraph.');
+      layoutCm();
     };
   }
   function wireAnnotationClicks() {
@@ -1430,10 +1457,53 @@
         const id = el.dataset.annId;
         const ann = (state.annotations || []).find(a => a.id === id);
         if (!ann) return;
-        showAnnDetail(ann);
+        if (ann.type === 'comment') openCmPop(ann); else showAnnDetail(ann);
       };
     });
+    layoutCm();
   }
+  /* comment icons in the margin, one per line that carries a comment */
+  let cmPop=null,gutter=null;
+  const seenSet=()=>new Set(readMeta().seen||[]);
+  const cmStamp=a=>a.id+':'+(a.replies?a.replies.length:0)+':'+(a.resolved?1:0);
+  function markSeen(a){const m=readMeta();const set=new Set((m.seen||[]).filter(x=>x.split(':')[0]!==a.id));set.add(cmStamp(a));m.seen=[...set].slice(-400);writeMeta(m)}
+  function isNew(a){const me=researcherLabel();const last=(a.replies&&a.replies.length&&a.replies[a.replies.length-1])||a;return last.author!==me&&!seenSet().has(cmStamp(a))}
+  function closeCmPop(){if(cmPop){cmPop.remove();cmPop=null}}
+  function layoutCm(){
+    const wrap=editor.parentElement;if(!wrap)return;
+    if(!gutter||!gutter.isConnected){gutter=document.createElement('div');gutter.className='pq-gutter';wrap.appendChild(gutter)}
+    gutter.innerHTML='';const wr=wrap.getBoundingClientRect(),er=editor.getBoundingClientRect(),lines=new Map();
+    (state.annotations||[]).filter(a=>a.type==='comment'&&a.sectionId===state.activeSectionId).forEach(a=>{
+      const mk=editor.querySelector('[data-ann-id="'+a.id+'"]');if(!mk)return;const rc=mk.getClientRects()[0];if(!rc)return;
+      const y=Math.round((rc.top-wr.top+wrap.scrollTop)/8)*8;(lines.get(y)||lines.set(y,[]).get(y)).push(a);
+    });
+    lines.forEach((arr,y)=>{
+      const b=document.createElement('button');b.type='button';b.className='pq-cm-ico'+(arr.every(a=>a.resolved)?' done':'')+(arr.some(isNew)?' new':'');
+      b.title=arr.length+' comment'+(arr.length>1?'s':'');b.textContent=arr.length>1?arr.length:'💬';
+      b.style.top=(y)+'px';b.style.left=Math.min(er.right-wr.left+6,wrap.clientWidth-30)+'px';
+      b.onclick=e=>{e.stopPropagation();openCmPop(arr[0],arr,b)};gutter.appendChild(b);
+    });
+    const open=(state.annotations||[]).filter(a=>a.type==='comment'&&!a.resolved).length,btn=$('#pq-ann-panel-btn');
+    if(btn)btn.textContent=open?'Notes on text ('+open+')':'Notes on text';
+  }
+  function openCmPop(ann,group,anchor){
+    closeCmPop();group=group||[ann];cmPop=document.createElement('div');cmPop.className='pq-pop';
+    cmPop.innerHTML=group.map(a=>{markSeen(a);return '<div data-c="'+a.id+'" style="margin-bottom:10px"><div class="pq-help"><strong>'+escapeHtml(a.author||'')+'</strong> · '+escapeHtml(String(a.createdAt||'').slice(0,16).replace('T',' '))+(a.resolved?' · resolved':'')+'</div>'+
+      (a.quote?'<p class="th" style="font-style:italic">“'+escapeHtml(a.quote.slice(0,120))+'”</p>':'')+'<p>'+escapeHtml(a.body||'')+'</p>'+
+      (a.replies||[]).map(r=>'<div class="th"><strong>'+escapeHtml(r.author)+'</strong>: '+escapeHtml(r.body)+'</div>').join('')+
+      '<input class="pq-inp" data-reply="'+a.id+'" style="width:100%;margin-top:6px" placeholder="Reply and press Enter"><div class="row"><button type="button" class="pq-btn" data-res="'+a.id+'">'+(a.resolved?'Reopen':'Resolve')+'</button><button type="button" class="pq-btn" data-del="'+a.id+'">Delete</button></div></div>'}).join('')+'<div class="row"><button type="button" class="pq-btn" data-x>Close</button></div>';
+    ROOT.appendChild(cmPop);
+    const r=(anchor||editor.querySelector('[data-ann-id="'+ann.id+'"]')||editor).getBoundingClientRect();
+    cmPop.style.left=Math.max(8,Math.min(r.left-120,innerWidth-310))+'px';cmPop.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-300))+'px';
+    cmPop.querySelector('[data-x]').onclick=()=>{closeCmPop();layoutCm()};
+    cmPop.querySelectorAll('[data-reply]').forEach(i=>i.onkeydown=e=>{if(e.key!=='Enter')return;const a=group.find(x=>x.id===i.dataset.reply),v=i.value.trim();if(!v)return;(a.replies=a.replies||[]).push({id:uid(),author:researcherLabel(),body:v,createdAt:new Date().toISOString()});scheduleSave();renderAnnPanel();openCmPop(ann,group,anchor);layoutCm()});
+    cmPop.querySelectorAll('[data-res]').forEach(b=>b.onclick=()=>{const a=group.find(x=>x.id===b.dataset.res);a.resolved=!a.resolved;scheduleSave();renderAnnPanel();closeCmPop();layoutCm()});
+    cmPop.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const a=group.find(x=>x.id===b.dataset.del);if(!confirm('Delete this comment and its replies?'))return;closeCmPop();tomb(a.id);state.annotations=state.annotations.filter(x=>x.id!==a.id);$$('[data-ann-id="'+a.id+'"]',editor).forEach(el=>{while(el.firstChild)el.parentNode.insertBefore(el.firstChild,el);el.remove()});saveCurrent();scheduleSave();renderAnnPanel();layoutCm()});
+    layoutCm();
+  }
+  editor.parentElement.addEventListener('scroll',()=>{closeCmPop()},{passive:true});
+  addEventListener('resize',()=>layoutCm());
+  editor.addEventListener('input',()=>requestAnimationFrame(layoutCm));
   function showAnnDetail(ann) {
     const isComment = ann.type === 'comment';
     openModal(
@@ -1519,7 +1589,7 @@
         const ann = (state.annotations || []).find(a => a.id === card.dataset.id);
         if (!ann) return;
         if (ann.sectionId && ann.sectionId !== state.activeSectionId) switchSection(ann.sectionId);
-        setTimeout(() => showAnnDetail(ann), 100);
+        setTimeout(() => { if (ann.type === 'comment') { const mk = editor.querySelector('[data-ann-id="' + ann.id + '"]'); if (mk) mk.scrollIntoView({ block: 'center' }); openCmPop(ann); } else showAnnDetail(ann); }, 150);
       };
     });
   }
@@ -1573,7 +1643,9 @@
   const toolAnn = $('#tool-ann');
   if (toolAnn) toolAnn.onclick = () => { $('#pq-tools-menu').classList.remove('open'); openAnnPanel(); };
 
-  $('#pq-lt-toggle').onclick=()=>{if(state.ltOn){clearLT();toast('LT off')}else runLanguageTool()};
+  $('#pq-lt-toggle').onclick=()=>{if(state.ltOn){clearLT();toast('Writing check off')}else runLanguageTool()};
+  $('#pq-lt-close').onclick=()=>$('#pq-lt-panel').classList.remove('open');
+  $('#pq-lt-set').onclick=openLTSettings;
   $('#pq-collab-btn').onclick=()=>openCollabModal();
   $('#pq-disk-save').onclick=()=>saveToDisk(false);
   $('#pq-disk-open').onclick=()=>openFromDisk();
