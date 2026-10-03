@@ -252,17 +252,14 @@
       <div class="pq-proj-grid" id="pq-proj-grid"></div>
     </div>
     <div class="pq-dash-card" id="pq-d-collab">
-      <strong>Collaborate</strong>
-      <p class="pq-help" id="pq-d-collab-status" style="margin:6px 0 8px"></p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <button type="button" class="pq-btn pq-btn-primary" id="pq-d-share">Share this paper</button>
-      </div>
-      <label class="pq-lbl">Join with a code</label>
+      <strong>Join a shared paper</strong>
+      <p class="pq-help" style="margin:6px 0 8px">Enter the code you were given. The shared paper is added to your list and opens right away. Your other papers are not changed.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input class="pq-inp" id="pq-d-join-code" placeholder="PQ-XXXXXXXX" autocomplete="off" style="flex:1;min-width:150px">
-        <button type="button" class="pq-btn" id="pq-d-join">Join</button>
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-d-join">Join</button>
+        <button type="button" class="pq-btn" id="pq-d-cancel" style="display:none">Cancel</button>
       </div>
-      <p class="pq-help" style="margin:8px 0 0">Joining adds the shared paper to your list. Your current paper stays as it is.</p>
+      <p class="pq-help" id="pq-d-collab-status" style="margin:8px 0 0"></p>
     </div>
     <div class="pq-dash-card">
       <strong>Session goal</strong>
@@ -811,55 +808,63 @@
     else{el.textContent='';btn.textContent='Save disk'}
   }
 
-  /* Collaboration: serverless WebRTC (Trystero over public relays). A room code is bound to one paper. */
-  const COLLAB_APP='paperquill-collab-v2';
-  const RTC_CFG={iceServers:[
-    {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'},
-    {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}
-  ]};
-  let trystero=null,room=null,acts={},peerInfo=new Map(),connState='idle',awaitingPaper=false,needSent=false,expectingFrom=null,holdPush=false,modalLocked=false,waitTimer=null;
+  /* Collaboration: direct peer-to-peer (WebRTC via PeerJS). A code is bound to one paper.
+     The first person online with a code holds the room; everyone else connects to them. If they leave, someone else takes over. */
+  let peer=null,isHub=false,conns=new Map(),helloFrom=new Map(),hubPeers=1,session=0,connState='idle',lastErr='';
+  let awaitingPaper=false,needSent=false,expectingFrom=null,mergeMode=false,sessionSynced=false,holdPush=false,modalLocked=false,retryTimer=null;
 
   function tomb(id){(state.deleted=state.deleted||[]).push(id)}
   function makeRoomCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='PQ-';const r=new Uint32Array(8);crypto.getRandomValues(r);for(let i=0;i<8;i++)s+=a[r[i]%a.length];return s}
-  async function loadTransport(){
-    if(trystero)return trystero;
-    for(const u of ['https://cdn.jsdelivr.net/npm/trystero@0.21.5/+esm','https://esm.sh/trystero@0.21.5']){
-      try{const m=await import(u);if(m&&m.joinRoom){trystero=m;return m}}catch(e){console.warn('Collab library failed from',u,e)}
-    }
-    return null;
+  const hubId=c=>'pqv3-'+c;
+  function loadPeerJS(){
+    if(window.Peer)return Promise.resolve(true);
+    const urls=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'];
+    return (async()=>{
+      for(const u of urls){
+        const ok=await new Promise(res=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>res(!!window.Peer);sc.onerror=()=>res(false);document.head.appendChild(sc)});
+        if(ok)return true;
+      }
+      return false;
+    })();
   }
   function docHash(){
     saveCurrent();
     const j=JSON.stringify([state.paperTitle,state.notes,state.style,(state.sections||[]).map(x=>[x.id,x.title,x.content,x.status]),state.sources||[],state.annotations||[]]);
     let h=5381;for(let i=0;i<j.length;i++)h=((h<<5)+h+j.charCodeAt(i))|0;return h;
   }
-  function helloPayload(){return {code:roomCode,rev:state.rev||0,hash:docHash(),title:state.paperTitle||'Untitled paper',who:researcherLabel()}}
   function snapshotState(){
     saveCurrent();
     return {rev:state.rev||0,deleted:state.deleted||[],style:state.style,paperTitle:state.paperTitle,notes:state.notes||'',
       sources:state.sources||[],annotations:state.annotations||[],
       sections:state.sections.map(s=>{const o=Object.assign({},s);delete o.snapshots;return o})};
   }
+  const sendTo=(c,o)=>{try{c.send(o)}catch(e){console.warn('send failed',e)}};
+  const broadcast=(o,except)=>conns.forEach(c=>{if(c!==except)sendTo(c,o)});
+  function peopleCount(){return isHub?conns.size+1:(conns.size?hubPeers:1)}
+
   function collabLine(){
     if(!roomCode)return currentCollabCode?'Linked to '+currentCollabCode+'. Not connected.':'';
-    const n=peerInfo.size;
-    if(connState==='loading')return 'Connecting to '+roomCode+'…';
-    if(awaitingPaper)return n?'Receiving the paper…':'Looking for the paper. The person who shared it must have it open.';
-    return n?(n+1)+' people in '+roomCode+'.':'Live in '+roomCode+'. Waiting for others to join with this code.';
+    if(connState==='error')return 'Not connected: '+lastErr+' Retrying…';
+    if(connState==='loading')return 'Loading the connection library…';
+    if(connState==='signaling')return 'Connecting to '+roomCode+'…';
+    if(awaitingPaper)return conns.size?'Connected. Receiving the paper…':'Connected to the network. Waiting for the paper’s owner to open it and share this code.';
+    const n=peopleCount();
+    return n>1?n+' people connected in '+roomCode+'.':'Live in '+roomCode+'. Waiting for others to join.';
   }
   function updateCollabUI(){
     const pill=$('#pq-collab-status'),label=$('#pq-collab-label');if(!pill)return;
     if(roomCode){
-      pill.classList.add('on');const n=peerInfo.size;
-      label.textContent=roomCode+(connState==='loading'?' · connecting…':awaitingPaper?' · fetching paper…':n?' · '+(n+1)+' online':' · waiting for others…');
+      pill.classList.add('on');
+      const n=peopleCount();
+      label.textContent=roomCode+(connState==='error'?' · offline, retrying':(connState==='loading'||connState==='signaling')?' · connecting…':awaitingPaper?' · fetching paper…':n>1?' · '+n+' online':' · waiting for others');
     }else{pill.classList.remove('on');label.textContent=currentCollabCode?'Linked · offline':'Solo'}
     renderCollabCard();
+    const m=$('#m-status');if(m)m.textContent=collabLine();
   }
   function renderCollabCard(){
-    const st=$('#pq-d-collab-status'),btn=$('#pq-d-share');if(!st||!btn)return;
-    if(roomCode){st.textContent=collabLine();btn.textContent='Show code'}
-    else if(currentCollabCode){st.textContent='“'+(state.paperTitle||'This paper')+'” is shared as '+currentCollabCode+'. Go live to sync with the people who joined.';btn.textContent='Go live'}
-    else{st.textContent='Share “'+(state.paperTitle||'this paper')+'” with a code. People who join get this paper in their own list.';btn.textContent='Share this paper'}
+    const st=$('#pq-d-collab-status'),cb=$('#pq-d-cancel');if(!st)return;
+    st.textContent=(roomCode&&awaitingPaper)?collabLine():'';
+    if(cb)cb.style.display=(roomCode&&awaitingPaper)?'':'none';
   }
 
   /* --- merging --- */
@@ -891,7 +896,7 @@
       const act=getActiveSection();
       if(act&&act.content!==activeBefore)loadSection();
       $('#pq-style').value=state.style;updateWc();
-      if(typeof renderAnnPanel==='function')try{renderAnnPanel()}catch(e){}
+      try{renderAnnPanel()}catch(e){}
       scheduleSave();
     }finally{applyingRemote=false}
   }
@@ -911,7 +916,8 @@
     }finally{applyingRemote=false}
   }
   async function becomeGuestPaper(p){
-    await persist(); // current paper is saved untouched
+    awaitingPaper=false;holdPush=true;
+    await persist(); // the paper you had open is saved untouched
     currentProjectId=uid();currentCollabCode=roomCode;
     state=emptyState(p.paperTitle);
     adoptPaper(p);
@@ -919,115 +925,190 @@
     const meta=readMeta();meta.projectId=currentProjectId;writeMeta(meta);
     if(meta.researcher)state.authorName=meta.researcher;
     fileHandle=null;diskName='';sessionBase=totalWords();state.goals.sessionBase=sessionBase;
-    awaitingPaper=false;holdPush=false;
+    sessionSynced=true;holdPush=false;
     await persist();
     renderAll();updateCollabUI();
     $('#pq-dash').classList.remove('open');closeModal();
     toast('Joined “'+(state.paperTitle||'paper')+'”');
   }
 
-  /* --- handshake --- */
-  function handleHello(m,id){
-    if(!m||m.code!==roomCode)return;
-    peerInfo.set(id,m);updateCollabUI();
-    if(awaitingPaper){if(!needSent){needSent=true;acts.need&&acts.need({},id)}return}
-    if(m.hash===docHash())return;
-    if((m.rev||0)>(state.rev||0)&&!modalLocked&&expectingFrom==null)askUpdate(m,id);
+  /* --- messages --- */
+  function myHello(){return {t:'hello',code:roomCode,rev:state.rev||0,hash:docHash(),title:state.paperTitle||'Untitled paper',who:researcherLabel(),aw:awaitingPaper}}
+  function onData(m,c){
+    if(!m||typeof m!=='object')return;
+    if(m.t==='hello')return handleHello(m,c);
+    if(m.t==='need'){if(!awaitingPaper)sendTo(c,Object.assign({t:'paper'},snapshotState()));return}
+    if(m.t==='peers'){hubPeers=m.n||2;updateCollabUI();return}
+    if(m.t==='paper'){
+      if(awaitingPaper)return becomeGuestPaper(m);
+      if(expectingFrom===c.peer){
+        expectingFrom=null;holdPush=false;sessionSynced=true;
+        if(mergeMode){mergeMode=false;mergeRemote(m)}
+        else{adoptPaper(m);renderAll();scheduleSave();toast('Paper updated')}
+        updateCollabUI();
+      }
+      return;
+    }
+    if(m.t==='patch'){
+      if(isHub)broadcast(m,c); // relay to everyone else
+      if(!awaitingPaper&&!holdPush)mergeRemote(m);
+    }
   }
-  function askUpdate(m,id){
+  function handleHello(m,c){
+    if(m.code!==roomCode)return;
+    helloFrom.set(c.peer,m);
+    if(awaitingPaper){if(!m.aw&&!needSent){needSent=true;sendTo(c,{t:'need'})}return}
+    if(m.aw)return; // they will ask us for the paper
+    if(m.hash===docHash()){sessionSynced=true;return}
+    if((m.rev||0)>(state.rev||0)){
+      if(sessionSynced){expectingFrom=c.peer;mergeMode=true;sendTo(c,{t:'need'})}
+      else if(!modalLocked)askUpdate(m,c);
+    }
+  }
+  function askUpdate(m,c){
     holdPush=true;modalLocked=true;
-    openModal('<h3>Newer version available</h3><p class="pq-help"><strong>'+escapeHtml(m.who||'A collaborator')+'</strong> has a newer version of “'+escapeHtml(m.title||'this paper')+'” (edited '+escapeHtml(new Date(m.rev).toLocaleString())+'). Updating replaces your copy of this paper with theirs. Choosing “Keep mine” disconnects you from the room.</p>'+
+    openModal('<h3>Newer version available</h3><p class="pq-help"><strong>'+escapeHtml(m.who||'A collaborator')+'</strong> has a newer version of “'+escapeHtml(m.title||'this paper')+'”, last edited '+escapeHtml(new Date(m.rev).toLocaleString())+'. Updating replaces your copy of this paper with theirs. “Keep mine” disconnects you from the room.</p>'+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-keep">Keep mine</button><button type="button" class="pq-btn pq-btn-primary" id="m-upd">Update my paper</button></div>');
     $('#m-upd').onclick=()=>{
-      modalLocked=false;closeModal();expectingFrom=id;acts.need&&acts.need({},id);
-      setTimeout(()=>{if(expectingFrom===id){expectingFrom=null;holdPush=false;toast('No answer from collaborator. Still on your version.')}},20000);
+      modalLocked=false;closeModal();expectingFrom=c.peer;mergeMode=false;sendTo(c,{t:'need'});
+      setTimeout(()=>{if(expectingFrom===c.peer){expectingFrom=null;holdPush=false;toast('No answer from your collaborator. You are still on your version.')}},20000);
     };
     $('#m-keep').onclick=()=>{modalLocked=false;closeModal();leaveRoom();toast('Kept your version. Disconnected.')};
   }
-
   function scheduleCollabPush(){
-    if(!room||applyingRemote||holdPush||awaitingPaper||!peerInfo.size)return;
+    if(!roomCode||applyingRemote||holdPush||awaitingPaper||!conns.size)return;
     clearTimeout(pushTimer);
-    pushTimer=setTimeout(()=>{if(room&&!holdPush&&!awaitingPaper&&acts.patch)acts.patch(snapshotState())},350);
+    pushTimer=setTimeout(()=>{if(roomCode&&!holdPush&&!awaitingPaper&&conns.size)broadcast(Object.assign({t:'patch'},snapshotState()))},350);
+  }
+
+  /* --- connection --- */
+  function destroyPeer(){
+    clearTimeout(retryTimer);
+    conns.forEach(c=>{try{c.close()}catch(e){}});conns.clear();helloFrom.clear();
+    try{peer&&peer.destroy()}catch(e){}
+    peer=null;isHub=false;hubPeers=1;
   }
   function leaveRoom(){
-    clearTimeout(waitTimer);clearTimeout(pushTimer);
-    try{room&&room.leave()}catch(e){}
-    room=null;acts={};peerInfo.clear();roomCode=null;connState='idle';awaitingPaper=false;needSent=false;expectingFrom=null;holdPush=false;
+    session++;clearTimeout(pushTimer);destroyPeer();
+    roomCode=null;connState='idle';lastErr='';awaitingPaper=false;needSent=false;expectingFrom=null;mergeMode=false;sessionSynced=false;holdPush=false;
     updateCollabUI();
   }
-  async function connect(code,mode){ // mode: 'linked' (paper already on this device) | 'fresh' (fetch paper from the room)
-    leaveRoom();
-    roomCode=code;connState='loading';awaitingPaper=mode==='fresh';holdPush=awaitingPaper;needSent=false;
-    updateCollabUI();
-    const t=await loadTransport();
-    if(roomCode!==code)return false;
-    if(!t){leaveRoom();toast('Could not load the collaboration library. Check your connection and try again.');return false}
-    try{room=t.joinRoom({appId:COLLAB_APP,rtcConfig:RTC_CFG},code)}
-    catch(e){console.error(e);leaveRoom();toast('Could not open the room.');return false}
-    const [sendHello,onHello]=room.makeAction('hello');
-    const [sendNeed,onNeed]=room.makeAction('need');
-    const [sendPaper,onPaper]=room.makeAction('paper');
-    const [sendPatch,onPatch]=room.makeAction('patch');
-    acts={hello:sendHello,need:sendNeed,paper:sendPaper,patch:sendPatch};
-    room.onPeerJoin(id=>{peerInfo.set(id,null);updateCollabUI();if(!awaitingPaper)sendHello(helloPayload(),id)});
-    room.onPeerLeave(id=>{peerInfo.delete(id);updateCollabUI()});
-    onHello(handleHello);
-    onNeed((_,id)=>{if(awaitingPaper)return;sendPaper(snapshotState(),id)});
-    onPaper(async(p,id)=>{
-      if(!p||!Array.isArray(p.sections))return;
-      if(awaitingPaper){await becomeGuestPaper(p)}
-      else if(expectingFrom===id){
-        expectingFrom=null;adoptPaper(p);holdPush=false;renderAll();updateCollabUI();scheduleSave();toast('Paper updated');
-      }
+  function errText(e){
+    const t=e&&e.type||'';
+    if(t==='network'||t==='socket-error'||t==='socket-closed'||t==='server-error')return 'cannot reach the connection server (0.peerjs.com). Check your internet, VPN or firewall.';
+    if(t==='browser-incompatible')return 'this browser does not support WebRTC.';
+    return 'connection problem'+(t?' ('+t+')':'')+'.';
+  }
+  function failAndRetry(tok,msg,delay){
+    if(tok!==session)return;
+    destroyPeer();connState='error';lastErr=msg;updateCollabUI();
+    retryTimer=setTimeout(()=>startPeer(tok),delay||6000);
+  }
+  function startPeer(tok){
+    if(tok!==session||!roomCode)return;
+    destroyPeer();connState='signaling';updateCollabUI();
+    let p;try{p=new window.Peer(hubId(roomCode),{debug:1})}catch(e){return failAndRetry(tok,errText(e))}
+    peer=p;
+    const sigTimer=setTimeout(()=>{if(tok===session&&peer===p&&!p.open)failAndRetry(tok,'cannot reach the connection server (0.peerjs.com). Check your internet, VPN or firewall.')},12000);
+    p.on('open',()=>{
+      clearTimeout(sigTimer);if(tok!==session||peer!==p)return;
+      isHub=true;connState='live';updateCollabUI();
     });
-    onPatch(p=>{if(awaitingPaper||holdPush)return;mergeRemote(p)});
-    connState='live';updateCollabUI();
-    clearTimeout(waitTimer);
-    waitTimer=setTimeout(()=>{if(roomCode===code&&!peerInfo.size)toast(awaitingPaper?'No one found for this code yet. Ask them to open the paper and click Go live.':'Nobody else has joined yet.')},25000);
-    return true;
+    p.on('connection',c=>{
+      if(tok!==session||peer!==p)return;
+      c.on('open',()=>{conns.set(c.peer,c);sendTo(c,myHello());broadcast({t:'peers',n:conns.size+1});updateCollabUI()});
+      c.on('data',m=>onData(m,c));
+      const gone=()=>{if(conns.get(c.peer)===c){conns.delete(c.peer);helloFrom.delete(c.peer);broadcast({t:'peers',n:conns.size+1});updateCollabUI()}};
+      c.on('close',gone);c.on('error',gone);
+    });
+    p.on('disconnected',()=>{if(tok===session&&peer===p&&isHub){try{p.reconnect()}catch(e){}}});
+    p.on('error',err=>{
+      clearTimeout(sigTimer);if(tok!==session||peer!==p)return;
+      if(err.type==='unavailable-id')return startClient(tok);   // someone already holds this room: join them
+      failAndRetry(tok,errText(err));
+    });
+  }
+  function startClient(tok){
+    if(tok!==session||!roomCode)return;
+    destroyPeer();connState='signaling';updateCollabUI();
+    let p;try{p=new window.Peer({debug:1})}catch(e){return failAndRetry(tok,errText(e))}
+    peer=p;isHub=false;
+    let linkTimer=null;
+    const sigTimer=setTimeout(()=>{if(tok===session&&peer===p&&!p.open)failAndRetry(tok,'cannot reach the connection server (0.peerjs.com). Check your internet, VPN or firewall.')},12000);
+    const lost=()=>{ // the room holder left: try to take over after a short random delay
+      if(tok!==session||peer!==p)return;
+      destroyPeer();connState='signaling';updateCollabUI();
+      retryTimer=setTimeout(()=>startPeer(tok),400+Math.random()*1400);
+    };
+    p.on('open',()=>{
+      clearTimeout(sigTimer);if(tok!==session||peer!==p)return;
+      const c=p.connect(hubId(roomCode),{reliable:true});
+      linkTimer=setTimeout(()=>{if(tok===session&&peer===p&&!conns.size)failAndRetry(tok,'found the room but could not open a direct link. Your network may block peer-to-peer connections.',8000)},15000);
+      c.on('open',()=>{clearTimeout(linkTimer);if(tok!==session||peer!==p)return;conns.set(c.peer,c);connState='live';sendTo(c,myHello());updateCollabUI()});
+      c.on('data',m=>onData(m,c));
+      c.on('close',lost);c.on('error',lost);
+    });
+    p.on('disconnected',()=>{try{p.reconnect()}catch(e){}});
+    p.on('error',err=>{
+      clearTimeout(sigTimer);clearTimeout(linkTimer);if(tok!==session||peer!==p)return;
+      if(err.type==='peer-unavailable')return lost();            // holder vanished between checks
+      failAndRetry(tok,errText(err));
+    });
+  }
+  async function connect(code,mode){ // mode: 'linked' = paper already on this device, 'fresh' = fetch the paper from the room
+    leaveRoom();const tok=session;
+    roomCode=code;connState='loading';awaitingPaper=mode==='fresh';holdPush=awaitingPaper;
+    updateCollabUI();
+    const ok=await loadPeerJS();
+    if(tok!==session)return false;
+    if(!ok){connState='error';lastErr='could not load the connection library. Check your internet.';updateCollabUI();toast('Could not load the connection library.');return false}
+    startPeer(tok);return true;
   }
   async function goLive(){
     saveCurrent();
     if(!currentCollabCode)currentCollabCode=makeRoomCode();
     await persist();
+    $('#pq-dash').classList.remove('open');
     const ok=await connect(currentCollabCode,'linked');
-    if(ok)openCollabModal();
+    openCollabModal();
     return ok;
   }
   async function joinByCode(raw){
     const code=String(raw||'').trim().toUpperCase();
     if(!/^PQ-[A-Z0-9]{8}$/.test(code)){toast('Codes look like PQ-ABCD2345');return false}
-    if(code===currentCollabCode)return connect(code,'linked');
+    if(roomCode===code&&connState!=='error')return true;
     let rec=null;try{rec=(await idbAll()).find(r=>r.collabCode===code)}catch(e){}
-    if(rec){ if(rec.id!==currentProjectId)await switchProject(rec.id); return connect(code,'linked') }
+    if(rec){ // you already have this paper: open your copy
+      if(rec.id!==currentProjectId)await switchProject(rec.id);
+      currentCollabCode=code;$('#pq-dash').classList.remove('open');
+      toast('Opening your copy of “'+(state.paperTitle||'paper')+'”');
+      return connect(code,'linked');
+    }
     await persist();
-    const ok=await connect(code,'fresh');
-    if(ok)toast('Looking for the paper…');
+    const ok=await connect(code,'fresh'); // stays on Home with live status until the paper arrives, then opens it
     return ok;
   }
   function openCollabModal(){
     const on=!!roomCode;
     let h='<h3>Live collaboration</h3>';
     if(on){
-      h+='<p class="pq-help">Share this code. Whoever joins gets this paper in their own list, and the same paper every time they use the code.</p><div class="pq-code">'+escapeHtml(roomCode)+'</div><p class="pq-help">'+escapeHtml(collabLine())+'</p>'+
+      h+='<p class="pq-help">Share this code. People enter it under “Join a shared paper” on the Home screen and get this paper.</p><div class="pq-code">'+escapeHtml(roomCode)+'</div><p class="pq-help" id="m-status">'+escapeHtml(collabLine())+'</p>'+
         '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-copy">Copy code</button><button type="button" class="pq-btn" id="m-leave">Disconnect</button><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>';
+    }else if(currentCollabCode){
+      h+='<p class="pq-help">This paper is shared as</p><div class="pq-code">'+escapeHtml(currentCollabCode)+'</div><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-unlink">Stop sharing</button><button type="button" class="pq-btn" id="m-cancel">Close</button><button type="button" class="pq-btn pq-btn-primary" id="m-live">Go live</button></div>';
     }else{
-      h+=currentCollabCode
-        ?'<p class="pq-help">This paper is shared as <strong>'+escapeHtml(currentCollabCode)+'</strong>.</p><button type="button" class="pq-btn pq-btn-primary" id="m-live" style="width:100%;margin-bottom:6px">Go live</button><button type="button" class="pq-btn" id="m-unlink" style="width:100%;margin-bottom:10px">Stop sharing this paper</button>'
-        :'<p class="pq-help">Create a code for “'+escapeHtml(state.paperTitle||'this paper')+'”. Others join with it and receive this paper.</p><button type="button" class="pq-btn pq-btn-primary" id="m-live" style="width:100%;margin-bottom:10px">Share this paper</button>';
-      h+='<label class="pq-lbl">Join with a code</label><input class="pq-inp" id="m-join-code" style="width:100%" placeholder="PQ-XXXXXXXX" autocomplete="off"><p class="pq-help">The shared paper is added to your list. Your current paper is not replaced.</p><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-join">Join</button></div>';
+      h+='<p class="pq-help">Create a code for “'+escapeHtml(state.paperTitle||'this paper')+'”. Anyone who joins with it from the Home screen gets this paper, and the same paper every time they use the code.</p><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-live">Create code</button></div>';
     }
     openModal(h);
     $('#m-cancel').onclick=closeModal;
     const lv=$('#m-live');if(lv)lv.onclick=()=>{closeModal();goLive()};
     const un=$('#m-unlink');if(un)un.onclick=async()=>{if(!confirm('Unlink this paper from its code? Your copy stays; collaborators keep theirs.'))return;currentCollabCode=null;await persist();updateCollabUI();closeModal();renderProjectGrid()};
-    const j=$('#m-join');if(j)j.onclick=async()=>{const v=$('#m-join-code').value;closeModal();await joinByCode(v)};
     const l=$('#m-leave');if(l)l.onclick=()=>{leaveRoom();closeModal()};
     const cp=$('#m-copy');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);toast('Copied')}catch(e){toast(roomCode)}};
   }
-  $('#pq-d-share').onclick=()=>{if(roomCode)openCollabModal();else goLive()};
   $('#pq-d-join').onclick=()=>joinByCode($('#pq-d-join-code').value);
+  $('#pq-d-join-code').addEventListener('keydown',e=>{if(e.key==='Enter')joinByCode(e.target.value)});
+  $('#pq-d-cancel').onclick=()=>{leaveRoom();toast('Cancelled')};
 
   /* Citations — compact copies of prior logic */
   function authorLastFirst(a){a=(a||'').trim();if(!a)return'';if(a.includes(','))return a;const p=a.split(/\s+/);return p.length===1?p[0]:p[p.length-1]+', '+p.slice(0,-1).join(' ')}
