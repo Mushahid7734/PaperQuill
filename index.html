@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PaperQuill – Research Writing Studio</title>
+  <meta name="description" content="Research writing with automatic citations, LanguageTool checking, DOI lookup, and live collaboration. Private, offline-first PWA.">
+  <meta name="theme-color" content="#3d4f5f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@400;500;600&display=swap');
+    html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#ebe6df}
+    #pq-root{
+      --bg:#ebe6df;--paper:#f7f4ef;--ink:#2a2e33;--muted:#6b727a;--accent:#3d4f5f;
+      --border:#d4cdc3;--panel:#e4ddd4;--hover:#dcd5cb;--cite:#3a5f6f;--ok:#3d6b4f;
+      --danger:#8b4a3f;--warn:#b8860b;--sidebar:260px;
+      font-family:"Source Sans 3",system-ui,sans-serif;color:var(--ink);background:var(--bg);
+      display:flex;flex-direction:column;height:100%;height:100dvh;position:fixed;inset:0;isolation:isolate;
+    }
+    #pq-root *,#pq-root *::before,#pq-root *::after{box-sizing:border-box}
+    #pq-root[data-theme="dark"]{
+      --bg:#1a1e22;--paper:#242a30;--ink:#e2e6ea;--muted:#9aa3ab;--accent:#8eb0c8;
+      --border:#343c44;--panel:#222830;--hover:#2c343c;--cite:#8ab4c8;--ok:#7aaa88;--danger:#c89080;
+    }
+    .pq-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0}
+    .pq-logo{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:1.1rem;color:var(--accent);margin-right:4px}
+    .pq-btn{font:inherit;font-size:.78rem;font-weight:500;border:1px solid var(--border);background:var(--paper);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+    .pq-btn:hover{background:var(--hover)}
+    .pq-btn-primary{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+    .pq-btn-icon{padding:5px 8px;min-width:30px}
+    .pq-btn.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+    .pq-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+    .pq-sel,.pq-inp{font:inherit;font-size:.85rem;border:1px solid var(--border);border-radius:6px;background:var(--paper);color:var(--ink);padding:6px 8px}
+    .pq-collab-pill{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--paper);color:var(--muted)}
+    .pq-collab-pill.on{border-color:var(--ok);color:var(--ok)}
+    .pq-collab-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+    .pq-collab-pill.on .pq-collab-dot{background:var(--ok)}
+    .pq-body{display:flex;flex:1;min-height:0;position:relative}
+    .pq-sidebar{
+      width:var(--sidebar);max-width:42vw;background:var(--panel);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .2s,margin .2s;
+    }
+    #pq-root.pq-side-collapsed .pq-sidebar{width:0;max-width:0;border:none;margin:0;padding:0;overflow:hidden}
+    .pq-side-inner{width:var(--sidebar);max-width:42vw;padding:8px;display:flex;flex-direction:column;height:100%;overflow:hidden}
+    .pq-side-tabs{display:flex;gap:2px;margin-bottom:8px}
+    .pq-side-tabs button{flex:1;font-size:.72rem;padding:5px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:4px;cursor:pointer}
+    .pq-side-tabs button.active{background:var(--paper);color:var(--ink);font-weight:600}
+    .pq-list{flex:1;overflow-y:auto}
+    .pq-item{display:flex;align-items:center;gap:4px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:.82rem;border:1px solid transparent;margin-bottom:2px}
+    .pq-item:hover{background:var(--hover)}
+    .pq-item.active{background:var(--paper);border-color:var(--border);font-weight:600}
+    .pq-item .pq-del{opacity:0;border:none;background:none;color:var(--danger);cursor:pointer;margin-left:auto}
+    .pq-item:hover .pq-del{opacity:1}
+    .pq-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+    .pq-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg);align-items:center}
+    .pq-editor-wrap{flex:1;overflow-y:auto;padding:24px 6% 80px}
+    .pq-section-title{width:100%;max-width:42em;margin:0 auto 12px;border:none;background:transparent;font-family:"Source Serif 4",Georgia,serif;font-size:1.4rem;font-weight:600;color:var(--ink);padding:0 0 8px;border-bottom:1px solid var(--border);outline:none}
+    .pq-editor{min-height:280px;outline:none;font-family:"Source Serif 4",Georgia,serif;font-size:16px;line-height:1.75;color:var(--ink);max-width:42em;margin:0 auto}
+    .pq-editor:empty:before{content:attr(data-placeholder);color:var(--muted);opacity:.55;font-style:italic}
+    .pq-cite{color:var(--cite);border-bottom:1px dotted color-mix(in srgb,var(--cite) 50%,transparent)}
+    .pq-hl{background:color-mix(in srgb, #e8c547 45%, transparent);border-radius:2px;cursor:pointer}
+    .pq-hl.blue{background:color-mix(in srgb, #6a9ecf 40%, transparent)}
+    .pq-hl.green{background:color-mix(in srgb, #6aaa7a 40%, transparent)}
+    .pq-hl.pink{background:color-mix(in srgb, #d4899c 40%, transparent)}
+    .pq-ann-mark{background:color-mix(in srgb, var(--accent) 18%, transparent);border-bottom:2px solid var(--accent);cursor:pointer}
+    .pq-ann-panel{
+      position:fixed;right:12px;top:60px;bottom:80px;width:min(300px,92vw);z-index:700;
+      background:var(--paper);border:1px solid var(--border);border-radius:12px;
+      display:none;flex-direction:column;box-shadow:0 8px 28px rgba(0,0,0,.12);overflow:hidden;
+    }
+    .pq-ann-panel.open{display:flex}
+    .pq-ann-panel header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+    .pq-ann-panel header strong{flex:1;font-size:.9rem}
+    .pq-ann-list{flex:1;overflow-y:auto;padding:8px}
+    .pq-ann-card{border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;font-size:.8rem}
+    .pq-ann-card .meta{color:var(--muted);font-size:.72rem;margin-bottom:4px}
+    .pq-ann-card .quote{font-style:italic;opacity:.85;margin-bottom:6px;border-left:2px solid var(--border);padding-left:6px}
+    .pq-ann-toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg)}
+    .pq-lt-err{border-bottom:2px wavy var(--danger);cursor:pointer;background:color-mix(in srgb,var(--danger) 8%,transparent)}
+    .pq-works{max-width:42em;margin:32px auto 48px;padding-top:24px;border-top:2px solid var(--border)}
+    .pq-works h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.2rem;text-align:center;margin:0 0 16px}
+    .pq-bib-entry{font-family:"Source Serif 4",Georgia,serif;font-size:.95rem;line-height:1.6;margin:0 0 12px;padding-left:2em;text-indent:-2em}
+    .pq-works.ieee .pq-bib-entry{padding-left:0;text-indent:0}
+    .pq-wc{font-size:.75rem;color:var(--muted)}
+    .pq-modal-bg{display:none;position:fixed;inset:0;background:rgba(20,24,28,.45);z-index:1000;align-items:center;justify-content:center;padding:16px}
+    .pq-modal-bg.open{display:flex}
+    .pq-modal{background:var(--paper);color:var(--ink);border-radius:12px;border:1px solid var(--border);width:min(520px,96vw);max-height:88vh;overflow:auto;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+    .pq-modal h3{margin:0 0 10px;font-family:"Source Serif 4",Georgia,serif}
+    .pq-lbl{display:block;font-size:.78rem;color:var(--muted);margin:8px 0 4px}
+    .pq-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+    .pq-code{font-family:ui-monospace,monospace;font-size:1.3rem;letter-spacing:.12em;text-align:center;padding:12px;border-radius:8px;background:var(--bg);border:1px dashed var(--border);user-select:all;margin:8px 0}
+    .pq-toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--paper);padding:8px 16px;border-radius:8px;font-size:.85rem;z-index:2000;opacity:0;transition:opacity .2s;pointer-events:none}
+    .pq-toast.show{opacity:1}
+    .pq-src-card{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--paper);font-size:.82rem}
+    .pq-src-meta{color:var(--muted);font-size:.75rem}
+    .pq-src-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+    .pq-ac,.pq-dict{display:none;position:absolute;z-index:60;background:var(--paper);border:1px solid var(--border);border-radius:10px;max-height:260px;overflow:auto;min-width:260px;max-width:min(360px,90vw);box-shadow:0 8px 24px rgba(0,0,0,.12);padding:4px 0}
+    .pq-ac.open,.pq-dict.open{display:block}
+    .pq-ac-item,.pq-dict-item{padding:8px 12px;cursor:pointer;font-size:.82rem;border-bottom:1px solid var(--border)}
+    .pq-ac-item:hover,.pq-dict-item:hover{background:var(--hover)}
+    .pq-dict h4{margin:8px 12px 4px;font-size:.9rem}
+    .pq-dict p{margin:0 12px 8px;font-size:.78rem;color:var(--muted)}
+    .pq-help{font-size:.8rem;color:var(--muted);line-height:1.45;margin:0 0 10px}
+    .pq-dash{display:none;position:fixed;inset:0;z-index:900;background:var(--bg);overflow:auto;padding:24px 16px 100px}
+    .pq-dash.open{display:block}
+    .pq-dash-inner{max-width:720px;margin:0 auto}
+    .pq-dash h2{font-family:"Source Serif 4",Georgia,serif;margin:0 0 8px}
+    .pq-proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
+    .pq-proj-card{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--paper);cursor:pointer;text-align:left}
+    .pq-proj-card:hover{border-color:var(--accent)}
+    .pq-proj-card.active{outline:2px solid var(--accent)}
+    .pq-proj-card h4{margin:0 0 4px;font-size:.95rem}
+    .pq-proj-card p{margin:0;font-size:.75rem;color:var(--muted)}
+    .pq-status{font-size:.65rem;padding:2px 6px;border-radius:999px;border:1px solid var(--border);margin-left:6px}
+    .pq-status.draft{opacity:.8}.pq-status.revise{border-color:var(--warn);color:var(--warn)}.pq-status.done{border-color:var(--ok);color:var(--ok)}
+    .pq-dash-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+    .pq-capsule{
+      position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:800;
+      display:flex;gap:4px;padding:6px 8px;border-radius:999px;background:var(--panel);
+      border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.12);flex-wrap:wrap;justify-content:center;max-width:96vw
+    }
+    .pq-capsule .pq-btn{border-radius:999px;font-size:.75rem}
+    .pq-tools-menu{display:none;position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:850;background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:8px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    .pq-tools-menu.open{display:block}
+    .pq-tools-menu button{display:block;width:100%;text-align:left;margin-bottom:4px}
+    #pq-root.pq-focus .pq-top,#pq-root.pq-focus .pq-toolbar,#pq-root.pq-focus .pq-sidebar,#pq-root.pq-focus .pq-capsule,#pq-root.pq-focus .pq-works{display:none}
+    #pq-root.pq-focus .pq-editor-wrap{padding-top:48px}
+    .pq-focus-exit{display:none;position:fixed;top:12px;right:12px;z-index:900}
+    #pq-root.pq-focus .pq-focus-exit{display:block}
+    @media(max-width:800px){
+      #pq-root{--sidebar:min(280px,85vw)}
+      #pq-root:not(.pq-side-collapsed) .pq-sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.12);max-width:85vw}
+      .pq-main{width:100%}
+    }
+  </style>
+</head>
+<body>
+<div id="pq-root" class="pq-side-collapsed">
+  <div class="pq-top">
+    <span class="pq-logo">PaperQuill</span>
+    <div class="pq-sep"></div>
+    <button type="button" class="pq-btn pq-btn-icon" id="pq-toggle-side" title="Sections">☰</button>
+    <button type="button" class="pq-btn pq-btn-icon" id="pq-bold"><b>B</b></button>
+    <button type="button" class="pq-btn pq-btn-icon" id="pq-italic"><i>I</i></button>
+    <div class="pq-sep"></div>
+    <select class="pq-sel" id="pq-style" style="width:auto;min-width:100px">
+      <option value="mla9">MLA 9</option>
+      <option value="apa7">APA 7</option>
+      <option value="chicago-ad">Chicago AD</option>
+      <option value="chicago-nb">Chicago NB</option>
+      <option value="harvard">Harvard</option>
+      <option value="ieee">IEEE</option>
+    </select>
+    <button type="button" class="pq-btn pq-btn-primary" id="pq-insert-cite">Cite</button>
+    <button type="button" class="pq-btn" id="pq-add-source">+ Source</button>
+    <button type="button" class="pq-btn" id="pq-doi-fetch">DOI / ID</button>
+    <div class="pq-sep"></div>
+    <button type="button" class="pq-btn" id="pq-hl-btn" title="Highlight selection">Highlight</button>
+    <button type="button" class="pq-btn" id="pq-comment-btn" title="Comment on selection">Comment</button>
+    <button type="button" class="pq-btn" id="pq-ann-panel-btn" title="Annotations panel">Notes on text</button>
+    <button type="button" class="pq-btn" id="pq-lt-toggle" title="LanguageTool">LT Check</button>
+    <button type="button" class="pq-btn" id="pq-collab-btn">Collaborate</button>
+    <span class="pq-collab-pill" id="pq-collab-status"><span class="pq-collab-dot"></span><span id="pq-collab-label">Solo</span></span>
+    <div class="pq-sep"></div>
+    <button type="button" class="pq-btn" id="pq-disk-save" title="Save JSON to disk">Save disk</button>
+    <button type="button" class="pq-btn" id="pq-disk-open">Open disk</button>
+    <button type="button" class="pq-btn" id="pq-export">DOCX</button>
+    <span class="pq-wc" id="pq-wc">0 words</span>
+  </div>
+  <div class="pq-body">
+    <aside class="pq-sidebar"><div class="pq-side-inner">
+      <div class="pq-side-tabs">
+        <button type="button" class="active" data-side="sections">Sections</button>
+        <button type="button" data-side="sources">Sources</button>
+      </div>
+      <div id="pq-side-sections" class="pq-list"></div>
+      <div id="pq-side-sources" class="pq-list" style="display:none"></div>
+      <button type="button" class="pq-btn" id="pq-add-section" style="margin-top:8px">+ Section</button>
+    </div></aside>
+    <div class="pq-main">
+      <div class="pq-toolbar">
+        <span id="pq-style-hint" class="pq-help" style="margin:0;flex:1">Type @ to cite · double-click a word for synonyms · LT Check for grammar</span>
+        <span id="pq-disk-status" class="pq-wc"></span>
+        <select class="pq-sel" id="pq-sec-status" title="Section status" style="width:auto">
+          <option value="draft">Draft</option>
+          <option value="revise">Revise</option>
+          <option value="done">Done</option>
+        </select>
+        <button type="button" class="pq-btn" id="pq-refresh-bib">Refresh bib</button>
+      </div>
+      <div class="pq-editor-wrap">
+        <input type="text" class="pq-section-title" id="pq-sec-title" placeholder="Section title…">
+        <div class="pq-editor" id="pq-editor" contenteditable="true" data-placeholder="Write your research… Cite with @ or Cite button. Double-click a word for synonyms." spellcheck="true"></div>
+        <div class="pq-works" id="pq-works"><h2 id="pq-works-heading">Works Cited</h2><div id="pq-works-body"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="pq-capsule" id="pq-capsule">
+    <button type="button" class="pq-btn" id="cap-home">Home</button>
+    <button type="button" class="pq-btn" id="cap-sections">Sections</button>
+    <button type="button" class="pq-btn" id="cap-focus">Focus</button>
+    <button type="button" class="pq-btn" id="cap-tools">Tools</button>
+  </div>
+  <div class="pq-tools-menu" id="pq-tools-menu">
+    <button type="button" class="pq-btn" id="tool-lt">Run LanguageTool</button>
+    <button type="button" class="pq-btn" id="tool-autocap">Auto-capitalize: on</button>
+    <button type="button" class="pq-btn" id="tool-theme">Toggle theme</button>
+    <button type="button" class="pq-btn" id="tool-search">Search paper</button>
+    <button type="button" class="pq-btn" id="tool-notes">Research notes</button>
+    <button type="button" class="pq-btn" id="tool-snap">Snapshot section</button>
+    <button type="button" class="pq-btn" id="tool-snaps">View snapshots</button>
+    <button type="button" class="pq-btn" id="tool-shortcuts">Keyboard shortcuts</button>
+    <button type="button" class="pq-btn" id="tool-json">Backup JSON</button>
+    <button type="button" class="pq-btn" id="tool-ann">Annotations panel</button>
+    <button type="button" class="pq-btn" id="tool-collab">Collaborate</button>
+    <button type="button" class="pq-btn" id="tool-doi">Fetch by DOI</button>
+  </div>
+  <button type="button" class="pq-btn pq-focus-exit" id="pq-focus-exit">Exit focus</button>
+  <div class="pq-ann-panel" id="pq-ann-panel">
+    <header>
+      <strong>Annotations</strong>
+      <button type="button" class="pq-btn" id="pq-ann-close">Close</button>
+    </header>
+    <div class="pq-ann-toolbar">
+      <button type="button" class="pq-btn" id="pq-ann-filter-all">All</button>
+      <button type="button" class="pq-btn" id="pq-ann-filter-comments">Comments</button>
+      <button type="button" class="pq-btn" id="pq-ann-filter-hl">Highlights</button>
+    </div>
+    <div class="pq-ann-list" id="pq-ann-list"></div>
+  </div>
+  <div class="pq-dash" id="pq-dash"><div class="pq-dash-inner">
+    <h2 id="pq-dash-hello">Welcome</h2>
+    <p class="pq-help">Your private research desk. Multiple papers, IndexedDB, optional disk link, and live room codes.</p>
+    <div class="pq-dash-card">
+      <label class="pq-lbl">Researcher name</label>
+      <input class="pq-inp" id="pq-researcher" style="width:100%" placeholder="Your name">
+      <div class="pq-modal-actions" style="justify-content:flex-start">
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-save-name">Save name</button>
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue">Continue writing</button>
+      </div>
+    </div>
+    <div class="pq-dash-card">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+        <strong>Your papers</strong>
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-new">+ New paper</button>
+      </div>
+      <div class="pq-proj-grid" id="pq-proj-grid"></div>
+    </div>
+    <div class="pq-dash-card">
+      <strong>Session goal</strong>
+      <p class="pq-help" id="pq-session-line">0 / 500 words this session</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input class="pq-inp" id="pq-session-target" type="number" min="0" value="500" style="width:100px">
+        <button type="button" class="pq-btn" id="pq-session-set">Set goal</button>
+        <button type="button" class="pq-btn" id="pq-session-reset">Reset count</button>
+      </div>
+    </div>
+    <div class="pq-dash-card">
+      <strong>Quick tips</strong>
+      <ul class="pq-help" style="margin:8px 0 0;padding-left:18px">
+        <li>Switch papers from Home without losing work (autosaved).</li>
+        <li>Fetch sources by DOI · Cite with @ · LT Check for grammar.</li>
+        <li>Section status: Draft / Revise / Done · Snapshots before big cuts.</li>
+        <li>Search the whole paper · Notes pad · Keyboard shortcuts in Tools.</li>
+        <li>Save disk once; Re-link after reload if needed. Collaborate with a room code.</li>
+      </ul>
+    </div>
+  </div></div>
+  <div class="pq-ac" id="pq-ac"></div>
+  <div class="pq-dict" id="pq-dict"></div>
+  <div class="pq-modal-bg" id="pq-modal-bg"><div class="pq-modal" id="pq-modal"></div></div>
+  <div class="pq-toast" id="pq-toast"></div>
+</div>
+<script type="module">
+import * as Y from 'https://cdn.jsdelivr.net/npm/yjs@13.6.18/+esm';
+import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+esm';
+
+(function(){
+  const ROOT=document.getElementById('pq-root');
+  const $= (s,el)=>(el||document).querySelector(s);
+  const $$=(s,el)=>Array.from((el||document).querySelectorAll(s));
+  const META_KEY='paperquill-meta-v1';
+  const IDB_NAME='paperquill-db';
+  const IDB_STORE='projects';
+  const uid=()=>'id_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+
+  const DEFAULT_SECTIONS=[
+    {key:'title',title:'Title Page'},{key:'abstract',title:'Abstract'},{key:'intro',title:'Introduction'},
+    {key:'litreview',title:'Literature Review'},{key:'theory',title:'Theoretical Framework'},
+    {key:'method',title:'Methodology'},{key:'significance',title:'Significance / Rationale'},
+    {key:'results',title:'Results'},{key:'discussion',title:'Discussion'},
+    {key:'conclusion',title:'Conclusion'},{key:'works',title:'Works Cited'}
+  ];
+
+  let state={
+    style:'mla9',theme:'light',autoCap:true,ltOn:false,
+    sections:DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i})),
+    activeSectionId:null,sources:[],paperTitle:'',authorName:''
+  };
+  state.activeSectionId=state.sections[0].id;
+
+  let fileHandle=null, diskName='', projectDirty=false, ltMatches=[], ignoredLT=new Set();
+  let ydoc=null,provider=null,yMap=null,roomCode=null,peerCount=0,applyingRemote=false,pushTimer=null;
+
+  const editor=$('#pq-editor'), secTitle=$('#pq-sec-title'), worksBody=$('#pq-works-body'), worksHeading=$('#pq-works-heading');
+  const acEl=$('#pq-ac'), dictEl=$('#pq-dict');
+
+  function toast(m){const t=$('#pq-toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+  function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function stripHtml(h){const d=document.createElement('div');d.innerHTML=h||'';return d.innerText||''}
+  function wordCount(h){const t=stripHtml(h).trim();return t?t.split(/\s+/).length:0}
+  function totalWords(){return state.sections.reduce((n,s)=>n+wordCount(s.content),0)}
+
+  function readMeta(){try{return JSON.parse(localStorage.getItem(META_KEY)||'{}')||{}}catch(e){return{}}}
+  function writeMeta(m){try{localStorage.setItem(META_KEY,JSON.stringify(m))}catch(e){}}
+
+  function openIdb(){
+    return new Promise((res,rej)=>{
+      const r=indexedDB.open(IDB_NAME,2);
+      r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE,{keyPath:'id'})};
+      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+    });
+  }
+  async function idbPut(rec){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(rec);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)});
+  }
+  async function idbGet(id){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readonly');const q=tx.objectStore(IDB_STORE).get(id);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)});
+  }
+  async function idbAll(){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readonly');const q=tx.objectStore(IDB_STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});
+  }
+  async function idbDelete(id){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)});
+  }
+
+  let currentProjectId=null;
+  let sessionBase=0;
+
+  function emptyState(title){
+    const sections=DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[]}));
+    return {
+      style:'mla9',theme:'light',autoCap:true,ltOn:false,
+      sections,activeSectionId:sections[0].id,sources:[],
+      paperTitle:title||'Untitled paper',authorName:'',notes:'',annotations:[],
+      goals:{sessionTarget:500,sessionBase:0}
+    };
+  }
+
+  let saveTimer=null;
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(persist,400);
+    scheduleCollabPush();
+  }
+  async function persist(){
+    saveCurrent();
+    const meta=readMeta();
+    if(!currentProjectId)currentProjectId=meta.projectId||uid();
+    meta.projectId=currentProjectId;
+    meta.researcher=meta.researcher||state.authorName||'';
+    writeMeta(meta);
+    const name=state.paperTitle||'Untitled paper';
+    try{
+      await idbPut({
+        id:currentProjectId,
+        name,
+        updatedAt:new Date().toISOString(),
+        wordCount:totalWords(),
+        state
+      });
+    }catch(e){}
+    try{localStorage.setItem('paperquill-fallback',JSON.stringify({id:currentProjectId,state}))}catch(e){}
+    updateSessionLine();
+  }
+  function normalizeState(){
+    if(!state.sections||!state.sections.length){
+      state.sections=DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[]}));
+    }
+    state.sections.forEach(s=>{
+      if(!s.status)s.status='draft';
+      if(!s.snapshots)s.snapshots=[];
+    });
+    if(!state.sources)state.sources=[];
+    if(state.autoCap==null)state.autoCap=true;
+    if(!state.notes)state.notes='';
+    if(!state.annotations)state.annotations=[];
+    if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
+    if(!state.sections.find(s=>s.id===state.activeSectionId))state.activeSectionId=state.sections[0].id;
+  }
+  async function load(){
+    const meta=readMeta();
+    try{
+      if(meta.projectId){
+        const rec=await idbGet(meta.projectId);
+        if(rec&&rec.state){
+          currentProjectId=rec.id;
+          Object.assign(state,rec.state);
+        }
+      }
+      if(!currentProjectId){
+        const fb=localStorage.getItem('paperquill-fallback');
+        if(fb){
+          const d=JSON.parse(fb);
+          if(d.state){Object.assign(state,d.state);currentProjectId=d.id||uid()}
+        }
+      }
+      if(!currentProjectId){
+        currentProjectId=uid();
+        state=emptyState('Untitled paper');
+        meta.projectId=currentProjectId;
+        writeMeta(meta);
+        await persist();
+      }
+    }catch(e){
+      currentProjectId=uid();
+      state=emptyState('Untitled paper');
+    }
+    normalizeState();
+    if(meta.researcher)state.authorName=meta.researcher;
+    sessionBase=state.goals.sessionBase||totalWords();
+  }
+  async function switchProject(id){
+    await persist();
+    const rec=await idbGet(id);
+    if(!rec||!rec.state)return toast('Project not found');
+    currentProjectId=id;
+    state=Object.assign(emptyState(),rec.state);
+    normalizeState();
+    const meta=readMeta();meta.projectId=id;writeMeta(meta);
+    fileHandle=null;diskName='';
+    sessionBase=state.goals.sessionBase||totalWords();
+    renderAll();updateDiskStatus();
+    $('#pq-dash').classList.remove('open');
+    toast('Opened: '+(state.paperTitle||rec.name||'paper'));
+  }
+  async function createProject(){
+    await persist();
+    const title=prompt('Paper title:','Untitled paper')||'Untitled paper';
+    currentProjectId=uid();
+    state=emptyState(title);
+    if(readMeta().researcher)state.authorName=readMeta().researcher;
+    sessionBase=0;state.goals.sessionBase=0;
+    const meta=readMeta();meta.projectId=currentProjectId;writeMeta(meta);
+    fileHandle=null;diskName='';
+    await persist();
+    renderAll();
+    $('#pq-dash').classList.remove('open');
+    toast('New paper created');
+  }
+  async function deleteProject(id){
+    if(!confirm('Delete this paper from this browser?'))return;
+    await idbDelete(id);
+    if(currentProjectId===id){
+      const all=await idbAll();
+      if(all.length){
+        await switchProject(all.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''))[0].id);
+      }else{
+        await createProject();
+      }
+    }
+    await renderProjectGrid();
+    toast('Deleted');
+  }
+  async function renderProjectGrid(){
+    const grid=$('#pq-proj-grid');if(!grid)return;
+    let list=[];
+    try{list=await idbAll()}catch(e){}
+    list.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    if(!list.length){grid.innerHTML='<p class="pq-help">No papers yet.</p>';return}
+    grid.innerHTML=list.map(p=>{
+      const w=p.wordCount!=null?p.wordCount:(p.state?/*approx*/0:0);
+      const words=p.state&&p.state.sections?p.state.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0):w;
+      return '<div class="pq-proj-card'+(p.id===currentProjectId?' active':'')+'" data-id="'+p.id+'">'+
+        '<h4>'+escapeHtml(p.name||'Untitled')+'</h4>'+
+        '<p>'+words.toLocaleString()+' words · '+(p.updatedAt?String(p.updatedAt).slice(0,10):'')+'</p>'+
+        '<div style="margin-top:8px;display:flex;gap:6px">'+
+        '<button type="button" class="pq-btn pq-open-p" data-id="'+p.id+'">Open</button>'+
+        (list.length>1?'<button type="button" class="pq-btn pq-del-p" data-id="'+p.id+'">Delete</button>':'')+
+        '</div></div>';
+    }).join('');
+    grid.querySelectorAll('.pq-open-p').forEach(b=>b.onclick=e=>{e.stopPropagation();switchProject(b.dataset.id)});
+    grid.querySelectorAll('.pq-del-p').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteProject(b.dataset.id)});
+    grid.querySelectorAll('.pq-proj-card').forEach(c=>c.onclick=()=>switchProject(c.dataset.id));
+  }
+  function updateSessionLine(){
+    const el=$('#pq-session-line');if(!el)return;
+    const target=(state.goals&&state.goals.sessionTarget)||500;
+    const now=Math.max(0,totalWords()-(state.goals&&state.goals.sessionBase!=null?state.goals.sessionBase:sessionBase));
+    el.textContent=now.toLocaleString()+' / '+target.toLocaleString()+' words this session';
+  }
+  function getActiveSection(){return state.sections.find(s=>s.id===state.activeSectionId)||state.sections[0]}
+  function saveCurrent(){
+    const sec=getActiveSection();if(!sec)return;
+    sec.title=secTitle.value||sec.title;sec.content=editor.innerHTML;projectDirty=true;
+  }
+
+  /* Auto capitalize */
+  function applyAutoCap(e){
+    if(!state.autoCap)return;
+    if(e.inputType&&e.inputType.indexOf('insert')<0)return;
+    const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+    const node=sel.anchorNode;if(!node||node.nodeType!==3)return;
+    const text=node.textContent||'';const off=sel.anchorOffset;
+    if(off<1)return;
+    // After . ! ? + space, capitalize next letter — handled as user types space after end
+    if(off>=2){
+      const prev=text.slice(0,off);
+      const m=prev.match(/[.!?]\s+([a-z])$/);
+      if(m){
+        const i=off-1;
+        node.textContent=text.slice(0,i)+text.charAt(i).toUpperCase()+text.slice(i+1);
+        const r=document.createRange();r.setStart(node,off);r.collapse(true);sel.removeAllRanges();sel.addRange(r);
+      }
+    }
+    // Capitalize start of section
+    if(off===1&&/[a-z]/.test(text[0])&&text.length===1){
+      node.textContent=text.toUpperCase();
+      const r=document.createRange();r.setStart(node,1);r.collapse(true);sel.removeAllRanges();sel.addRange(r);
+    }
+  }
+
+  /* LanguageTool */
+  async function runLanguageTool(){
+    saveCurrent();
+    const text=stripHtml(editor.innerHTML);
+    if(!text.trim())return toast('Nothing to check');
+    toast('Checking with LanguageTool…');
+    try{
+      const body=new URLSearchParams({language:'en-US',text:text.slice(0,20000)});
+      const res=await fetch('https://api.languagetool.org/v2/check',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+      if(!res.ok)throw new Error('LT request failed');
+      const data=await res.json();
+      ltMatches=(data.matches||[]).filter(m=>{
+        const key=m.offset+'|'+m.length+'|'+(m.rule&&m.rule.id);
+        return !ignoredLT.has(key);
+      });
+      applyLTHighlights(text,ltMatches);
+      state.ltOn=true;
+      $('#pq-lt-toggle').classList.toggle('on',true);
+      toast(ltMatches.length?ltMatches.length+' issue(s) found':'No issues found');
+    }catch(e){
+      toast('LanguageTool unavailable (network or rate limit)');
+    }
+  }
+  function clearLT(){
+    ltMatches=[];
+    // strip marks by reloading section plain structure — keep content
+    saveCurrent();
+    const sec=getActiveSection();
+    const tmp=document.createElement('div');tmp.innerHTML=sec.content||'';
+    tmp.querySelectorAll('.pq-lt-err').forEach(el=>{
+      const t=document.createTextNode(el.textContent);el.replaceWith(t);
+    });
+    sec.content=tmp.innerHTML;editor.innerHTML=sec.content;
+    state.ltOn=false;$('#pq-lt-toggle').classList.remove('on');
+  }
+  function applyLTHighlights(plain,matches){
+    // Rebuild editor from plain + citation spans is hard; highlight by wrapping in plain text mode approximation
+    // Use mark over plain text only when editor has mostly text
+    const sorted=matches.slice().sort((a,b)=>b.offset-a.offset);
+    let html=escapeHtml(plain);
+    // work on escaped plain — loses formatting temporarily for LT pass
+    // Better approach: only mark if no complex HTML
+    const hasCite=editor.querySelector('.pq-cite');
+    if(hasCite){
+      // store matches for click via overlay list instead of destroying cites
+      showLTList(matches);
+      return;
+    }
+    sorted.forEach((m,idx)=>{
+      const start=m.offset,end=m.offset+m.length;
+      const before=html.slice(0,start),mid=html.slice(start,end),after=html.slice(end);
+      const key=m.offset+'|'+m.length+'|'+(m.rule&&m.rule.id);
+      html=before+'<span class="pq-lt-err" data-lt="'+idx+'" data-key="'+escapeHtml(key)+'">'+mid+'</span>'+after;
+    });
+    editor.innerHTML=html.replace(/\n/g,'<br>');
+    wireLTClicks(matches);
+  }
+  function showLTList(matches){
+    openModal('<h3>LanguageTool results</h3><p class="pq-help">Your text has citations, so issues are listed here instead of inline marks.</p>'+
+      matches.slice(0,40).map((m,i)=>'<div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px">'+
+        '<strong>'+escapeHtml((m.rule&&m.rule.category&&m.rule.category.name)||'Issue')+'</strong>'+
+        '<p class="pq-help" style="margin:4px 0">'+escapeHtml(m.message)+'</p>'+
+        '<p style="font-size:.85rem"><code>'+escapeHtml(stripHtml(editor.innerHTML).slice(m.offset,m.offset+m.length))+'</code></p>'+
+        (m.replacements&&m.replacements[0]?'<button type="button" class="pq-btn pq-btn-primary pq-lt-fix" data-i="'+i+'" data-rep="'+escapeHtml(m.replacements[0].value)+'">Fix: '+escapeHtml(m.replacements[0].value)+'</button> ':'')+
+        '<button type="button" class="pq-btn pq-lt-ign" data-i="'+i+'">Ignore</button></div>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.pq-lt-fix').forEach(b=>b.onclick=()=>{
+      const m=matches[+b.dataset.i];const rep=b.dataset.rep;
+      applyReplacement(m.offset,m.length,rep);closeModal();runLanguageTool();
+    });
+    $$('.pq-lt-ign').forEach(b=>b.onclick=()=>{
+      const m=matches[+b.dataset.i];
+      ignoredLT.add(m.offset+'|'+m.length+'|'+(m.rule&&m.rule.id));
+      b.closest('div').remove();
+    });
+  }
+  function wireLTClicks(matches){
+    $$('.pq-lt-err',editor).forEach(el=>{
+      el.onclick=()=>{
+        const m=matches[+el.dataset.lt];if(!m)return;
+        openModal('<h3>'+escapeHtml((m.rule&&m.rule.category&&m.rule.category.name)||'LanguageTool')+'</h3>'+
+          '<p class="pq-help">'+escapeHtml(m.message)+'</p>'+
+          (m.rule&&m.rule.description?'<p class="pq-help">'+escapeHtml(m.rule.description)+'</p>':'')+
+          '<p style="font-size:.9rem">“'+escapeHtml(el.textContent)+'”</p>'+
+          '<div class="pq-modal-actions">'+
+          (m.replacements||[]).slice(0,5).map(r=>'<button type="button" class="pq-btn pq-btn-primary pq-lt-rep" data-v="'+escapeHtml(r.value)+'">'+escapeHtml(r.value)+'</button>').join('')+
+          '<button type="button" class="pq-btn" id="m-ignore">Ignore</button>'+
+          '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+        $('#m-cancel').onclick=closeModal;
+        $('#m-ignore').onclick=()=>{ignoredLT.add(el.dataset.key);el.classList.remove('pq-lt-err');closeModal()};
+        $$('.pq-lt-rep').forEach(b=>b.onclick=()=>{
+          el.replaceWith(document.createTextNode(b.dataset.v));
+          saveCurrent();scheduleSave();closeModal();
+        });
+      };
+    });
+  }
+  function applyReplacement(offset,length,replacement){
+    const plain=stripHtml(editor.innerHTML);
+    const next=plain.slice(0,offset)+replacement+plain.slice(offset+length);
+    editor.innerHTML=escapeHtml(next).replace(/\n/g,'<br>');
+    saveCurrent();scheduleSave();
+  }
+
+  /* Dictionary Datamuse */
+  async function openDict(word,rect){
+    word=(word||'').replace(/[^a-zA-Z\-']/g,'');
+    if(!word||word.length<2)return;
+    dictEl.innerHTML='<p class="pq-help" style="padding:8px">Looking up…</p>';
+    dictEl.classList.add('open');
+    const rootRect=ROOT.getBoundingClientRect();
+    dictEl.style.left=Math.min(rect.left-rootRect.left,window.innerWidth-300)+'px';
+    dictEl.style.top=Math.min(rect.bottom-rootRect.top+4,window.innerHeight-200)+'px';
+    try{
+      const [syn,ant,rel]=await Promise.all([
+        fetch('https://api.datamuse.com/words?rel_syn='+encodeURIComponent(word)+'&max=12').then(r=>r.json()),
+        fetch('https://api.datamuse.com/words?rel_ant='+encodeURIComponent(word)+'&max=8').then(r=>r.json()),
+        fetch('https://api.datamuse.com/words?ml='+encodeURIComponent(word)+'&max=8').then(r=>r.json())
+      ]);
+      dictEl.innerHTML='<h4>'+escapeHtml(word)+'</h4>'+
+        '<p><strong>Synonyms</strong></p>'+(syn.length?syn.map(x=>'<div class="pq-dict-item" data-w="'+escapeHtml(x.word)+'">'+escapeHtml(x.word)+'</div>').join(''):'<p class="pq-help">None found</p>')+
+        (ant.length?'<p><strong>Antonyms</strong></p>'+ant.map(x=>'<div class="pq-dict-item" data-w="'+escapeHtml(x.word)+'">'+escapeHtml(x.word)+'</div>').join(''):'')+
+        (rel.length?'<p><strong>Related</strong></p>'+rel.map(x=>'<div class="pq-dict-item" data-w="'+escapeHtml(x.word)+'">'+escapeHtml(x.word)+'</div>').join(''):'')+
+        '<div style="padding:8px"><button type="button" class="pq-btn" id="dict-close">Close</button></div>';
+      $('#dict-close').onclick=()=>dictEl.classList.remove('open');
+      $$('.pq-dict-item',dictEl).forEach(el=>{
+        el.onclick=()=>{
+          const sel=window.getSelection();
+          if(sel&&sel.rangeCount){
+            const r=sel.getRangeAt(0);
+            r.deleteContents();r.insertNode(document.createTextNode(el.dataset.w));
+          }
+          dictEl.classList.remove('open');saveCurrent();scheduleSave();
+        };
+      });
+    }catch(e){dictEl.innerHTML='<p class="pq-help" style="padding:8px">Dictionary unavailable offline</p>'}
+  }
+  editor.addEventListener('dblclick',()=>{
+    const sel=window.getSelection();
+    const word=(sel&&sel.toString()||'').trim();
+    if(!word)return;
+    const r=sel.getRangeAt(0).getBoundingClientRect();
+    openDict(word,r);
+  });
+
+  /* DOI fetch — Crossref + Europe PMC */
+  async function fetchByDOI(doi){
+    doi=String(doi||'').trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'');
+    if(!doi)return null;
+    // Crossref
+    try{
+      const res=await fetch('https://api.crossref.org/works/'+encodeURIComponent(doi),{headers:{'Accept':'application/json'}});
+      if(res.ok){
+        const m=(await res.json()).message;
+        const authors=(m.author||[]).map(a=>[a.family,a.given].filter(Boolean).join(', ')).join('; ');
+        return {
+          type:m.type&&m.type.includes('journal')?'article':'book',
+          authors,title:(m.title&&m.title[0])||'',year:(m.issued&&m.issued['date-parts']&&m.issued['date-parts'][0][0])||'',
+          container:(m['container-title']&&m['container-title'][0])||'',volume:m.volume||'',issue:m.issue||'',
+          pages:m.page||'',publisher:m.publisher||'',url:'https://doi.org/'+doi,doi
+        };
+      }
+    }catch(e){}
+    // Europe PMC
+    try{
+      const res=await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:'+encodeURIComponent(doi)+'&format=json');
+      if(res.ok){
+        const data=await res.json();
+        const r=data.resultList&&data.resultList.result&&data.resultList.result[0];
+        if(r){
+          return {
+            type:'article',authors:(r.authorString||'').replace(/, /g,'; '),title:r.title||'',
+            year:(r.pubYear||'')+'',container:r.journalTitle||'',volume:r.journalVolume||'',
+            pages:r.pageInfo||'',url:r.doi?'https://doi.org/'+r.doi:(r.fullTextUrlList&&r.fullTextUrlList.fullTextUrl&&r.fullTextUrlList.fullTextUrl[0]&&r.fullTextUrlList.fullTextUrl[0].url)||'',doi
+          };
+        }
+      }
+    }catch(e){}
+    // OpenAlex (free, no key)
+    try{
+      const res=await fetch('https://api.openalex.org/works/https://doi.org/'+encodeURIComponent(doi));
+      if(res.ok){
+        const w=await res.json();
+        const authors=(w.authorships||[]).map(a=>a.author&&a.author.display_name).filter(Boolean).map(n=>{
+          const p=n.split(' ');return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+        }).join('; ');
+        return {
+          type:'article',authors,title:w.title||'',year:(w.publication_year||'')+'',
+          container:(w.primary_location&&w.primary_location.source&&w.primary_location.source.display_name)||'',
+          url:w.doi||('https://doi.org/'+doi),doi
+        };
+      }
+    }catch(e){}
+    return null;
+  }
+  function openDOIModal(){
+    openModal('<h3>Fetch source by DOI</h3><p class="pq-help">Uses Crossref, Europe PMC, and OpenAlex (no API key).</p>'+
+      '<label class="pq-lbl">DOI</label><input class="pq-inp" id="m-doi" style="width:100%" placeholder="10.xxxx/....">'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-go">Fetch</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-go').onclick=async()=>{
+      const doi=$('#m-doi').value;toast('Fetching…');
+      const src=await fetchByDOI(doi);
+      if(!src){toast('Not found');return}
+      src.id=uid();
+      state.sources.push(src);scheduleSave();closeModal();renderSources();
+      toast('Added: '+(src.title||'source').slice(0,40));
+      // open edit for polish
+      editSource(src.id);
+    };
+  }
+
+  /* Disk save with handle re-link */
+  async function saveToDisk(force){
+    saveCurrent();
+    const blob=new Blob([JSON.stringify({app:'PaperQuill',version:1,state,savedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+    try{
+      if(!force&&fileHandle){
+        let ok=true;
+        if(fileHandle.queryPermission){
+          let p=await fileHandle.queryPermission({mode:'readwrite'});
+          if(p!=='granted'&&fileHandle.requestPermission)p=await fileHandle.requestPermission({mode:'readwrite'});
+          ok=p==='granted';
+        }
+        if(ok){
+          const w=await fileHandle.createWritable();await w.write(blob);await w.close();
+          diskName=fileHandle.name||diskName;projectDirty=false;updateDiskStatus();toast('Saved · '+diskName);return;
+        }
+      }
+      if(window.showSaveFilePicker){
+        fileHandle=await window.showSaveFilePicker({
+          suggestedName:(diskName||'paperquill-paper.json'),
+          types:[{description:'PaperQuill JSON',accept:{'application/json':['.json']}}]
+        });
+        const w=await fileHandle.createWritable();await w.write(blob);await w.close();
+        diskName=fileHandle.name;projectDirty=false;updateDiskStatus();toast('Saved · '+diskName);return;
+      }
+    }catch(e){if(e&&e.name==='AbortError')return}
+    if(typeof saveAs==='function'){saveAs(blob,diskName||'paperquill-paper.json');toast('Downloaded JSON')}
+  }
+  async function openFromDisk(){
+    try{
+      if(window.showOpenFilePicker){
+        const [h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}]});
+        fileHandle=h;const f=await h.getFile();const text=await f.text();
+        const data=JSON.parse(text);const st=data.state||data;
+        Object.assign(state,st);diskName=h.name;projectDirty=false;
+        scheduleSave();renderAll();updateDiskStatus();toast('Opened · '+diskName);return;
+      }
+    }catch(e){if(e&&e.name==='AbortError')return}
+    toast('Open not supported — use Backup JSON import via file input');
+  }
+  function updateDiskStatus(){
+    const el=$('#pq-disk-status');
+    const btn=$('#pq-disk-save');
+    if(fileHandle){el.textContent='Disk: '+(diskName||'linked');btn.textContent=projectDirty?'Save●':'Save'}
+    else if(diskName){el.textContent='Re-link: '+diskName;btn.textContent='Re-link'}
+    else{el.textContent='';btn.textContent='Save disk'}
+  }
+
+  /* Collab — same as before */
+  function makeRoomCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='PQ-';for(let i=0;i<6;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
+  function updateCollabUI(){
+    const pill=$('#pq-collab-status'),label=$('#pq-collab-label');
+    if(roomCode&&provider){pill.classList.add('on');label.textContent=roomCode+(peerCount>1?' · '+peerCount+' online':' · waiting…')}
+    else{pill.classList.remove('on');label.textContent='Solo'}
+  }
+  function snapshotState(){saveCurrent();return {style:state.style,theme:state.theme,autoCap:state.autoCap,sections:state.sections,activeSectionId:state.activeSectionId,sources:state.sources,paperTitle:state.paperTitle,authorName:state.authorName,notes:state.notes,goals:state.goals,annotations:state.annotations||[]}}
+  function applyRemoteSnapshot(payload){
+    if(!payload||!payload.sections)return;applyingRemote=true;
+    try{
+      Object.assign(state,{style:payload.style,theme:payload.theme,autoCap:payload.autoCap,sections:payload.sections,sources:payload.sources||[],paperTitle:payload.paperTitle,authorName:payload.authorName,notes:payload.notes||'',goals:payload.goals||state.goals,annotations:payload.annotations||[]});normalizeState();
+      if(payload.activeSectionId&&state.sections.find(s=>s.id===payload.activeSectionId))state.activeSectionId=payload.activeSectionId;
+      renderAll();
+    }finally{applyingRemote=false}
+  }
+  function scheduleCollabPush(){
+    if(!yMap||applyingRemote)return;clearTimeout(pushTimer);
+    pushTimer=setTimeout(()=>{if(!yMap||applyingRemote)return;yMap.set('paper',snapshotState())},400);
+  }
+  function leaveRoom(){try{provider&&provider.destroy()}catch(e){}try{ydoc&&ydoc.destroy()}catch(e){}provider=ydoc=yMap=null;roomCode=null;peerCount=0;updateCollabUI()}
+  function joinRoom(code,asHost){
+    code=String(code||'').trim().toUpperCase();
+    if(!/^PQ-[A-Z0-9]{6}$/.test(code)){toast('Invalid code');return false}
+    leaveRoom();roomCode=code;ydoc=new Y.Doc();yMap=ydoc.getMap('paperquill');
+    provider=new WebrtcProvider('paperquill-'+code,ydoc,{signaling:['wss://signaling.yjs.dev']});
+    yMap.observe(()=>{if(applyingRemote)return;const r=yMap.get('paper');if(r)applyRemoteSnapshot(r)});
+    provider.awareness.on('change',()=>{peerCount=provider.awareness.getStates().size;updateCollabUI()});
+    if(asHost)setTimeout(()=>{yMap&&yMap.set('paper',snapshotState())},400);
+    updateCollabUI();toast(asHost?'Room created':'Joined '+code);return true;
+  }
+  function openCollabModal(){
+    const on=!!(roomCode&&provider);
+    openModal('<h3>Live collaboration</h3><p class="pq-help">Share a room code. Peers join with the same code (Yjs + WebRTC). Highlights and comments sync with the paper.</p>'+
+      (on?('<div class="pq-code">'+escapeHtml(roomCode)+'</div><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-copy">Copy</button><button type="button" class="pq-btn" id="m-leave">Leave</button><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>')
+      :('<button type="button" class="pq-btn pq-btn-primary" id="m-create" style="width:100%;margin-bottom:10px">Create room</button><label class="pq-lbl">Join code</label><input class="pq-inp" id="m-join-code" style="width:100%" placeholder="PQ-XXXXXX"><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-join">Join</button></div>')));
+    $('#m-cancel').onclick=closeModal;
+    const c=$('#m-create');if(c)c.onclick=()=>{if(joinRoom(makeRoomCode(),true)){closeModal();openCollabModal()}};
+    const j=$('#m-join');if(j)j.onclick=()=>{if(joinRoom($('#m-join-code').value,false))closeModal()};
+    const l=$('#m-leave');if(l)l.onclick=()=>{leaveRoom();closeModal()};
+    const cp=$('#m-copy');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);toast('Copied')}catch(e){toast(roomCode)}};
+  }
+
+  /* Citations — compact copies of prior logic */
+  function authorLastFirst(a){a=(a||'').trim();if(!a)return'';if(a.includes(','))return a;const p=a.split(/\s+/);return p.length===1?p[0]:p[p.length-1]+', '+p.slice(0,-1).join(' ')}
+  function authorFirstLast(a){a=(a||'').trim();if(!a)return'';if(a.includes(',')){const[l,...r]=a.split(',');return(r.join(',').trim()+' '+l.trim()).trim()}return a}
+  function authorsList(src,style){
+    const raw=(src.authors||'').split(/;\s*/).map(x=>x.trim()).filter(Boolean);if(!raw.length)return'Anonymous';
+    if(style==='mla9'){if(raw.length===1)return authorLastFirst(raw[0]);if(raw.length===2)return authorLastFirst(raw[0])+', and '+authorFirstLast(raw[1]);return authorLastFirst(raw[0])+', et al.'}
+    if(style==='apa7'){if(raw.length===1)return authorLastFirst(raw[0]);if(raw.length===2)return authorLastFirst(raw[0])+', & '+authorLastFirst(raw[1]);return raw.slice(0,-1).map(authorLastFirst).join(', ')+', & '+authorLastFirst(raw[raw.length-1])}
+    if(style==='ieee')return raw.map(authorFirstLast).join(', ');
+    if(raw.length===1)return authorLastFirst(raw[0]);if(raw.length===2)return authorLastFirst(raw[0])+' and '+authorLastFirst(raw[1]);return authorLastFirst(raw[0])+' et al.';
+  }
+  function inTextAuthor(src){const raw=(src.authors||'').split(/;\s*/)[0]||'Anonymous';if(raw.includes(','))return raw.split(',')[0].trim();const p=raw.trim().split(/\s+/);return p[p.length-1]}
+  function yearOf(src){return String(src.year||'n.d.').slice(0,4)}
+  function formatBibliographyEntry(src,style,index){
+    const authors=authorsList(src,style),title=src.title||'Untitled',year=yearOf(src),container=src.container||'',pub=src.publisher||'',url=src.url||'',pages=src.pages||'',vol=src.volume||'',iss=src.issue||'',type=(src.type||'book').toLowerCase();
+    if(style==='mla9'){let t=authors+'. ';if(type==='article'||type==='journal'){t+='"'+title+'." ';if(container)t+='<i>'+escapeHtml(container)+'</i>, ';if(vol)t+='vol. '+vol+', ';if(iss)t+='no. '+iss+', ';t+=year+(pages?', pp. '+pages:'')+'.'}else{t+='<i>'+escapeHtml(title)+'</i>. '+(pub?pub+', ':'')+year+'.'}return t}
+    if(style==='apa7'){let t=authors+' ('+year+'). ';if(type==='article'||type==='journal'){t+=title+'. ';if(container)t+='<i>'+escapeHtml(container)+'</i>';if(vol)t+=', <i>'+vol+'</i>';if(iss)t+='('+iss+')';if(pages)t+=', '+pages;t+='.'}else t+='<i>'+escapeHtml(title)+'</i>. '+(pub?pub+'.':'');return t}
+    if(style==='ieee'){return '['+(index+1)+'] '+authorsList(src,'ieee')+', '+(type==='article'?'"'+title+'," <i>'+escapeHtml(container)+'</i>, '+(vol?'vol. '+vol+', ':'')+(pages?'pp. '+pages+', ':'')+year+'.':'<i>'+escapeHtml(title)+'</i>. '+(pub?pub+', ':'')+year+'.')}
+    return authors+'. '+year+'. <i>'+escapeHtml(title)+'</i>. '+(pub?pub+'.':'');
+  }
+  function formatInText(src,style,page){
+    const last=inTextAuthor(src),year=yearOf(src),p=(page||'').trim();
+    if(style==='mla9')return p?'('+last+' '+p+')':'('+last+')';
+    if(style==='ieee'){const idx=citedSourceIds().indexOf(src.id);return '['+(idx>=0?idx+1:'?')+']'}
+    return p?'('+last+', '+year+', p. '+p+')':'('+last+', '+year+')';
+  }
+  function bibliographyTitle(style){return style==='mla9'?'Works Cited':style==='chicago-nb'?'Bibliography':'References'}
+  function citedSourceIds(){
+    const htmlAll=state.sections.map(s=>s.content||'').join(' ')+(editor.innerHTML||'');
+    const ids=[];const re=/data-source-id="([^"]+)"/g;let m;while((m=re.exec(htmlAll)))if(ids.indexOf(m[1])<0)ids.push(m[1]);return ids;
+  }
+  function rebuildWorksCited(){
+    saveCurrent();const style=state.style;worksHeading.textContent=bibliographyTitle(style);
+    $('#pq-works').className='pq-works'+(style==='ieee'?' ieee':'');
+    let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
+    if(style!=='ieee')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b)));
+    worksBody.innerHTML=list.length?list.map((s,i)=>'<div class="pq-bib-entry">'+formatBibliographyEntry(s,style,i)+'</div>').join(''):'<p class="pq-help" style="text-indent:0;padding:0">No citations yet.</p>';
+  }
+
+  function renderSections(){
+    const list=$('#pq-side-sections');
+    const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    list.innerHTML=sorted.map(s=>'<div class="pq-item'+(s.id===state.activeSectionId?' active':'')+'" data-id="'+s.id+'"><span>'+escapeHtml(s.title)+'<span class="pq-status '+(s.status||'draft')+'">'+(s.status||'draft')+'</span></span>'+(s.key==='works'?'':'<button type="button" class="pq-del" data-id="'+s.id+'">×</button>')+'</div>').join('');
+    list.querySelectorAll('.pq-item').forEach(el=>{el.onclick=e=>{if(e.target.classList.contains('pq-del'))return;switchSection(el.dataset.id)}});
+    list.querySelectorAll('.pq-del').forEach(btn=>{btn.onclick=e=>{e.stopPropagation();if(state.sections.length<=1)return;if(!confirm('Delete section?'))return;state.sections=state.sections.filter(s=>s.id!==btn.dataset.id);if(state.activeSectionId===btn.dataset.id){state.activeSectionId=state.sections[0].id;loadSection()}scheduleSave();renderSections()}});
+  }
+  function renderSources(){
+    const list=$('#pq-side-sources');
+    if(!state.sources.length){list.innerHTML='<p class="pq-help">No sources. Add or fetch DOI.</p>';return}
+    list.innerHTML=state.sources.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml((s.authors||'')+(s.year?' · '+s.year:''))+'</div><div class="pq-src-actions"><button type="button" class="pq-btn pq-cite-btn" data-id="'+s.id+'">Cite</button><button type="button" class="pq-btn pq-edit-src" data-id="'+s.id+'">Edit</button><button type="button" class="pq-btn pq-del-src" data-id="'+s.id+'">Del</button></div></div>').join('');
+    list.querySelectorAll('.pq-cite-btn').forEach(b=>b.onclick=()=>insertCitation(b.dataset.id));
+    list.querySelectorAll('.pq-edit-src').forEach(b=>b.onclick=()=>editSource(b.dataset.id));
+    list.querySelectorAll('.pq-del-src').forEach(b=>b.onclick=()=>{state.sources=state.sources.filter(s=>s.id!==b.dataset.id);scheduleSave();renderSources();rebuildWorksCited()});
+  }
+  function switchSection(id){saveCurrent();state.activeSectionId=id;loadSection();renderSections();scheduleSave()}
+  function loadSection(){
+    const sec=getActiveSection();if(!sec)return;secTitle.value=sec.title||'';editor.innerHTML=sec.content||'';
+    editor.style.display=(sec.key==='works')?'none':'';
+    const st=$('#pq-sec-status');if(st)st.value=sec.status||'draft';
+    rebuildWorksCited();updateWc();updateSessionLine();
+    wireAnnotationClicks();
+  }
+  function updateWc(){saveCurrent();$('#pq-wc').textContent=totalWords().toLocaleString()+' words'}
+  function renderAll(){$('#pq-style').value=state.style;ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');renderSections();renderSources();loadSection();updateWc();updateDiskStatus();$('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off')}
+
+  function openModal(h){$('#pq-modal').innerHTML=h;$('#pq-modal-bg').classList.add('open')}
+  function closeModal(){$('#pq-modal-bg').classList.remove('open')}
+  function editSource(id){
+    const src=id?state.sources.find(s=>s.id===id):{id:uid(),type:'book',authors:'',title:'',year:'',container:'',publisher:'',pages:'',volume:'',issue:'',url:''};
+    openModal('<h3>'+(id?'Edit':'Add')+' source</h3>'+
+      '<label class="pq-lbl">Type</label><select class="pq-sel" id="m-type">'+['book','article','journal','website','report'].map(t=>'<option value="'+t+'"'+(src.type===t?' selected':'')+'>'+t+'</option>').join('')+'</select>'+
+      '<label class="pq-lbl">Authors (Last, First; semicolon)</label><input class="pq-inp" id="m-authors" style="width:100%" value="'+escapeHtml(src.authors||'')+'">'+
+      '<label class="pq-lbl">Title</label><input class="pq-inp" id="m-title" style="width:100%" value="'+escapeHtml(src.title||'')+'">'+
+      '<label class="pq-lbl">Year</label><input class="pq-inp" id="m-year" style="width:100%" value="'+escapeHtml(src.year||'')+'">'+
+      '<label class="pq-lbl">Container</label><input class="pq-inp" id="m-container" style="width:100%" value="'+escapeHtml(src.container||'')+'">'+
+      '<label class="pq-lbl">Publisher / Vol / Issue / Pages</label><input class="pq-inp" id="m-pub" style="width:100%;margin-bottom:4px" value="'+escapeHtml(src.publisher||'')+'">'+
+      '<div style="display:flex;gap:6px"><input class="pq-inp" id="m-vol" placeholder="Vol" value="'+escapeHtml(src.volume||'')+'"><input class="pq-inp" id="m-iss" placeholder="Issue" value="'+escapeHtml(src.issue||'')+'"><input class="pq-inp" id="m-pages" placeholder="Pages" value="'+escapeHtml(src.pages||'')+'"></div>'+
+      '<label class="pq-lbl">URL / DOI</label><input class="pq-inp" id="m-url" style="width:100%" value="'+escapeHtml(src.url||'')+'">'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-save">Save</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-save').onclick=()=>{
+      const next={id:src.id,type:$('#m-type').value,authors:$('#m-authors').value.trim(),title:$('#m-title').value.trim(),year:$('#m-year').value.trim(),container:$('#m-container').value.trim(),publisher:$('#m-pub').value.trim(),volume:$('#m-vol').value.trim(),issue:$('#m-iss').value.trim(),pages:$('#m-pages').value.trim(),url:$('#m-url').value.trim()};
+      if(!next.title)return toast('Title required');
+      const i=state.sources.findIndex(s=>s.id===next.id);if(i>=0)state.sources[i]=next;else state.sources.push(next);
+      scheduleSave();closeModal();renderSources();rebuildWorksCited();
+    };
+  }
+  function insertCitation(sourceId){
+    const src=state.sources.find(s=>s.id===sourceId);if(!src)return;
+    const page=prompt('Page (optional):','')||'';
+    const html='<span class="pq-cite" data-source-id="'+src.id+'" contenteditable="false">'+escapeHtml(formatInText(src,state.style,page))+'</span>\u00a0';
+    editor.focus();try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
+    saveCurrent();scheduleSave();rebuildWorksCited();updateWc();
+  }
+
+  editor.addEventListener('input',e=>{applyAutoCap(e);saveCurrent();scheduleSave();updateWc();rebuildWorksCited()});
+  editor.addEventListener('keyup',()=>{
+    const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+    const range=sel.getRangeAt(0),node=range.startContainer;if(!node||node.nodeType!==3){acEl.classList.remove('open');return}
+    const text=node.textContent||'',upto=range.startOffset,slice=text.slice(0,upto),at=slice.lastIndexOf('@');
+    if(at<0||/\s/.test(slice.slice(at+1))){acEl.classList.remove('open');return}
+    const q=slice.slice(at+1).toLowerCase();
+    const items=state.sources.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.authors||'').toLowerCase().includes(q)).slice(0,8);
+    if(!items.length){acEl.classList.remove('open');return}
+    acEl.innerHTML=items.map(s=>'<div class="pq-ac-item" data-id="'+s.id+'"><strong>'+escapeHtml(s.title||'')+'</strong></div>').join('');
+    const rr=ROOT.getBoundingClientRect();acEl.style.left=Math.min(range.getBoundingClientRect().left-rr.left,innerWidth-280)+'px';
+    acEl.style.top=(range.getBoundingClientRect().bottom-rr.top+4)+'px';acEl.classList.add('open');
+    $$('.pq-ac-item',acEl).forEach(el=>{el.onmousedown=e=>{e.preventDefault();
+      const node2=range.startContainer;if(node2&&node2.nodeType===3){const t=node2.textContent||'',u=range.startOffset,a=t.lastIndexOf('@',u-1);if(a>=0){node2.textContent=t.slice(0,a)+t.slice(u);const r=document.createRange();r.setStart(node2,a);r.collapse(true);sel.removeAllRanges();sel.addRange(r)}}
+      insertCitation(el.dataset.id);acEl.classList.remove('open');
+    }});
+  });
+
+  async function exportDocx(){
+    if(typeof docx==='undefined')return toast('DOCX unavailable');
+    saveCurrent();rebuildWorksCited();
+    const{Document,Packer,Paragraph,TextRun,HeadingLevel,AlignmentType}=docx;const children=[];
+    state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
+      if(sec.key==='works')return;
+      children.push(new Paragraph({text:sec.title,heading:HeadingLevel.HEADING_1,spacing:{before:360,after:200}}));
+      stripHtml(sec.content).split(/\n+/).forEach(line=>children.push(new Paragraph({children:[new TextRun({text:line||' ',font:'Times New Roman',size:24})],spacing:{after:200,line:480}})));
+    });
+    children.push(new Paragraph({text:bibliographyTitle(state.style),heading:HeadingLevel.HEADING_1,alignment:AlignmentType.CENTER,spacing:{before:480,after:240}}));
+    let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
+    if(state.style!=='ieee')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b)));
+    list.forEach((src,i)=>{const tmp=document.createElement('div');tmp.innerHTML=formatBibliographyEntry(src,state.style,i);
+      children.push(new Paragraph({children:[new TextRun({text:tmp.innerText||'',font:'Times New Roman',size:24})],indent:{left:720,hanging:720},spacing:{after:200,line:480}}))});
+    const blob=await Packer.toBlob(new Document({sections:[{properties:{},children}]}));
+    if(typeof saveAs==='function')saveAs(blob,'paperquill.docx');toast('DOCX ready');
+  }
+
+  
+  /* ---- Annotations: highlights + comments (synced via state / Yjs) ---- */
+  let annFilter = 'all';
+  function researcherLabel() {
+    const m = readMeta();
+    return (m.researcher || state.authorName || 'Anonymous').trim() || 'Anonymous';
+  }
+  function getSelectionQuote() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+    const text = (sel.toString() || '').trim();
+    if (!text) return null;
+    // Ensure selection is inside editor
+    try {
+      if (!editor.contains(sel.anchorNode)) return null;
+    } catch (e) { return null; }
+    return { text: text.slice(0, 500), range: sel.getRangeAt(0).cloneRange() };
+  }
+  function wrapSelection(className, annId) {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
+    try {
+      const range = sel.getRangeAt(0);
+      if (!editor.contains(range.commonAncestorContainer)) return false;
+      const span = document.createElement('span');
+      span.className = className;
+      span.dataset.annId = annId;
+      range.surroundContents(span);
+      sel.removeAllRanges();
+      return true;
+    } catch (e) {
+      // surroundContents fails on partial element selection — fallback insert
+      try {
+        const range = sel.getRangeAt(0);
+        const span = document.createElement('span');
+        span.className = className;
+        span.dataset.annId = annId;
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+        sel.removeAllRanges();
+        return true;
+      } catch (e2) {
+        toast('Select text within a single block to annotate');
+        return false;
+      }
+    }
+  }
+  function addHighlight(color) {
+    const q = getSelectionQuote();
+    if (!q) return toast('Select text to highlight');
+    color = color || 'yellow';
+    const id = uid();
+    const cls = 'pq-hl' + (color === 'yellow' ? '' : ' ' + color);
+    if (!wrapSelection(cls, id)) return;
+    saveCurrent();
+    state.annotations = state.annotations || [];
+    state.annotations.unshift({
+      id: id,
+      type: 'highlight',
+      color: color,
+      sectionId: state.activeSectionId,
+      quote: q.text,
+      author: researcherLabel(),
+      createdAt: new Date().toISOString(),
+      body: ''
+    });
+    scheduleSave();
+    wireAnnotationClicks();
+    renderAnnPanel();
+    toast('Highlighted');
+  }
+  function addComment() {
+    const q = getSelectionQuote();
+    if (!q) return toast('Select text to comment on');
+    openModal(
+      '<h3>Add comment</h3>' +
+      '<p class="pq-help">On: “' + escapeHtml(q.text.slice(0, 120)) + (q.text.length > 120 ? '…' : '') + '”</p>' +
+      '<label class="pq-lbl">Comment</label>' +
+      '<textarea class="pq-inp" id="m-cbody" style="width:100%;min-height:100px"></textarea>' +
+      '<div class="pq-modal-actions">' +
+      '<button type="button" class="pq-btn" id="m-cancel">Cancel</button>' +
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-save">Post comment</button></div>'
+    );
+    $('#m-cancel').onclick = closeModal;
+    $('#m-save').onclick = () => {
+      const body = ($('#m-cbody').value || '').trim();
+      if (!body) return toast('Write a comment');
+      const id = uid();
+      // restore selection if possible — user may have lost it; still store annotation
+      const sel = window.getSelection();
+      let wrapped = false;
+      if (sel && !sel.isCollapsed) wrapped = wrapSelection('pq-ann-mark', id);
+      saveCurrent();
+      state.annotations = state.annotations || [];
+      state.annotations.unshift({
+        id: id,
+        type: 'comment',
+        sectionId: state.activeSectionId,
+        quote: q.text,
+        body: body,
+        author: researcherLabel(),
+        createdAt: new Date().toISOString(),
+        resolved: false,
+        replies: []
+      });
+      scheduleSave();
+      wireAnnotationClicks();
+      renderAnnPanel();
+      closeModal();
+      toast(wrapped ? 'Comment added' : 'Comment saved (select text again next time to mark in place)');
+      openAnnPanel();
+    };
+  }
+  function wireAnnotationClicks() {
+    $$('.pq-hl, .pq-ann-mark', editor).forEach(el => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        const id = el.dataset.annId;
+        const ann = (state.annotations || []).find(a => a.id === id);
+        if (!ann) return;
+        showAnnDetail(ann);
+      };
+    });
+  }
+  function showAnnDetail(ann) {
+    const isComment = ann.type === 'comment';
+    openModal(
+      '<h3>' + (isComment ? 'Comment' : 'Highlight') + '</h3>' +
+      '<p class="meta" style="font-size:0.75rem;color:var(--muted)">' + escapeHtml(ann.author || '') + ' · ' + escapeHtml(String(ann.createdAt || '').slice(0, 16).replace('T', ' ')) + '</p>' +
+      (ann.quote ? '<p class="pq-help" style="font-style:italic">“' + escapeHtml(ann.quote) + '”</p>' : '') +
+      (isComment ? '<p style="line-height:1.5">' + escapeHtml(ann.body || '') + '</p>' : '') +
+      (isComment && ann.replies && ann.replies.length ? '<div style="margin-top:8px">' + ann.replies.map(r =>
+        '<div style="border-left:2px solid var(--border);padding:4px 8px;margin:6px 0;font-size:0.85rem"><strong>' + escapeHtml(r.author) + '</strong>: ' + escapeHtml(r.body) + '</div>'
+      ).join('') + '</div>' : '') +
+      (isComment ? '<label class="pq-lbl">Reply</label><input class="pq-inp" id="m-reply" style="width:100%" placeholder="Write a reply…">' : '') +
+      '<div class="pq-modal-actions">' +
+      (isComment ? '<button type="button" class="pq-btn" id="m-reply-btn">Reply</button>' : '') +
+      (isComment ? '<button type="button" class="pq-btn" id="m-resolve">' + (ann.resolved ? 'Reopen' : 'Resolve') + '</button>' : '') +
+      '<button type="button" class="pq-btn" id="m-del-ann">Delete</button>' +
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>'
+    );
+    $('#m-cancel').onclick = closeModal;
+    const del = $('#m-del-ann');
+    if (del) del.onclick = () => {
+      state.annotations = (state.annotations || []).filter(a => a.id !== ann.id);
+      // unwrap marks in editor
+      $$('[data-ann-id="' + ann.id + '"]', editor).forEach(el => {
+        const parent = el.parentNode;
+        while (el.firstChild) parent.insertBefore(el.firstChild, el);
+        parent.removeChild(el);
+      });
+      saveCurrent();
+      scheduleSave();
+      renderAnnPanel();
+      closeModal();
+      toast('Removed');
+    };
+    const res = $('#m-resolve');
+    if (res) res.onclick = () => {
+      ann.resolved = !ann.resolved;
+      scheduleSave();
+      renderAnnPanel();
+      closeModal();
+    };
+    const rb = $('#m-reply-btn');
+    if (rb) rb.onclick = () => {
+      const body = ($('#m-reply').value || '').trim();
+      if (!body) return;
+      if (!ann.replies) ann.replies = [];
+      ann.replies.push({ id: uid(), author: researcherLabel(), body: body, createdAt: new Date().toISOString() });
+      scheduleSave();
+      renderAnnPanel();
+      closeModal();
+      toast('Reply added');
+    };
+  }
+  function renderAnnPanel() {
+    const list = $('#pq-ann-list');
+    if (!list) return;
+    let anns = (state.annotations || []).slice();
+    if (annFilter === 'comments') anns = anns.filter(a => a.type === 'comment');
+    if (annFilter === 'highlights') anns = anns.filter(a => a.type === 'highlight');
+    // prefer current section first
+    anns.sort((a, b) => {
+      const ac = a.sectionId === state.activeSectionId ? 0 : 1;
+      const bc = b.sectionId === state.activeSectionId ? 0 : 1;
+      if (ac !== bc) return ac - bc;
+      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+    });
+    if (!anns.length) {
+      list.innerHTML = '<p class="pq-help" style="padding:8px">No annotations yet. Select text, then Highlight or Comment. Shared live when collaborating.</p>';
+      return;
+    }
+    list.innerHTML = anns.map(a => {
+      const sec = state.sections.find(s => s.id === a.sectionId);
+      return '<div class="pq-ann-card" data-id="' + a.id + '">' +
+        '<div class="meta">' + escapeHtml(a.type) + (a.resolved ? ' · resolved' : '') + ' · ' + escapeHtml(a.author || '') +
+        (sec ? ' · ' + escapeHtml(sec.title) : '') + '</div>' +
+        (a.quote ? '<div class="quote">' + escapeHtml(a.quote.slice(0, 100)) + '</div>' : '') +
+        (a.body ? '<div>' + escapeHtml(a.body.slice(0, 160)) + '</div>' : '') +
+        (a.replies && a.replies.length ? '<div class="meta">' + a.replies.length + ' reply(ies)</div>' : '') +
+        '</div>';
+    }).join('');
+    list.querySelectorAll('.pq-ann-card').forEach(card => {
+      card.onclick = () => {
+        const ann = (state.annotations || []).find(a => a.id === card.dataset.id);
+        if (!ann) return;
+        if (ann.sectionId && ann.sectionId !== state.activeSectionId) switchSection(ann.sectionId);
+        setTimeout(() => showAnnDetail(ann), 100);
+      };
+    });
+  }
+  function openAnnPanel() {
+    $('#pq-ann-panel').classList.add('open');
+    renderAnnPanel();
+  }
+  function closeAnnPanel() {
+    $('#pq-ann-panel').classList.remove('open');
+  }
+  function openHighlightMenu() {
+    const q = getSelectionQuote();
+    if (!q) return toast('Select text to highlight');
+    openModal(
+      '<h3>Highlight</h3><p class="pq-help">Choose a color. Highlights sync to collaborators.</p>' +
+      '<div class="pq-modal-actions" style="justify-content:flex-start">' +
+      '<button type="button" class="pq-btn pq-btn-primary" id="hl-y">Yellow</button>' +
+      '<button type="button" class="pq-btn" id="hl-b">Blue</button>' +
+      '<button type="button" class="pq-btn" id="hl-g">Green</button>' +
+      '<button type="button" class="pq-btn" id="hl-p">Pink</button>' +
+      '<button type="button" class="pq-btn" id="m-cancel">Cancel</button></div>'
+    );
+    $('#m-cancel').onclick = closeModal;
+    $('#hl-y').onclick = () => { closeModal(); addHighlight('yellow'); };
+    $('#hl-b').onclick = () => { closeModal(); addHighlight('blue'); };
+    $('#hl-g').onclick = () => { closeModal(); addHighlight('green'); };
+    $('#hl-p').onclick = () => { closeModal(); addHighlight('pink'); };
+  }
+
+
+  /* Wire UI */
+  $('#pq-toggle-side').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
+  $('#pq-bold').onclick=()=>{document.execCommand('bold');editor.focus()};
+  $('#pq-italic').onclick=()=>{document.execCommand('italic');editor.focus()};
+  $('#pq-style').onchange=()=>{state.style=$('#pq-style').value;scheduleSave();rebuildWorksCited()};
+  $('#pq-add-source').onclick=()=>editSource(null);
+  $('#pq-doi-fetch').onclick=()=>openDOIModal();
+  $('#pq-insert-cite').onclick=()=>{
+    if(!state.sources.length)return toast('Add a source first');
+    openModal('<h3>Insert citation</h3>'+state.sources.map(s=>'<button type="button" class="pq-btn" style="display:block;width:100%;margin-bottom:6px;text-align:left" data-id="'+s.id+'">'+escapeHtml(s.title)+'</button>').join('')+'<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button></div>');
+    $('#m-cancel').onclick=closeModal;$$('#pq-modal [data-id]').forEach(b=>b.onclick=()=>{closeModal();insertCitation(b.dataset.id)});
+  };
+  
+  $('#pq-hl-btn').onclick = () => openHighlightMenu();
+  $('#pq-comment-btn').onclick = () => addComment();
+  $('#pq-ann-panel-btn').onclick = () => openAnnPanel();
+  $('#pq-ann-close').onclick = () => closeAnnPanel();
+  $('#pq-ann-filter-all').onclick = () => { annFilter = 'all'; renderAnnPanel(); };
+  $('#pq-ann-filter-comments').onclick = () => { annFilter = 'comments'; renderAnnPanel(); };
+  $('#pq-ann-filter-hl').onclick = () => { annFilter = 'highlights'; renderAnnPanel(); };
+  const toolAnn = $('#tool-ann');
+  if (toolAnn) toolAnn.onclick = () => { $('#pq-tools-menu').classList.remove('open'); openAnnPanel(); };
+
+  $('#pq-lt-toggle').onclick=()=>{if(state.ltOn){clearLT();toast('LT off')}else runLanguageTool()};
+  $('#pq-collab-btn').onclick=()=>openCollabModal();
+  $('#pq-disk-save').onclick=()=>saveToDisk(false);
+  $('#pq-disk-open').onclick=()=>openFromDisk();
+  $('#pq-export').onclick=()=>exportDocx();
+  $('#pq-refresh-bib').onclick=()=>{rebuildWorksCited();toast('Bibliography refreshed')};
+  $('#pq-add-section').onclick=()=>{const t=prompt('Section title','New Section');if(!t)return;saveCurrent();const sec={id:uid(),key:'custom',title:t,content:'',order:state.sections.length};state.sections.push(sec);state.activeSectionId=sec.id;scheduleSave();renderSections();loadSection()};
+  secTitle.onchange=()=>{saveCurrent();scheduleSave();renderSections()};
+
+  $$('.pq-side-tabs button').forEach(btn=>{btn.onclick=()=>{$$('.pq-side-tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    const side=btn.dataset.side;$('#pq-side-sections').style.display=side==='sections'?'':'none';$('#pq-side-sources').style.display=side==='sources'?'':'none';$('#pq-add-section').style.display=side==='sections'?'':'none'}});
+
+  $('#cap-home').onclick=async()=>{$('#pq-dash').classList.add('open');const m=readMeta();$('#pq-researcher').value=m.researcher||state.authorName||'';$('#pq-dash-hello').textContent=m.researcher||state.authorName?('Welcome, '+(m.researcher||state.authorName)):'Welcome, researcher';$('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;updateSessionLine();await renderProjectGrid()};
+  $('#cap-sections').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
+  $('#cap-focus').onclick=()=>ROOT.classList.add('pq-focus');
+  $('#pq-focus-exit').onclick=()=>ROOT.classList.remove('pq-focus');
+  $('#cap-tools').onclick=()=>$('#pq-tools-menu').classList.toggle('open');
+  $('#tool-lt').onclick=()=>{$('#pq-tools-menu').classList.remove('open');runLanguageTool()};
+  $('#tool-autocap').onclick=()=>{state.autoCap=!state.autoCap;scheduleSave();$('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off');toast('Auto-cap '+(state.autoCap?'on':'off'))};
+  $('#tool-theme').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');scheduleSave()};
+  $('#tool-json').onclick=()=>{saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');toast('JSON downloaded')};
+  $('#tool-collab').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openCollabModal()};
+  $('#tool-doi').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openDOIModal()};
+  $('.pq-logo').style.cursor='pointer';
+  $('.pq-logo').title='Rename paper';
+  $('.pq-logo').onclick=()=>{const t=prompt('Paper title',state.paperTitle||'');if(t!=null){state.paperTitle=t.trim()||'Untitled paper';scheduleSave();toast('Title updated')}};
+
+
+  const secStatus=$('#pq-sec-status');
+  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;scheduleSave();renderSections()};
+
+  $('#pq-dash-new').onclick=()=>createProject();
+  $('#pq-session-set').onclick=()=>{
+    const v=parseInt($('#pq-session-target').value,10)||500;
+    if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
+    state.goals.sessionTarget=v;scheduleSave();updateSessionLine();toast('Session goal set');
+  };
+  $('#pq-session-reset').onclick=()=>{
+    if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
+    state.goals.sessionBase=totalWords();sessionBase=state.goals.sessionBase;scheduleSave();updateSessionLine();toast('Session count reset');
+  };
+
+  function openSearch(){
+    openModal('<h3>Search paper</h3><input class="pq-inp" id="m-q" style="width:100%" placeholder="Find in sections, notes, sources…"><div id="m-results" style="margin-top:10px;max-height:40vh;overflow:auto"></div><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    const run=()=>{
+      const q=($('#m-q').value||'').toLowerCase().trim();
+      if(!q){$('#m-results').innerHTML='';return}
+      const hits=[];
+      state.sections.forEach(s=>{
+        if((s.title||'').toLowerCase().includes(q)||stripHtml(s.content).toLowerCase().includes(q))
+          hits.push({type:'section',id:s.id,label:s.title});
+      });
+      state.sources.forEach(s=>{
+        if((s.title||'').toLowerCase().includes(q)||(s.authors||'').toLowerCase().includes(q))
+          hits.push({type:'source',id:s.id,label:s.title});
+      });
+      if((state.notes||'').toLowerCase().includes(q))hits.push({type:'notes',label:'Research notes'});
+      $('#m-results').innerHTML=hits.length?hits.map(h=>'<button type="button" class="pq-btn" style="display:block;width:100%;text-align:left;margin-bottom:4px" data-t="'+h.type+'" data-id="'+(h.id||'')+'">'+escapeHtml(h.type)+': '+escapeHtml(h.label)+'</button>').join(''):'<p class="pq-help">No matches</p>';
+      $$('#m-results button').forEach(b=>b.onclick=()=>{
+        closeModal();
+        if(b.dataset.t==='section')switchSection(b.dataset.id);
+        if(b.dataset.t==='notes')openNotes();
+      });
+    };
+    $('#m-q').oninput=run;
+  }
+  function openNotes(){
+    openModal('<h3>Research notes</h3><p class="pq-help">Scratch pad for this paper (not in the manuscript).</p><textarea class="pq-inp" id="m-notes" style="width:100%;min-height:180px;font-family:inherit">'+(state.notes||'').replace(/</g,'&lt;')+'</textarea><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-save">Save notes</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-save').onclick=()=>{state.notes=$('#m-notes').value;scheduleSave();closeModal();toast('Notes saved')};
+  }
+  function takeSnapshot(){
+    const sec=getActiveSection();if(!sec)return;
+    const name=prompt('Snapshot name:','Before edit')||('Snapshot '+new Date().toLocaleString());
+    if(!sec.snapshots)sec.snapshots=[];
+    sec.snapshots.unshift({id:uid(),name,content:sec.content||'',title:sec.title,at:new Date().toISOString()});
+    if(sec.snapshots.length>20)sec.snapshots=sec.snapshots.slice(0,20);
+    scheduleSave();toast('Snapshot saved');
+  }
+  function viewSnapshots(){
+    const sec=getActiveSection();
+    const snaps=(sec&&sec.snapshots)||[];
+    if(!snaps.length)return toast('No snapshots for this section');
+    openModal('<h3>Snapshots — '+escapeHtml(sec.title)+'</h3>'+
+      snaps.map(s=>'<div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px"><strong>'+escapeHtml(s.name)+'</strong><p class="pq-help">'+escapeHtml(String(s.at).slice(0,19))+'</p><button type="button" class="pq-btn pq-btn-primary pq-rest" data-id="'+s.id+'">Restore</button></div>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.pq-rest').forEach(b=>b.onclick=()=>{
+      const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
+      if(!confirm('Replace current section text with this snapshot?'))return;
+      sec.content=snap.content;if(snap.title)sec.title=snap.title;loadSection();scheduleSave();closeModal();toast('Restored');
+    });
+  }
+  function openShortcuts(){
+    openModal('<h3>Keyboard shortcuts</h3><ul class="pq-help" style="padding-left:18px;line-height:1.7">'+
+      '<li><strong>Ctrl/Cmd+S</strong> — Save disk</li>'+
+      '<li><strong>Ctrl/Cmd+K</strong> — Search paper</li>'+
+      '<li><strong>Ctrl/Cmd+Shift+L</strong> — LanguageTool</li>'+
+      '<li><strong>Ctrl/Cmd+Shift+F</strong> — Focus mode</li>'+
+      '<li><strong>@</strong> — Cite source while typing</li>'+
+      '<li><strong>Double-click word</strong> — Synonyms</li>'+
+      '</ul><div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+  }
+
+  $('#tool-search').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openSearch()};
+  $('#tool-notes').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openNotes()};
+  $('#tool-snap').onclick=()=>{$('#pq-tools-menu').classList.remove('open');takeSnapshot()};
+  $('#tool-snaps').onclick=()=>{$('#pq-tools-menu').classList.remove('open');viewSnapshots()};
+  $('#tool-shortcuts').onclick=()=>{$('#pq-tools-menu').classList.remove('open');openShortcuts()};
+
+  document.addEventListener('keydown',e=>{
+    const mod=e.metaKey||e.ctrlKey;
+    if(mod&&e.key==='s'){e.preventDefault();saveToDisk(false)}
+    if(mod&&e.key==='k'){e.preventDefault();openSearch()}
+    if(mod&&e.shiftKey&&(e.key==='L'||e.key==='l')){e.preventDefault();runLanguageTool()}
+    if(mod&&e.shiftKey&&(e.key==='F'||e.key==='f')){e.preventDefault();ROOT.classList.toggle('pq-focus')}
+  });
+
+  // paper title editable from dashboard continue - add rename in top via paper title on home cards only
+
+    $('#pq-dash-save-name').onclick=()=>{const n=$('#pq-researcher').value.trim();const m=readMeta();m.researcher=n;writeMeta(m);state.authorName=n;scheduleSave();toast('Saved');$('#pq-dash-hello').textContent=n?'Welcome, '+n:'Welcome'};
+  $('#pq-dash-continue').onclick=()=>$('#pq-dash').classList.remove('open');
+  $('#pq-modal-bg').onclick=e=>{if(e.target===$('#pq-modal-bg'))closeModal()};
+  document.addEventListener('click',e=>{if(!e.target.closest('#pq-tools-menu')&&!e.target.closest('#cap-tools'))$('#pq-tools-menu').classList.remove('open');if(!e.target.closest('#pq-dict'))dictEl.classList.remove('open')});
+
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+  (async()=>{
+    await load();
+    ROOT.classList.add('pq-side-collapsed');
+    renderAll();updateCollabUI();updateSessionLine();
+    const m=readMeta();
+    $('#pq-researcher').value=m.researcher||state.authorName||'';
+    $('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;
+    await renderProjectGrid();
+    if(!m.researcher){$('#pq-dash').classList.add('open');$('#pq-dash-hello').textContent='Welcome, researcher'}
+    else {$('#pq-dash-hello').textContent='Welcome, '+m.researcher}
+  })();
+})();
+</script>
+</body>
+</html>
