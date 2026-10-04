@@ -61,6 +61,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@400;500;600&display=swap');
     html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#ebe6df}
@@ -635,6 +636,145 @@
     .pq-slab-pane{display:none}.pq-slab-pane.active{display:block}
     #pq-modal.pq-slab-wide{width:min(740px,96vw)}
     .pq-sign-tip{font-size:.78rem;line-height:1.5;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--accent) 8%,var(--paper));border:1px solid var(--border);margin-bottom:12px}
+
+    /* Reference Management */
+    .pq-ref{
+      display:none;position:fixed;inset:0;z-index:970;background:var(--bg);
+      flex-direction:column;overflow:hidden;
+    }
+    .pq-ref.open{display:flex}
+    .pq-ref-top{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;
+      background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0
+    }
+    .pq-ref-top .pq-logo{margin-right:4px}
+    .pq-ref-body{display:flex;flex:1;min-height:0;position:relative}
+    .pq-ref-side{
+      width:min(280px,88vw);background:var(--panel);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden
+    }
+    .pq-ref-side-head{padding:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .pq-ref-side-head strong{flex:1;font-size:.9rem}
+    .pq-ref-folders{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin}
+    .pq-ref-folder{
+      display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;cursor:pointer;
+      font-size:.82rem;border:1px solid transparent;margin-bottom:3px
+    }
+    .pq-ref-folder:hover{background:var(--hover)}
+    .pq-ref-folder.active{background:var(--paper);border-color:color-mix(in srgb,var(--accent) 35%,var(--border));font-weight:600}
+    .pq-ref-folder .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pq-ref-folder .cnt{font-size:.68rem;color:var(--muted)}
+    .pq-ref-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+    .pq-ref-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg);align-items:center}
+    .pq-ref-list{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin}
+    .pq-ref-item{
+      display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);
+      border-radius:10px;margin-bottom:8px;background:var(--paper);cursor:pointer;transition:border-color .12s
+    }
+    .pq-ref-item:hover{border-color:var(--accent)}
+    .pq-ref-item .ico{font-size:1.4rem;flex-shrink:0;line-height:1}
+    .pq-ref-item .meta{flex:1;min-width:0}
+    .pq-ref-item h4{margin:0 0 4px;font-size:.92rem;line-height:1.3}
+    .pq-ref-item .sub{font-size:.75rem;color:var(--muted)}
+    .pq-ref-item .acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+    .pq-ref-item .acts .pq-btn{font-size:.7rem;padding:4px 8px;min-height:30px}
+    .pq-ref-reader{
+      display:none;position:absolute;inset:0;z-index:5;background:var(--bg);flex-direction:column
+    }
+    .pq-ref-reader.open{display:flex}
+    .pq-ref-reader-bar{
+      display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;
+      background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0
+    }
+    .pq-ref-reader-bar strong{flex:1;font-size:.88rem;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pq-ref-reader-body{flex:1;display:flex;min-height:0}
+    .pq-ref-pdf-wrap{flex:1;overflow:auto;background:#3d4043;position:relative;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+    .pq-ref-pdf-wrap .page-canvas-wrap{margin:16px auto;box-shadow:0 4px 20px rgba(0,0,0,.4);position:relative;background:#fff}
+    .pq-ref-pdf-wrap canvas{
+      display:block;width:100%;height:auto;
+      image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
+    }
+    .pq-ref-pdf-wrap .textLayer{
+      position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;opacity:1;line-height:1;
+      --scale-factor:1;z-index:3;pointer-events:auto;
+      user-select:text;-webkit-user-select:text;-moz-user-select:text;
+    }
+    .pq-ref-pdf-wrap .textLayer span{
+      position:absolute;white-space:pre;color:transparent;transform-origin:0% 0%;cursor:text;
+      user-select:text;-webkit-user-select:text;pointer-events:auto;
+    }
+    .pq-ref-pdf-wrap .textLayer ::selection,
+    .pq-ref-pdf-wrap .textLayer span::selection{background:rgba(0,120,255,.45);color:transparent}
+    .pq-ref-pdf-wrap canvas{pointer-events:none;z-index:1}
+    .pq-ref-pdf-wrap .pq-ref-hl-layer{z-index:2}
+    .pq-ref-pdf-wrap .page-placeholder{
+      background:#fff;display:flex;align-items:center;justify-content:center;
+      color:#999;font-size:.85rem;min-height:200px
+    }
+    .pq-ref-reader:fullscreen,
+    .pq-ref-reader.pq-ref-fs{
+      background:#1a1a1a;
+    }
+    .pq-ref-reader:fullscreen .pq-ref-side-panel,
+    .pq-ref-reader.pq-ref-fs .pq-ref-side-panel{display:none}
+    .pq-ref-reader:fullscreen .pq-ref-pdf-wrap,
+    .pq-ref-reader.pq-ref-fs .pq-ref-pdf-wrap{background:#2a2a2a}
+    .pq-ref-reader:fullscreen .pq-ref-reader-bar,
+    .pq-ref-reader.pq-ref-fs .pq-ref-reader-bar{background:#222;border-color:#333;color:#eee}
+    .pq-ref-reader:fullscreen .pq-ref-reader-bar .pq-btn,
+    .pq-ref-reader.pq-ref-fs .pq-ref-reader-bar .pq-btn{color:#eee;border-color:#444;background:#333}
+    .pq-ref-reader:fullscreen .pq-ref-reader-bar .pq-inp,
+    .pq-ref-reader.pq-ref-fs .pq-ref-reader-bar .pq-inp{background:#333;color:#eee;border-color:#555}
+    .pq-ref-reader:fullscreen .pq-ref-reader-bar strong,
+    .pq-ref-reader.pq-ref-fs .pq-ref-reader-bar strong{color:#eee}
+    .pq-ref-reader:fullscreen .pq-wc,
+    .pq-ref-reader.pq-ref-fs .pq-wc{color:#bbb}
+    .pq-ref-reader:fullscreen .pq-modal-bg,
+    .pq-ref-reader.pq-ref-fs .pq-modal-bg,
+    .pq-ref-reader .pq-modal-bg.open{
+      position:fixed;inset:0;z-index:2147483646;display:flex;
+    }
+    .pq-ref-reader:fullscreen .pq-toast,
+    .pq-ref-reader.pq-ref-fs .pq-toast{
+      z-index:2147483647;
+    }
+
+    .pq-ref-hl-layer{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none}
+    .pq-ref-hl-layer .hl{
+      position:absolute;background:color-mix(in srgb,#e8c547 45%,transparent);border-radius:2px;pointer-events:auto;cursor:pointer
+    }
+    .pq-ref-hl-layer .hl.blue{background:color-mix(in srgb,#6a9ecf 40%,transparent)}
+    .pq-ref-hl-layer .hl.green{background:color-mix(in srgb,#6aaa7a 40%,transparent)}
+    .pq-ref-hl-layer .hl.pink{background:color-mix(in srgb,#d4899c 40%,transparent)}
+    .pq-ref-side-panel{
+      width:min(320px,100%);border-left:1px solid var(--border);background:var(--panel);
+      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden
+    }
+    .pq-ref-side-panel .tabs{display:flex;gap:2px;padding:6px;border-bottom:1px solid var(--border)}
+    .pq-ref-side-panel .tabs button{flex:1;font-size:.72rem;padding:6px;border:none;background:transparent;color:var(--muted);border-radius:6px;cursor:pointer}
+    .pq-ref-side-panel .tabs button.active{background:var(--paper);color:var(--ink);font-weight:600}
+    .pq-ref-side-panel .pane{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin}
+    .pq-ref-note-card{border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;background:var(--paper);font-size:.8rem}
+    .pq-ref-note-card .meta{font-size:.7rem;color:var(--muted);margin-bottom:4px}
+    #pq-root.pq-ref-mode .pq-top,
+    #pq-root.pq-ref-mode .pq-body,
+    #pq-root.pq-ref-mode .pq-tools-menu,
+    #pq-root.pq-ref-mode .pq-capsule{display:none!important}
+
+    .pq-ref-pdf-wrap .find-mark{
+      background:color-mix(in srgb,#f5d76e 70%,transparent)!important;border-radius:2px;
+      color:transparent!important;
+    }
+    .pq-ref-pdf-wrap .find-mark.current{
+      background:color-mix(in srgb,#ff9800 75%,transparent)!important;outline:2px solid #e65100;
+    }
+    .pq-ref-search-hit{border-left:3px solid var(--ok);padding-left:8px}
+    @media(max-width:700px){
+      .pq-ref-side{position:absolute;left:0;top:0;bottom:0;z-index:10;box-shadow:4px 0 20px rgba(0,0,0,.12)}
+      .pq-ref-side.collapsed{width:0;border:none;padding:0;overflow:hidden}
+      .pq-ref-side-panel{position:absolute;right:0;top:0;bottom:0;z-index:10;max-width:92vw;box-shadow:-4px 0 20px rgba(0,0,0,.12)}
+      .pq-ref-side-panel.collapsed{width:0;border:none;overflow:hidden}
+    }
   </style>
 </head>
 <body>
@@ -731,6 +871,9 @@
     <button type="button" class="pq-btn" id="cap-scaffold" title="Scaffold" aria-label="Scaffold">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="10" rx="1"/><path d="M14 17h7M14 21h7"/></svg>
     </button>
+    <button type="button" class="pq-btn" id="cap-refs" title="Reference manager" aria-label="Reference manager">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/></svg>
+    </button>
     <button type="button" class="pq-btn" id="cap-focus" title="Focus mode" aria-label="Focus mode">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
@@ -754,6 +897,7 @@
     <button type="button" class="pq-btn" id="tool-claims">Claim → evidence</button>
     <button type="button" class="pq-btn" id="tool-tutorial">Tutorial guidance</button>
     <div class="pq-tools-cat">Citations &amp; sources</div>
+    <button type="button" class="pq-btn" id="tool-refs">Reference manager (PDFs)</button>
     <button type="button" class="pq-btn" id="tool-audit">Citation audit</button>
     <button type="button" class="pq-btn" id="tool-library">Shared source library</button>
     <button type="button" class="pq-btn" id="tool-import">Import sources (BibTeX/RIS)</button>
@@ -979,6 +1123,75 @@
   <div class="pq-ac" id="pq-ac"></div>
   <div class="pq-dict" id="pq-dict"></div>
   <div class="pq-modal-bg" id="pq-modal-bg"><div class="pq-modal" id="pq-modal"></div></div>
+
+  <div class="pq-ref" id="pq-ref" aria-label="Reference management">
+    <div class="pq-ref-top">
+      <span class="pq-logo">PaperQuill</span>
+      <strong style="font-size:.95rem">Reference Manager</strong>
+      <span class="pq-tag">local</span>
+      <div class="pq-sep"></div>
+      <button type="button" class="pq-btn" id="ref-back-write" title="Back to writing desk">← Writing desk</button>
+      <button type="button" class="pq-btn" id="ref-toggle-folders" title="Folders">Folders</button>
+      <input class="pq-inp" id="ref-search" placeholder="Search PDFs, notes, highlights…" style="flex:1;min-width:140px;max-width:320px">
+      <button type="button" class="pq-btn" id="ref-upload">Upload PDF</button>
+      <button type="button" class="pq-btn" id="ref-new-folder">+ Folder</button>
+      <button type="button" class="pq-btn" id="ref-export-json" title="First time: download &amp; link a JSON file. Later: overwrite same file">Save disk</button>
+      <span class="pq-wc" id="ref-disk-status" style="font-size:.72rem"></span>
+      <button type="button" class="pq-btn" id="ref-import-json">Open disk</button>
+      <button type="button" class="pq-btn" id="ref-drive-sync" title="Sync library metadata to Drive">Sync Drive</button>
+      <input type="file" id="ref-file-input" accept="application/pdf,.pdf" multiple hidden>
+      <input type="file" id="ref-json-input" accept="application/json,.json" hidden>
+    </div>
+    <div class="pq-ref-body">
+      <aside class="pq-ref-side" id="ref-side">
+        <div class="pq-ref-side-head">
+          <strong>Folders</strong>
+          <button type="button" class="pq-btn" id="ref-folder-all" style="font-size:.72rem;padding:4px 8px">All</button>
+        </div>
+        <div class="pq-ref-folders" id="ref-folders"></div>
+        <p class="pq-help" style="padding:8px 10px;margin:0;font-size:.68rem">PDFs stay on this device (IndexedDB). Highlights &amp; notes sync with disk JSON / Drive metadata.</p>
+      </aside>
+      <div class="pq-ref-main">
+        <div class="pq-ref-toolbar">
+          <span class="pq-help" id="ref-folder-label" style="margin:0;flex:1">All PDFs</span>
+          <span class="pq-wc" id="ref-count">0 items</span>
+        </div>
+        <div class="pq-ref-list" id="ref-list"></div>
+      </div>
+      <div class="pq-ref-reader" id="ref-reader">
+        <div class="pq-ref-reader-bar">
+          <button type="button" class="pq-btn" id="ref-reader-close">← Library</button>
+          <strong id="ref-reader-title">PDF</strong>
+          <button type="button" class="pq-btn" id="ref-page-prev" title="Previous page">‹</button>
+          <span class="pq-wc" id="ref-page-label">1 / 1</span>
+          <button type="button" class="pq-btn" id="ref-page-next" title="Next page">›</button>
+          <button type="button" class="pq-btn" id="ref-zoom-out">−</button>
+          <button type="button" class="pq-btn" id="ref-zoom-in">+</button>
+          <input class="pq-inp" id="ref-find-q" placeholder="Find in this PDF…" style="width:min(180px,28vw);font-size:.8rem;padding:5px 8px">
+          <button type="button" class="pq-btn" id="ref-find-prev" title="Previous match">▴</button>
+          <span class="pq-wc" id="ref-find-label"></span>
+          <button type="button" class="pq-btn" id="ref-find-next" title="Next match">▾</button>
+          <button type="button" class="pq-btn" id="ref-hl-y" title="Highlight selection (keyboard: H)">HL · H</button>
+          <button type="button" class="pq-btn" id="ref-add-note">+ Note</button>
+          <button type="button" class="pq-btn" id="ref-dl-pdf">Download</button>
+          <button type="button" class="pq-btn" id="ref-fs" title="Fullscreen reader">Fullscreen</button>
+        </div>
+        <div class="pq-ref-reader-body">
+          <div class="pq-ref-pdf-wrap" id="ref-pdf-wrap"></div>
+          <aside class="pq-ref-side-panel" id="ref-anno-panel">
+            <div class="tabs">
+              <button type="button" class="active" data-rpane="notes">Notes</button>
+              <button type="button" data-rpane="highlights">Highlights</button>
+              <button type="button" data-rpane="info">Info</button>
+            </div>
+            <div class="pane" id="ref-pane-notes"></div>
+            <div class="pane" id="ref-pane-highlights" style="display:none"></div>
+            <div class="pane" id="ref-pane-info" style="display:none"></div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="pq-toast" id="pq-toast"></div>
 </div>
 <script type="module">
@@ -990,6 +1203,8 @@
   const IDB_NAME='paperquill-db';
   const IDB_STORE='projects';
   const IDB_LIB='library';
+  const IDB_REF_META='refMeta';
+  const IDB_REF_BLOBS='refBlobs';
   const uid=()=>'id_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
   let cleanPaste=false;
   let pomoTimer=null,pomoLeft=0,pomoRunning=false;
@@ -1442,7 +1657,24 @@
   const editor=$('#pq-editor'), secTitle=$('#pq-sec-title'), worksBody=$('#pq-works-body'), worksHeading=$('#pq-works-heading');
   const acEl=$('#pq-ac'), dictEl=$('#pq-dict');
 
-  function toast(m){const t=$('#pq-toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+  function toast(m){
+    const t=$('#pq-toast');if(!t)return;
+    t.textContent=m;t.classList.add('show');
+    const host=typeof refFullscreenHost==='function'?refFullscreenHost():null;
+    if(host&&t.parentElement!==host){
+      t._pqHomeParent=t.parentElement;
+      host.appendChild(t);
+      t.style.zIndex='2147483647';
+    }
+    clearTimeout(t._pqHide);
+    t._pqHide=setTimeout(()=>{
+      t.classList.remove('show');
+      if(t._pqHomeParent&&t.parentElement!==t._pqHomeParent){
+        try{t._pqHomeParent.appendChild(t)}catch(e){}
+        t._pqHomeParent=null;t.style.zIndex='';
+      }
+    },2400);
+  }
   function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
   function stripHtml(h){const d=document.createElement('div');d.innerHTML=h||'';return d.innerText||''}
   function wordCount(h){const t=stripHtml(h).trim();return t?t.split(/\s+/).length:0}
@@ -1453,11 +1685,13 @@
 
   function openIdb(){
     return new Promise((res,rej)=>{
-      const r=indexedDB.open(IDB_NAME,3);
+      const r=indexedDB.open(IDB_NAME,4);
       r.onupgradeneeded=()=>{
         const db=r.result;
         if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE,{keyPath:'id'});
         if(!db.objectStoreNames.contains(IDB_LIB))db.createObjectStore(IDB_LIB,{keyPath:'id'});
+        if(!db.objectStoreNames.contains(IDB_REF_META))db.createObjectStore(IDB_REF_META,{keyPath:'id'});
+        if(!db.objectStoreNames.contains(IDB_REF_BLOBS))db.createObjectStore(IDB_REF_BLOBS,{keyPath:'id'});
       };
       r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
     });
@@ -3630,15 +3864,44 @@
     });
   }
 
+  function refFullscreenHost(){
+    // Browser fullscreen element, or CSS fallback .pq-ref-fs reader
+    if(document.fullscreenElement)return document.fullscreenElement;
+    const r=$('#ref-reader');
+    if(r&&r.classList.contains('pq-ref-fs'))return r;
+    return null;
+  }
   function openModal(h){
     const m=$('#pq-modal'),bg=$('#pq-modal-bg');
+    if(!m||!bg)return;
     m.innerHTML=h;m.classList.remove('pq-slab-wide');
     m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');
+    // Fullscreen API puts the element in a top layer above all page z-index.
+    // Reparent the modal into that host so notes/prompts appear on top.
+    const host=refFullscreenHost();
+    if(host&&bg.parentElement!==host){
+      bg._pqHomeParent=bg.parentElement; // restore later
+      host.appendChild(bg);
+    }
+    bg.style.zIndex='2147483646';
     bg.classList.add('open');
     const focusable=m.querySelector('button,input,select,textarea,[href]');
     if(focusable)try{focusable.focus()}catch(e){}
   }
-  function closeModal(){$('#pq-modal-bg').classList.remove('open');const m=$('#pq-modal');if(m)m.classList.remove('pq-slab-wide')}
+  function closeModal(){
+    const bg=$('#pq-modal-bg');
+    const m=$('#pq-modal');
+    if(bg){
+      bg.classList.remove('open');
+      // Move modal back to its original place in the document
+      if(bg._pqHomeParent&&bg.parentElement!==bg._pqHomeParent){
+        try{bg._pqHomeParent.appendChild(bg)}catch(e){}
+      }
+      bg._pqHomeParent=null;
+      bg.style.zIndex='';
+    }
+    if(m)m.classList.remove('pq-slab-wide');
+  }
   /** Styled confirm — replaces window.confirm. Returns Promise&lt;boolean&gt;. */
   function styledConfirm(title,message,okLabel,cancelLabel){
     return new Promise(resolve=>{
@@ -5813,6 +6076,8 @@
   $('#cap-tools').onclick=()=>$('#pq-tools-menu').classList.toggle('open');
   $('#tool-lt').onclick=()=>{closeTools();if(state.ltOn){clearLT();toast('LanguageTool off')}else runLanguageTool()};
   $('#tool-audit').onclick=()=>{closeTools();openCitationAudit()};
+  const toolRefs=$('#tool-refs');if(toolRefs)toolRefs.onclick=()=>{closeTools();openRefManager()};
+
   const toolReady=$('#tool-readiness');
   if(toolReady)toolReady.onclick=()=>{closeTools();openReadiness()};
   const toolFocusSess=$('#tool-focus-session');
@@ -6809,6 +7074,1529 @@
   }
 
 
+
+  /* ========== Reference Manager (Zotero-like local library) ========== */
+  const REF_META_KEY='paperquill-ref-folders-v1';
+  let refState={
+    folders:[],
+    activeFolderId:'all',
+    items:[],
+    openItemId:null,
+    pdfDoc:null,
+    page:1,
+    scale:1.4,
+    rendering:false,
+    pageTexts:[],
+    findQ:'',
+    findMatches:[],
+    findIdx:-1,
+    libSearchQ:'',
+    libSearchHits:null,
+    pendingLibKeyword:'',
+    lastSel:null
+  };
+  let refFileHandle=null, refDiskName='';
+  if(typeof pdfjsLib!=='undefined'){
+    try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}catch(e){}
+  }
+
+  function refReadFolders(){
+    try{
+      const raw=localStorage.getItem(REF_META_KEY);
+      const o=raw?JSON.parse(raw):null;
+      if(o&&Array.isArray(o.folders))return o.folders;
+    }catch(e){}
+    return [{id:'inbox',name:'Inbox',createdAt:new Date().toISOString()}];
+  }
+  function refWriteFolders(folders){
+    try{localStorage.setItem(REF_META_KEY,JSON.stringify({folders,updatedAt:new Date().toISOString()}))}catch(e){}
+  }
+  async function refMetaPut(item){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_META,'readwrite');
+      tx.objectStore(IDB_REF_META).put(item);
+      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
+    });
+  }
+  async function refMetaGet(id){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_META,'readonly');
+      const q=tx.objectStore(IDB_REF_META).get(id);
+      q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);
+    });
+  }
+  async function refMetaAll(){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_META,'readonly');
+      const q=tx.objectStore(IDB_REF_META).getAll();
+      q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);
+    });
+  }
+  async function refMetaDelete(id){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_META,'readwrite');
+      tx.objectStore(IDB_REF_META).delete(id);
+      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
+    });
+  }
+  async function refBlobPut(id, buffer){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_BLOBS,'readwrite');
+      tx.objectStore(IDB_REF_BLOBS).put({id, data:buffer, updatedAt:new Date().toISOString()});
+      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
+    });
+  }
+  async function refBlobGet(id){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_BLOBS,'readonly');
+      const q=tx.objectStore(IDB_REF_BLOBS).get(id);
+      q.onsuccess=()=>res(q.result?q.result.data:null);q.onerror=()=>rej(q.error);
+    });
+  }
+  async function refBlobDelete(id){
+    const db=await openIdb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_REF_BLOBS,'readwrite');
+      tx.objectStore(IDB_REF_BLOBS).delete(id);
+      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
+    });
+  }
+
+  async function extractPdfPageTexts(arrayBuffer){
+    if(typeof pdfjsLib==='undefined')return {pageTexts:[], fullText:''};
+    try{
+      const doc=await pdfjsLib.getDocument({data:arrayBuffer.slice?arrayBuffer.slice(0):arrayBuffer}).promise;
+      const pageTexts=[];
+      for(let i=1;i<=doc.numPages;i++){
+        const page=await doc.getPage(i);
+        const tc=await page.getTextContent();
+        const t=(tc.items||[]).map(it=>it.str||'').join(' ').replace(/\s+/g,' ').trim();
+        pageTexts.push(t);
+      }
+      try{doc.destroy()}catch(e){}
+      return {pageTexts, fullText:pageTexts.join('\n')};
+    }catch(e){console.warn('extract text',e);return {pageTexts:[], fullText:''}}
+  }
+
+  function openRefManager(){
+    exitFocusMode();
+    const dash=$('#pq-dash');if(dash)dash.classList.remove('open');
+    const tools=$('#pq-tools-menu');if(tools)tools.classList.remove('open');
+    ROOT.classList.add('pq-ref-mode');
+    $('#pq-ref').classList.add('open');
+    const cap=$('#cap-refs');if(cap)cap.classList.add('on');
+    refState.folders=refReadFolders();
+    refreshRefLibrary();
+  }
+  function closeRefManager(){
+    closeRefReader();
+    ROOT.classList.remove('pq-ref-mode');
+    $('#pq-ref').classList.remove('open');
+    const cap=$('#cap-refs');if(cap)cap.classList.remove('on');
+  }
+  async function refreshRefLibrary(){
+    refState.folders=refReadFolders();
+    refState.items=await refMetaAll();
+    renderRefFolders();
+    renderRefList();
+  }
+  function renderRefFolders(){
+    const el=$('#ref-folders');if(!el)return;
+    const counts={};
+    refState.items.forEach(it=>{
+      const f=it.folderId||'inbox';
+      counts[f]=(counts[f]||0)+1;
+    });
+    el.innerHTML=refState.folders.map(f=>{
+      const n=counts[f.id]||0;
+      const on=refState.activeFolderId===f.id?' active':'';
+      return '<div class="pq-ref-folder'+on+'" data-id="'+f.id+'">'+
+        '<span class="grow">'+escapeHtml(f.name)+'</span>'+
+        '<span class="cnt">'+n+'</span>'+
+        (f.id!=='inbox'?'<button type="button" class="pq-btn ref-fdel" data-id="'+f.id+'" style="font-size:.7rem;padding:2px 6px;min-height:26px" title="Delete folder">✕</button>':'')+
+        '</div>';
+    }).join('');
+    $$('.pq-ref-folder',el).forEach(row=>{
+      row.onclick=e=>{
+        if(e.target.closest('.ref-fdel'))return;
+        refState.activeFolderId=row.dataset.id;
+        renderRefFolders();renderRefList();
+      };
+    });
+    $$('.ref-fdel',el).forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      if(!(await styledConfirm('Delete folder','Delete folder and move its PDFs to Inbox?','Delete','Cancel')))return;
+      const id=b.dataset.id;
+      for(const it of refState.items.filter(x=>x.folderId===id)){
+        it.folderId='inbox';it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);
+      }
+      refState.folders=refState.folders.filter(f=>f.id!==id);
+      refWriteFolders(refState.folders);
+      if(refState.activeFolderId===id)refState.activeFolderId='all';
+      await refreshRefLibrary();
+      toast('Folder deleted');
+    });
+  }
+  function filteredRefItems(){
+    let list=refState.items.slice();
+    if(refState.activeFolderId&&refState.activeFolderId!=='all'){
+      list=list.filter(it=>(it.folderId||'inbox')===refState.activeFolderId);
+    }
+    const hits=refState.libSearchHits;
+    const q=(refState.libSearchQ||'').toLowerCase().trim();
+    if(hits){
+      list=list.filter(it=>hits[it.id]);
+      list.sort((a,b)=>(hits[b.id].count||0)-(hits[a.id].count||0));
+    }else if(q){
+      list=list.filter(it=>{
+        const blob=[it.title,it.fileName,it.notes,it.fullText||'',(it.tags||[]).join(' '),
+          (it.highlights||[]).map(h=>[(h.text||''),(h.note||''),(h.underpinnings||[]).map(u=>u.text).join(' '),(h.engagement||[]).map(e=>e.text).join(' ')].join(' ')).join(' '),
+          (it.annotations||[]).map(a=>a.text||'').join(' ')].join(' ').toLowerCase();
+        return blob.includes(q);
+      });
+    }else{
+      list.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    }
+    return list;
+  }
+  function refHasUsableMeta(it){
+    if(!it||!it.meta)return false;
+    const m=it.meta;
+    return !!(m.title&&String(m.title).trim()&&((m.authors&&String(m.authors).trim())||(m.year&&String(m.year).trim())||(m.doi&&String(m.doi).trim())));
+  }
+  function refIsInSources(it){
+    if(!it)return false;
+    if(it.linkedSourceId&&state.sources.some(s=>s.id===it.linkedSourceId))return true;
+    if(it.meta){
+      const fp=sourceFingerprint(it.meta);
+      return state.sources.some(s=>sourceFingerprint(s)===fp);
+    }
+    return false;
+  }
+  function renderRefList(){
+    const list=$('#ref-list');if(!list)return;
+    const items=filteredRefItems();
+    const lab=$('#ref-folder-label');
+    if(lab){
+      if(refState.libSearchHits){
+        lab.textContent='Full-text hits for “'+(refState.libSearchQ||'')+'” · '+items.length+' PDF(s)';
+      }else if(refState.activeFolderId==='all')lab.textContent='All PDFs';
+      else{
+        const f=refState.folders.find(x=>x.id===refState.activeFolderId);
+        lab.textContent=f?f.name:'Folder';
+      }
+    }
+    const cnt=$('#ref-count');if(cnt)cnt.textContent=items.length+' item'+(items.length===1?'':'s');
+    if(!items.length){
+      list.innerHTML='<p class="pq-help" style="padding:24px 8px">No PDFs match. Upload a PDF, clear search, or try another keyword.</p>';
+      return;
+    }
+    const hits=refState.libSearchHits;
+    list.innerHTML=items.map(it=>{
+      const hl=(it.highlights||[]).length;
+      const notes=it.notes?1:0;
+      const hasMeta=refHasUsableMeta(it);
+      const inSrc=refIsInSources(it);
+      const metaBit=hasMeta?(it.meta.authors?it.meta.authors.split(';')[0].trim():'')+(it.meta.year?' ('+it.meta.year+')':''):'';
+      const sub=[it.fileName||'', formatBytes(it.size||0), it.updatedAt&&String(it.updatedAt).slice(0,10), hl?hl+' highlights':'', notes?'notes':'', hasMeta?'meta ✓':''].filter(Boolean).join(' · ');
+      let snip='';
+      if(hits&&hits[it.id]){
+        snip='<div class="pq-help pq-ref-search-hit" style="margin-top:6px">'+hits[it.id].count+' match'+(hits[it.id].count===1?'':'es')+
+          (hits[it.id].snippets&&hits[it.id].snippets[0]?' · …'+escapeHtml(hits[it.id].snippets[0])+'…':'')+'</div>';
+      }
+      if(metaBit)snip+='<div class="pq-help" style="margin-top:4px">'+escapeHtml(metaBit)+(it.meta&&it.meta.container?' · '+escapeHtml(it.meta.container):'')+'</div>';
+      let srcBtn='';
+      if(inSrc){
+        srcBtn='<button type="button" class="pq-btn ref-src-done" data-id="'+it.id+'" disabled style="opacity:.75">Added to source library</button>';
+      }else if(hasMeta){
+        srcBtn='<button type="button" class="pq-btn pq-btn-primary ref-add-src" data-id="'+it.id+'">Add to sources</button>';
+      }
+      return '<div class="pq-ref-item" data-id="'+it.id+'">'+
+        '<div class="ico">📄</div>'+
+        '<div class="meta"><h4>'+escapeHtml(it.title||it.fileName||'PDF')+'</h4>'+
+        '<div class="sub">'+escapeHtml(sub)+'</div>'+snip+
+        '<div class="acts">'+
+        '<button type="button" class="pq-btn pq-btn-primary ref-open" data-id="'+it.id+'">Open</button>'+
+        '<button type="button" class="pq-btn ref-move" data-id="'+it.id+'">Move</button>'+
+        '<button type="button" class="pq-btn ref-ren" data-id="'+it.id+'">Rename</button>'+
+        '<button type="button" class="pq-btn ref-meta" data-id="'+it.id+'">Metadata</button>'+
+        srcBtn+
+        '<button type="button" class="pq-btn ref-del" data-id="'+it.id+'">Delete</button>'+
+        '</div></div></div>';
+    }).join('');
+    $$('.ref-open',list).forEach(b=>b.onclick=e=>{e.stopPropagation();openRefReader(b.dataset.id)});
+    $$('.pq-ref-item',list).forEach(row=>row.ondblclick=()=>openRefReader(row.dataset.id));
+    $$('.ref-del',list).forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      if(!(await styledConfirm('Delete PDF','Remove this PDF and its notes/highlights from this device?','Delete','Cancel')))return;
+      await refMetaDelete(b.dataset.id);
+      await refBlobDelete(b.dataset.id);
+      await refreshRefLibrary();
+      toast('Deleted');
+    });
+    $$('.ref-ren',list).forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const it=refState.items.find(x=>x.id===b.dataset.id);if(!it)return;
+      const t=await styledPrompt('Rename','Title',it.title||it.fileName||'');
+      if(t===null)return;
+      it.title=t.trim()||it.fileName;it.updatedAt=new Date().toISOString();
+      await refMetaPut(it);await refreshRefLibrary();
+    });
+    $$('.ref-move',list).forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const it=refState.items.find(x=>x.id===b.dataset.id);if(!it)return;
+      const pick=await styledPrompt('Move to folder','Folder id or name: '+refState.folders.map(f=>f.id+' = '+f.name).join(', '),it.folderId||'inbox');
+      if(pick===null)return;
+      let fid=pick.trim();
+      const byName=refState.folders.find(f=>f.name.toLowerCase()===fid.toLowerCase()||f.id===fid);
+      if(byName)fid=byName.id;
+      if(!refState.folders.some(f=>f.id===fid)){toast('Unknown folder');return}
+      it.folderId=fid;it.updatedAt=new Date().toISOString();
+      await refMetaPut(it);await refreshRefLibrary();toast('Moved');
+    });
+    $$('.ref-meta',list).forEach(b=>b.onclick=e=>{e.stopPropagation();openRefMetadata(b.dataset.id)});
+    $$('.ref-add-src',list).forEach(b=>b.onclick=e=>{e.stopPropagation();refAddToSources(b.dataset.id)});
+  }
+  function formatBytes(n){
+    if(!n)return'';
+    if(n<1024)return n+' B';
+    if(n<1048576)return (n/1024).toFixed(1)+' KB';
+    return (n/1048576).toFixed(1)+' MB';
+  }
+  async function refDeepSearch(query){
+    const q=(query||'').trim().toLowerCase();
+    refState.libSearchQ=q;
+    if(q.length<2){
+      refState.libSearchHits=null;
+      renderRefList();
+      return;
+    }
+    const listEl=$('#ref-list');
+    if(listEl)listEl.innerHTML='<p class="pq-help">Searching inside PDF text…</p>';
+    const hits={};
+    // Ensure fullText for items missing it
+    for(const it of refState.items){
+      let full=it.fullText||'';
+      if(!full){
+        try{
+          const buf=await refBlobGet(it.id);
+          if(buf){
+            const ex=await extractPdfPageTexts(buf);
+            it.pageTexts=ex.pageTexts;it.fullText=ex.fullText;full=ex.fullText;
+            await refMetaPut(it);
+          }
+        }catch(e){}
+      }
+      const blob=[full,it.title,it.fileName,it.notes,
+        (it.highlights||[]).map(h=>h.text||'').join(' ')].join(' ').toLowerCase();
+      if(!blob.includes(q))continue;
+      let count=0;let idx=0;
+      while((idx=blob.indexOf(q,idx))>=0){count++;idx+=q.length;if(count>50)break}
+      const snippets=[];
+      const src=full.toLowerCase();
+      let pos=src.indexOf(q);
+      for(let s=0;s<3&&pos>=0;s++){
+        snippets.push(full.slice(Math.max(0,pos-40),pos+q.length+40).replace(/\s+/g,' '));
+        pos=src.indexOf(q,pos+q.length);
+      }
+      hits[it.id]={count:Math.max(1,count),snippets};
+    }
+    refState.libSearchHits=hits;
+    renderRefList();
+    const n=Object.keys(hits).length;
+    toast(n?n+' PDF(s) contain “'+q+'”':'No PDF text matched “'+q+'”');
+  }
+  async function refUploadFiles(fileList){
+    const files=Array.from(fileList||[]).filter(f=>f&&(/pdf/i.test(f.type)||/\.pdf$/i.test(f.name)));
+    if(!files.length){toast('Choose PDF files');return}
+    const folder=refState.activeFolderId==='all'?'inbox':refState.activeFolderId;
+    let n=0;
+    toast('Uploading & indexing text…');
+    for(const file of files){
+      try{
+        const buf=await file.arrayBuffer();
+        const id=uid();
+        const ex=await extractPdfPageTexts(buf);
+        const item={
+          id, folderId:folder, title:file.name.replace(/\.pdf$/i,''),
+          fileName:file.name, mime:'application/pdf', size:file.size,
+          notes:'', tags:[], highlights:[], annotations:[],
+          pageTexts:ex.pageTexts, fullText:ex.fullText,
+          addedAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+          driveFileId:''
+        };
+        await refBlobPut(id, buf);
+        await refMetaPut(item);
+        n++;
+      }catch(e){console.warn(e)}
+    }
+    await refreshRefLibrary();
+    toast('Uploaded '+n+' PDF'+(n===1?'':'s')+' (text indexed for search)');
+  }
+  async function refNewFolder(){
+    const name=await styledPrompt('New folder','Folder name','Readings');
+    if(name===null||!name.trim())return;
+    const f={id:uid(),name:name.trim(),createdAt:new Date().toISOString()};
+    refState.folders.push(f);
+    refWriteFolders(refState.folders);
+    refState.activeFolderId=f.id;
+    renderRefFolders();renderRefList();
+    toast('Folder created');
+  }
+
+  function closeRefReader(){
+    refState.openItemId=null;
+    refState.pdfDoc=null;
+    refState.pageTexts=[];
+    refState.findMatches=[];
+    refState.findIdx=-1;
+    refState.pendingLibKeyword='';
+    const r=$('#ref-reader');if(r)r.classList.remove('open');
+    const wrap=$('#ref-pdf-wrap');if(wrap)wrap.innerHTML='';
+    try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
+  }
+  function refScrollToPage(pageNum){
+    const wrap=$('#ref-pdf-wrap');if(!wrap)return;
+    const el=wrap.querySelector('.page-canvas-wrap[data-page="'+pageNum+'"]');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    refState.page=pageNum;
+    const lab=$('#ref-page-label');
+    if(lab&&refState.pdfDoc)lab.textContent=pageNum+' / '+refState.pdfDoc.numPages;
+  }
+  async function openRefReader(id){
+    const item=await refMetaGet(id);if(!item)return toast('Not found');
+    const buf=await refBlobGet(id);
+    if(!buf)return toast('PDF data missing — re-upload this file');
+    if(typeof pdfjsLib==='undefined')return toast('PDF.js not loaded — check network');
+    refState.openItemId=id;
+    refState.page=1;
+    refState.scale=1.4;
+    refState.findMatches=[];
+    refState.findIdx=-1;
+    $('#ref-reader').classList.add('open');
+    $('#ref-reader-title').textContent=item.title||item.fileName||'PDF';
+    const fl=$('#ref-find-label');if(fl)fl.textContent='';
+    const fq=$('#ref-find-q');if(fq)fq.value='';
+    try{
+      const loading=pdfjsLib.getDocument({data:buf});
+      refState.pdfDoc=await loading.promise;
+      // page texts
+      if(item.pageTexts&&item.pageTexts.length===refState.pdfDoc.numPages){
+        refState.pageTexts=item.pageTexts.slice();
+      }else{
+        const ex=await extractPdfPageTexts(buf);
+        refState.pageTexts=ex.pageTexts;
+        item.pageTexts=ex.pageTexts;item.fullText=ex.fullText;
+        await refMetaPut(item);
+      }
+      await renderRefAllPages();
+      renderRefAnnoPanes(item);
+      // if library search keyword pending, run find
+      const kw=refState.libSearchQ||refState.pendingLibKeyword;
+      if(kw&&kw.length>=2){
+        if(fq)fq.value=kw;
+        await refFindInPdf(kw,true);
+      }
+    }catch(e){
+      console.error(e);
+      toast('Could not open PDF');
+      closeRefReader();
+    }
+  }
+  async function renderRefAllPages(){
+    const doc=refState.pdfDoc;if(!doc||refState.rendering)return;
+    refState.rendering=true;
+    const wrap=$('#ref-pdf-wrap');if(!wrap){refState.rendering=false;return}
+    // cancel prior intersection observer
+    try{if(wrap._refIO){wrap._refIO.disconnect();wrap._refIO=null}}catch(e){}
+    const item=refState.openItemId?await refMetaGet(refState.openItemId):null;
+    const findQ=(refState.findQ||'').toLowerCase();
+    const dpr=Math.min(window.devicePixelRatio||1, 2.5);
+    const cssScale=refState.scale;
+    // Build placeholder shells first (instant), then paint pages progressively
+    wrap.innerHTML='';
+    const holders=[];
+    for(let pageNum=1;pageNum<=doc.numPages;pageNum++){
+      const holder=document.createElement('div');
+      holder.className='page-canvas-wrap page-placeholder';
+      holder.dataset.page=String(pageNum);
+      holder.dataset.ready='0';
+      // approximate height so scroll position is stable (letter ratio)
+      const approxW=Math.min(wrap.clientWidth-32, 720)*cssScale/1.4;
+      holder.style.width=Math.round(Math.min(wrap.clientWidth-24, 900*cssScale/1.4))+'px';
+      holder.style.minHeight=Math.round((holder.style.width.replace('px','')||600)*1.294)+'px';
+      holder.innerHTML='<span style="opacity:.5">Page '+pageNum+'</span>';
+      wrap.appendChild(holder);
+      holders.push(holder);
+    }
+    const lab=$('#ref-page-label');
+    if(lab)lab.textContent=refState.page+' / '+doc.numPages;
+
+    async function paintPage(pageNum){
+      const holder=holders[pageNum-1];
+      if(!holder||holder.dataset.ready==='1'||holder.dataset.painting==='1')return;
+      holder.dataset.painting='1';
+      try{
+        const page=await doc.getPage(pageNum);
+        // Viewport at CSS scale; canvas buffer at CSS*dpr for sharp pixels
+        const viewport=page.getViewport({scale:cssScale});
+        const outputScale=dpr;
+        const canvas=document.createElement('canvas');
+        const ctx=canvas.getContext('2d',{alpha:false});
+        canvas.width=Math.floor(viewport.width*outputScale);
+        canvas.height=Math.floor(viewport.height*outputScale);
+        canvas.style.width=Math.floor(viewport.width)+'px';
+        canvas.style.height=Math.floor(viewport.height)+'px';
+        const transform=outputScale!==1?[outputScale,0,0,outputScale,0,0]:null;
+        holder.classList.remove('page-placeholder');
+        holder.style.width=Math.floor(viewport.width)+'px';
+        holder.style.height=Math.floor(viewport.height)+'px';
+        holder.style.minHeight='';
+        holder.innerHTML='';
+        holder.appendChild(canvas);
+        const textLayerDiv=document.createElement('div');
+        textLayerDiv.className='textLayer';
+        textLayerDiv.style.width=Math.floor(viewport.width)+'px';
+        textLayerDiv.style.height=Math.floor(viewport.height)+'px';
+        textLayerDiv.style.setProperty('--scale-factor',String(cssScale));
+        holder.appendChild(textLayerDiv);
+        const hlLayer=document.createElement('div');
+        hlLayer.className='pq-ref-hl-layer';
+        hlLayer.style.width=Math.floor(viewport.width)+'px';
+        hlLayer.style.height=Math.floor(viewport.height)+'px';
+        holder.appendChild(hlLayer);
+
+        const renderTask=page.render({
+          canvasContext:ctx,
+          viewport,
+          transform:transform||undefined,
+          intent:'display'
+        });
+        await renderTask.promise;
+
+        // Text layer for selection / find / highlight
+        try{
+          const textContent=await page.getTextContent();
+          if(pdfjsLib.renderTextLayer){
+            await pdfjsLib.renderTextLayer({
+              textContentSource:textContent,
+              container:textLayerDiv,
+              viewport,
+              textDivs:[]
+            }).promise;
+          }else if(typeof pdfjsLib.TextLayer==='function'){
+            const tl=new pdfjsLib.TextLayer({
+              textContentSource:textContent,
+              container:textLayerDiv,
+              viewport
+            });
+            await tl.render();
+          }else{
+            textContent.items.forEach(itx=>{
+              if(!itx.str)return;
+              const span=document.createElement('span');
+              span.textContent=itx.str;
+              const tx=pdfjsLib.Util.transform(viewport.transform, itx.transform);
+              const fontH=(itx.height||10)*cssScale;
+              span.style.left=tx[4]+'px';
+              span.style.top=(tx[5]-fontH)+'px';
+              span.style.fontSize=fontH+'px';
+              span.style.fontFamily=itx.fontName||'sans-serif';
+              textLayerDiv.appendChild(span);
+            });
+          }
+          if(findQ.length>=2){
+            $$('span',textLayerDiv).forEach(span=>{
+              const t=span.textContent||'';
+              if(t.toLowerCase().includes(findQ))span.classList.add('find-mark');
+            });
+          }
+        }catch(e){console.warn('text layer',e)}
+
+        if(item){
+          (item.highlights||[]).filter(h=>h.page===pageNum).forEach(h=>{
+            const el=document.createElement('div');
+            el.className='hl '+(h.color||'');
+            el.style.left=(h.x!=null?h.x:8)+'px';
+            el.style.top=(h.y!=null?h.y:8)+'px';
+            el.style.width=(h.w!=null?h.w:(viewport.width-16))+'px';
+            el.style.height=(h.h!=null?h.h:18)+'px';
+            el.title=h.text||'';
+            hlLayer.appendChild(el);
+          });
+        }
+        holder.dataset.ready='1';
+      }catch(e){
+        console.warn('page render',pageNum,e);
+        holder.innerHTML='<span style="color:#c66">Failed to render page '+pageNum+'</span>';
+      }
+      holder.dataset.painting='0';
+    }
+
+    // Paint first 2 pages immediately for fast first paint
+    const firstBatch=Math.min(2, doc.numPages);
+    for(let i=1;i<=firstBatch;i++)await paintPage(i);
+
+    // IntersectionObserver: paint pages as they approach viewport
+    try{
+      const io=new IntersectionObserver(entries=>{
+        entries.forEach(en=>{
+          if(en.isIntersecting){
+            const pn=parseInt(en.target.dataset.page,10);
+            if(pn)paintPage(pn);
+          }
+        });
+        // track current page
+        let best=null,br=0;
+        entries.forEach(en=>{
+          if(en.isIntersecting&&en.intersectionRatio>=br){
+            br=en.intersectionRatio;best=en.target;
+          }
+        });
+        if(best&&best.dataset.page){
+          refState.page=parseInt(best.dataset.page,10)||1;
+          if(lab)lab.textContent=refState.page+' / '+doc.numPages;
+        }
+      },{root:wrap, rootMargin:'600px 0px', threshold:[0,0.15,0.4,0.7]});
+      holders.forEach(h=>io.observe(h));
+      wrap._refIO=io;
+    }catch(e){
+      // fallback: paint remaining sequentially in background
+      (async()=>{
+        for(let i=firstBatch+1;i<=doc.numPages;i++){
+          await paintPage(i);
+          await new Promise(r=>setTimeout(r,0));
+        }
+      })();
+    }
+
+    // Also kick off a few more in background so short papers feel instant
+    (async()=>{
+      for(let i=firstBatch+1;i<=Math.min(doc.numPages, firstBatch+3);i++){
+        await paintPage(i);
+        await new Promise(r=>setTimeout(r,16));
+      }
+    })();
+
+    if(refState.findMatches&&refState.findMatches.length){
+      setTimeout(()=>refHighlightFindCurrent(),100);
+    }
+    refState.rendering=false;
+  }
+  function toggleRefFullscreen(){
+    const reader=$('#ref-reader');
+    if(!reader)return;
+    const isFs=!!document.fullscreenElement||reader.classList.contains('pq-ref-fs');
+    if(isFs){
+      if(document.fullscreenElement){
+        document.exitFullscreen&&document.exitFullscreen();
+      }
+      reader.classList.remove('pq-ref-fs');
+      const btn=$('#ref-fs');if(btn)btn.textContent='Fullscreen';
+    }else{
+      if(reader.requestFullscreen){
+        reader.requestFullscreen().then(()=>{
+          const btn=$('#ref-fs');if(btn)btn.textContent='Exit full';
+        }).catch(()=>{
+          // fallback CSS fullscreen if browser blocks API
+          reader.classList.add('pq-ref-fs');
+          reader.style.position='fixed';
+          reader.style.inset='0';
+          reader.style.zIndex='9999';
+          const btn=$('#ref-fs');if(btn)btn.textContent='Exit full';
+        });
+      }else{
+        reader.classList.add('pq-ref-fs');
+        reader.style.position='fixed';
+        reader.style.inset='0';
+        reader.style.zIndex='9999';
+        const btn=$('#ref-fs');if(btn)btn.textContent='Exit full';
+      }
+    }
+  }
+
+  async function refFindInPdf(q, fromLib){
+    q=(q||'').trim();
+    refState.findQ=q;
+    refState.findMatches=[];
+    refState.findIdx=-1;
+    const lab=$('#ref-find-label');
+    if(q.length<2){
+      if(lab)lab.textContent='';
+      $$('#ref-pdf-wrap .find-mark').forEach(el=>el.classList.remove('find-mark','current'));
+      return;
+    }
+    const ql=q.toLowerCase();
+    const texts=refState.pageTexts||[];
+    texts.forEach((pt,i)=>{
+      const src=(pt||'').toLowerCase();
+      let idx=0,pos;
+      while((pos=src.indexOf(ql,idx))>=0){
+        refState.findMatches.push({page:i+1, pos});
+        idx=pos+ql.length;
+        if(refState.findMatches.length>500)break;
+      }
+    });
+    if(!refState.findMatches.length){
+      if(lab)lab.textContent='0';
+      toast('No matches in this PDF');
+      // still re-render marks clear
+      await renderRefAllPages();
+      return;
+    }
+    refState.findIdx=0;
+    if(lab)lab.textContent='1 / '+refState.findMatches.length;
+    await renderRefAllPages();
+    refScrollToPage(refState.findMatches[0].page);
+    refHighlightFindCurrent();
+  }
+  function refHighlightFindCurrent(){
+    const marks=$$('#ref-pdf-wrap .find-mark');
+    marks.forEach(m=>m.classList.remove('current'));
+    const m=refState.findMatches[refState.findIdx];
+    if(!m)return;
+    // mark first find-mark on that page as current
+    const pageEl=$('#ref-pdf-wrap .page-canvas-wrap[data-page="'+m.page+'"]');
+    if(pageEl){
+      const pm=$$('.find-mark',pageEl);
+      if(pm[0]){
+        pm[0].classList.add('current');
+        pm[0].scrollIntoView({behavior:'smooth',block:'center'});
+      }else{
+        pageEl.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
+    const lab=$('#ref-find-label');
+    if(lab)lab.textContent=(refState.findIdx+1)+' / '+refState.findMatches.length;
+  }
+  function refFindNext(dir){
+    if(!refState.findMatches.length)return;
+    refState.findIdx=(refState.findIdx+dir+refState.findMatches.length)%refState.findMatches.length;
+    const m=refState.findMatches[refState.findIdx];
+    refScrollToPage(m.page);
+    refHighlightFindCurrent();
+  }
+  function refCaptureSelection(){
+    const sel=window.getSelection();
+    if(!sel||sel.isCollapsed||!sel.rangeCount)return null;
+    const text=(sel.toString()||'').trim();
+    if(!text)return null;
+    const wrap=$('#ref-pdf-wrap');
+    if(!wrap)return null;
+    // ensure selection is inside the PDF wrap
+    try{
+      const a=sel.anchorNode;
+      if(a&&!wrap.contains(a.nodeType===3?a.parentNode:a))return null;
+    }catch(e){return null}
+    let x=8,y=40,w=120,h=18,page=refState.page;
+    try{
+      const range=sel.getRangeAt(0);
+      const rect=range.getBoundingClientRect();
+      if(!rect||(rect.width===0&&rect.height===0))return null;
+      const holders=$$('.page-canvas-wrap',wrap);
+      holders.forEach(holder=>{
+        const hr=holder.getBoundingClientRect();
+        // selection intersects this page
+        if(rect.bottom>=hr.top&&rect.top<=hr.bottom){
+          page=parseInt(holder.dataset.page,10)||page;
+          x=Math.max(0,rect.left-hr.left);
+          y=Math.max(0,rect.top-hr.top);
+          w=Math.max(12,rect.width);
+          h=Math.max(10,rect.height);
+        }
+      });
+    }catch(e){}
+    return {text:text.slice(0,4000), page, x, y, w, h};
+  }
+  function refPaintHighlightOverlay(hl){
+    if(!hl)return;
+    const holder=$('#ref-pdf-wrap .page-canvas-wrap[data-page="'+hl.page+'"]');
+    if(!holder)return;
+    let layer=holder.querySelector('.pq-ref-hl-layer');
+    if(!layer){
+      layer=document.createElement('div');
+      layer.className='pq-ref-hl-layer';
+      layer.style.width=holder.style.width;
+      layer.style.height=holder.style.height;
+      holder.appendChild(layer);
+    }
+    // avoid duplicate DOM for same id
+    if(layer.querySelector('[data-hid="'+hl.id+'"]'))return;
+    const el=document.createElement('div');
+    el.className='hl '+(hl.color||'');
+    el.dataset.hid=hl.id;
+    el.style.left=(hl.x!=null?hl.x:8)+'px';
+    el.style.top=(hl.y!=null?hl.y:8)+'px';
+    el.style.width=(hl.w!=null?hl.w:120)+'px';
+    el.style.height=(hl.h!=null?hl.h:18)+'px';
+    el.title=hl.text||'';
+    layer.appendChild(el);
+  }
+  async function refAddHighlightFromSelection(color){
+    const id=refState.openItemId;if(!id)return;
+    // Prefer live selection; fall back to last captured (button click clears selection)
+    let cap=refCaptureSelection()||refState.lastSel;
+    if(!cap||!cap.text){toast('Select text in the PDF first, then press H or HL');return}
+    const item=await refMetaGet(id);if(!item)return;
+    if(!item.highlights)item.highlights=[];
+    const hl={
+      id:uid(), page:cap.page||refState.page, text:cap.text,
+      color:color||'', note:'', underpinnings:[], engagement:[],
+      x:cap.x, y:cap.y, w:cap.w, h:cap.h,
+      createdAt:new Date().toISOString()
+    };
+    item.highlights.push(hl);
+    item.updatedAt=new Date().toISOString();
+    await refMetaPut(item);
+    refState.lastSel=null;
+    try{window.getSelection().removeAllRanges()}catch(e){}
+    // paint overlay in place — no full re-render (keeps fullscreen & speed)
+    refPaintHighlightOverlay(hl);
+    renderRefAnnoPanes(item);
+    const tab=$$('#ref-anno-panel .tabs button').find(b=>b&&b.dataset&&b.dataset.rpane==='highlights');
+    if(tab)try{tab.click()}catch(e){}
+    toast('Highlighted · p.'+hl.page+' — press H again after selecting more');
+  }
+  async function refAddNote(){
+    const id=refState.openItemId;if(!id)return;
+    const text=await styledPromptArea('Page note','Note for page '+refState.page,'');
+    if(text===null||!String(text).trim())return;
+    const item=await refMetaGet(id);if(!item)return;
+    if(!item.annotations)item.annotations=[];
+    item.annotations.unshift({id:uid(), page:refState.page, text:String(text).trim(), createdAt:new Date().toISOString()});
+    item.updatedAt=new Date().toISOString();
+    await refMetaPut(item);
+    renderRefAnnoPanes(item);
+    toast('Note added');
+  }
+  async function refSendToScaffold(passage, underpinnings, engagement){
+    const projects=await idbAll();
+    if(!projects.length){
+      // use current paper only
+      const sc=ensureScaffold();
+      const box=newScafBox(passage||'');
+      box.underpinnings=(underpinnings||[]).map(t=>({id:uid(),text:t}));
+      box.engagement=(engagement||[]).map(t=>({id:uid(),text:t}));
+      sc.boxes.push(box);
+      if(!sc.open)sc.open=true;
+      scheduleSave();applyScaffoldChrome();renderScaffold();
+      toast('Added to current paper scaffold');
+      return;
+    }
+    const options=projects.map(p=>{
+      const st=p.state||p;
+      const title=(st.paperTitle||p.name||'Untitled paper');
+      return {id:p.id, title};
+    });
+    // include current if not in list
+    if(currentProjectId&&!options.some(o=>o.id===currentProjectId)){
+      options.unshift({id:currentProjectId, title:state.paperTitle||'Current paper'});
+    }
+    openModal('<h3>Add to scaffold</h3>'+
+      '<p class="pq-help">Send this passage'+(underpinnings&&underpinnings.length?' with underpinnings':'')+(engagement&&engagement.length?' & engagement':'')+' to a paper’s Scaffold panel.</p>'+
+      '<label class="pq-lbl">Paper</label>'+
+      '<select class="pq-sel" id="m-scaf-paper" style="width:100%">'+
+      options.map(o=>'<option value="'+escapeHtml(o.id)+'"'+(o.id===currentProjectId?' selected':'')+'>'+escapeHtml(o.title)+'</option>').join('')+
+      '</select>'+
+      '<div class="pq-src-card" style="margin-top:10px;max-height:120px;overflow:auto"><em>'+escapeHtml((passage||'').slice(0,500))+'</em></div>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-go">Add to scaffold</button></div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-go').onclick=async()=>{
+      const pid=$('#m-scaf-paper').value;
+      const box=newScafBox(passage||'');
+      box.underpinnings=(underpinnings||[]).filter(Boolean).map(t=>({id:uid(),text:String(t)}));
+      box.engagement=(engagement||[]).filter(Boolean).map(t=>({id:uid(),text:String(t)}));
+      if(pid===currentProjectId){
+        const sc=ensureScaffold();
+        sc.boxes.push(box);
+        if(!sc.open)sc.open=true;
+        scheduleSave();applyScaffoldChrome();renderScaffold();
+        closeModal();
+        toast('Added to current paper scaffold');
+        return;
+      }
+      const proj=await idbGet(pid);
+      if(!proj){toast('Paper not found');return}
+      const st=Object.assign({}, proj.state||{});
+      if(!st.scaffold)st.scaffold={open:true,wide:false,boxes:[]};
+      if(!st.scaffold.boxes)st.scaffold.boxes=[];
+      st.scaffold.boxes.push(box);
+      st.scaffold.open=true;
+      proj.state=st;
+      proj.updatedAt=new Date().toISOString();
+      await idbPut(proj);
+      closeModal();
+      toast('Added to scaffold in “'+(st.paperTitle||'paper')+'”');
+    };
+  }
+  function renderRefAnnoPanes(item){
+    if(!item)return;
+    const notes=$('#ref-pane-notes');
+    const hls=$('#ref-pane-highlights');
+    const info=$('#ref-pane-info');
+    if(notes){
+      notes.innerHTML='<label class="pq-lbl">Document notes</label>'+
+        '<textarea class="pq-inp" id="ref-doc-notes" style="width:100%;min-height:100px;font-size:.85rem">'+(item.notes||'').replace(/</g,'&lt;')+'</textarea>'+
+        '<button type="button" class="pq-btn pq-btn-primary" id="ref-save-notes" style="margin-top:6px">Save notes</button>'+
+        '<p class="pq-help" style="margin-top:12px">Page notes</p>'+
+        ((item.annotations||[]).length?(item.annotations||[]).map(a=>
+          '<div class="pq-ref-note-card"><div class="meta">p.'+a.page+' · '+escapeHtml(String(a.createdAt||'').slice(0,16))+'</div>'+
+          escapeHtml(a.text||'')+
+          '<div style="margin-top:4px">'+
+          '<button type="button" class="pq-btn ref-a-scaf" data-id="'+a.id+'" style="font-size:.68rem;padding:2px 6px">→ Scaffold</button> '+
+          '<button type="button" class="pq-btn ref-adel" data-id="'+a.id+'" style="font-size:.68rem;padding:2px 6px">Delete</button></div></div>'
+        ).join(''):'<p class="pq-help">No page notes yet.</p>');
+      const sn=$('#ref-save-notes');
+      if(sn)sn.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        it.notes=($('#ref-doc-notes')&&$('#ref-doc-notes').value)||'';
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);toast('Notes saved');
+      };
+      $$('.ref-adel',notes).forEach(b=>b.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        it.annotations=(it.annotations||[]).filter(a=>a.id!==b.dataset.id);
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);renderRefAnnoPanes(it);
+      });
+      $$('.ref-a-scaf',notes).forEach(b=>b.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        const a=(it.annotations||[]).find(x=>x.id===b.dataset.id);
+        if(a)refSendToScaffold(a.text||'',[],[]);
+      });
+    }
+    if(hls){
+      const list=item.highlights||[];
+      hls.innerHTML=list.length?list.map(h=>{
+        const under=(h.underpinnings||[]).map(u=>
+          '<div class="pq-scaf-bubble under" style="margin-top:6px"><span class="tag">Underpinning</span><div class="body">'+escapeHtml(u.text||'')+'</div>'+
+          '<div class="b-row"><button type="button" class="pq-btn ref-udel" data-hid="'+h.id+'" data-uid="'+u.id+'" style="font-size:.65rem;padding:2px 6px">Delete</button></div></div>'
+        ).join('');
+        const eng=(h.engagement||[]).map(e=>
+          '<div class="pq-scaf-bubble engage" style="margin-top:6px"><span class="tag">Engagement</span><div class="body">'+escapeHtml(e.text||'')+'</div>'+
+          '<div class="b-row"><button type="button" class="pq-btn ref-edel" data-hid="'+h.id+'" data-eid="'+e.id+'" style="font-size:.65rem;padding:2px 6px">Delete</button></div></div>'
+        ).join('');
+        return '<div class="pq-ref-note-card" data-hid="'+h.id+'"><div class="meta">p.'+h.page+(h.color?' · '+h.color:'')+'</div>'+
+          '<div style="font-style:italic;line-height:1.4">'+escapeHtml((h.text||'').slice(0,500))+'</div>'+
+          under+eng+
+          '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">'+
+          '<button type="button" class="pq-btn ref-add-u" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">+ Underpinning</button>'+
+          '<button type="button" class="pq-btn ref-add-e" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">+ Engagement</button>'+
+          '<button type="button" class="pq-btn pq-btn-primary ref-h-scaf" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">→ Scaffold</button>'+
+          '<button type="button" class="pq-btn ref-hgo" data-page="'+h.page+'" style="font-size:.68rem;padding:3px 7px">Go</button>'+
+          '<button type="button" class="pq-btn ref-hdel" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">Delete</button>'+
+          '</div></div>';
+      }).join(''):'<p class="pq-help">Select text in the PDF, then press <strong>HL</strong>. Add underpinnings &amp; engagement here, then send to a paper’s Scaffold.</p>';
+      $$('.ref-hdel',hls).forEach(b=>b.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        it.highlights=(it.highlights||[]).filter(h=>h.id!==b.dataset.id);
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);renderRefAnnoPanes(it);renderRefAllPages();
+      });
+      $$('.ref-hgo',hls).forEach(b=>b.onclick=()=>{refScrollToPage(parseInt(b.dataset.page,10)||1)});
+      $$('.ref-add-u',hls).forEach(b=>b.onclick=async()=>{
+        const t=await styledPromptArea('Underpinning','Theoretical or empirical support for this passage.','');
+        if(t===null||!String(t).trim())return;
+        const it=await refMetaGet(item.id);if(!it)return;
+        const h=(it.highlights||[]).find(x=>x.id===b.dataset.id);if(!h)return;
+        if(!h.underpinnings)h.underpinnings=[];
+        h.underpinnings.push({id:uid(),text:String(t).trim()});
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);renderRefAnnoPanes(it);
+      });
+      $$('.ref-add-e',hls).forEach(b=>b.onclick=async()=>{
+        const t=await styledPromptArea('Engagement','How you engage with this passage in your argument.','');
+        if(t===null||!String(t).trim())return;
+        const it=await refMetaGet(item.id);if(!it)return;
+        const h=(it.highlights||[]).find(x=>x.id===b.dataset.id);if(!h)return;
+        if(!h.engagement)h.engagement=[];
+        h.engagement.push({id:uid(),text:String(t).trim()});
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);renderRefAnnoPanes(it);
+      });
+      $$('.ref-udel',hls).forEach(b=>b.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        const h=(it.highlights||[]).find(x=>x.id===b.dataset.hid);if(!h)return;
+        h.underpinnings=(h.underpinnings||[]).filter(u=>u.id!==b.dataset.uid);
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);renderRefAnnoPanes(it);
+      });
+      $$('.ref-edel',hls).forEach(b=>b.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        const h=(it.highlights||[]).find(x=>x.id===b.dataset.hid);if(!h)return;
+        h.engagement=(h.engagement||[]).filter(e=>e.id!==b.dataset.eid);
+        it.updatedAt=new Date().toISOString();
+        await refMetaPut(it);renderRefAnnoPanes(it);
+      });
+      $$('.ref-h-scaf',hls).forEach(b=>b.onclick=async()=>{
+        const it=await refMetaGet(item.id);if(!it)return;
+        const h=(it.highlights||[]).find(x=>x.id===b.dataset.id);if(!h)return;
+        refSendToScaffold(
+          h.text||'',
+          (h.underpinnings||[]).map(u=>u.text),
+          (h.engagement||[]).map(e=>e.text)
+        );
+      });
+    }
+    if(info){
+      const m=item.meta||{};
+      const hasMeta=refHasUsableMeta(item);
+      const inSrc=refIsInSources(item);
+      let metaHtml='';
+      if(hasMeta){
+        metaHtml='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);line-height:1.55">'+
+          '<div><strong>Title</strong> '+escapeHtml(m.title||'')+'</div>'+
+          '<div><strong>Authors</strong> '+escapeHtml(m.authors||'')+'</div>'+
+          '<div><strong>Year</strong> '+escapeHtml(m.year||'')+'</div>'+
+          (m.container?'<div><strong>Journal</strong> '+escapeHtml(m.container)+'</div>':'')+
+          (m.volume||m.issue||m.pages?'<div><strong>Vol/Iss/pp</strong> '+escapeHtml([m.volume,m.issue,m.pages].filter(Boolean).join(' · '))+'</div>':'')+
+          (m.doi?'<div><strong>DOI</strong> '+escapeHtml(m.doi)+'</div>':'')+
+          (m.publisher?'<div><strong>Publisher</strong> '+escapeHtml(m.publisher)+'</div>':'')+
+          '</div>';
+      }else{
+        metaHtml='<p class="pq-help" style="margin-top:8px">No citation metadata yet.</p>';
+      }
+      const actions=
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'+
+        '<button type="button" class="pq-btn" id="ref-info-meta">Edit metadata</button>'+
+        (inSrc
+          ?'<button type="button" class="pq-btn" disabled style="opacity:.75">Added to source library</button>'
+          :(hasMeta?'<button type="button" class="pq-btn pq-btn-primary" id="ref-info-addsrc">Add to sources</button>':''))+
+        '</div>';
+      info.innerHTML='<div class="pq-help" style="line-height:1.6">'+
+        '<div><strong>File</strong> '+escapeHtml(item.fileName||'')+'</div>'+
+        '<div><strong>Size</strong> '+escapeHtml(formatBytes(item.size||0))+'</div>'+
+        '<div><strong>Pages indexed</strong> '+((item.pageTexts&&item.pageTexts.length)||'—')+'</div>'+
+        '<div><strong>Added</strong> '+escapeHtml(String(item.addedAt||'').slice(0,19))+'</div>'+
+        '<div><strong>Updated</strong> '+escapeHtml(String(item.updatedAt||'').slice(0,19))+'</div>'+
+        '<div><strong>Folder</strong> '+escapeHtml(item.folderId||'')+'</div>'+
+        '<div><strong>Highlights</strong> '+(item.highlights||[]).length+'</div>'+
+        '<div><strong>Page notes</strong> '+(item.annotations||[]).length+'</div>'+
+        metaHtml+actions+'</div>';
+      const emb=$('#ref-info-meta');if(emb)emb.onclick=()=>openRefMetadata(item.id);
+      const eas=$('#ref-info-addsrc');if(eas)eas.onclick=()=>refAddToSources(item.id);
+    }
+  }
+  async function refDownloadPdf(){
+    const id=refState.openItemId;if(!id)return;
+    const item=await refMetaGet(id);const buf=await refBlobGet(id);
+    if(!buf)return toast('Missing file data');
+    const blob=new Blob([buf],{type:'application/pdf'});
+    if(typeof saveAs==='function')saveAs(blob,item.fileName||'document.pdf');
+    else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=item.fileName||'document.pdf';a.click();
+    }
+  }
+  function updateRefDiskStatus(){
+    const el=$('#ref-disk-status');
+    const btn=$('#ref-export-json');
+    if(!el||!btn)return;
+    if(refFileHandle){el.textContent='Disk: '+(refDiskName||'linked');btn.textContent='Save disk'}
+    else if(refDiskName){el.textContent='Re-link: '+refDiskName;btn.textContent='Re-link'}
+    else{el.textContent='';btn.textContent='Save disk'}
+  }
+  async function refBuildPayload(){
+    const items=await refMetaAll();
+    const folders=refReadFolders();
+    return {app:'PaperQuill-Refs', version:2, exportedAt:new Date().toISOString(), folders, items};
+  }
+  async function refExportJson(force){
+    const payload=await refBuildPayload();
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    try{
+      if(!force&&refFileHandle){
+        let ok=true;
+        if(refFileHandle.queryPermission){
+          let p=await refFileHandle.queryPermission({mode:'readwrite'});
+          if(p!=='granted'&&refFileHandle.requestPermission)p=await refFileHandle.requestPermission({mode:'readwrite'});
+          ok=p==='granted';
+        }
+        if(ok){
+          const w=await refFileHandle.createWritable();await w.write(blob);await w.close();
+          refDiskName=refFileHandle.name||refDiskName;
+          updateRefDiskStatus();
+          toast('Saved · '+refDiskName);return;
+        }
+      }
+      if(window.showSaveFilePicker){
+        refFileHandle=await window.showSaveFilePicker({
+          suggestedName:(refDiskName||'paperquill-references.json'),
+          types:[{description:'PaperQuill References JSON',accept:{'application/json':['.json']}}]
+        });
+        const w=await refFileHandle.createWritable();await w.write(blob);await w.close();
+        refDiskName=refFileHandle.name;
+        updateRefDiskStatus();
+        toast('Linked & saved · '+refDiskName+' — later saves update this file');return;
+      }
+    }catch(e){if(e&&e.name==='AbortError')return;console.warn(e)}
+    // fallback download
+    if(typeof saveAs==='function')saveAs(blob,refDiskName||'paperquill-references.json');
+    else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=refDiskName||'paperquill-references.json';a.click();
+    }
+    toast('Downloaded reference JSON (browser cannot link file — use Chrome/Edge for linked saves)');
+  }
+  async function refImportJson(file){
+    // file input fallback
+    if(file){
+      try{
+        const data=JSON.parse(await file.text());
+        await refApplyDiskData(data);
+        toast('Metadata imported — re-upload any missing PDFs');
+      }catch(e){toast('Import failed');console.error(e)}
+      return;
+    }
+    // File System Access open
+    try{
+      if(window.showOpenFilePicker){
+        const [h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}]});
+        refFileHandle=h;
+        const f=await h.getFile();
+        const data=JSON.parse(await f.text());
+        await refApplyDiskData(data);
+        refDiskName=h.name;
+        updateRefDiskStatus();
+        toast('Opened & linked · '+refDiskName);return;
+      }
+    }catch(e){if(e&&e.name==='AbortError')return;console.warn(e)}
+    // trigger hidden file input
+    const jin=$('#ref-json-input');if(jin)jin.click();
+  }
+  async function refApplyDiskData(data){
+    if(data.folders&&Array.isArray(data.folders))refWriteFolders(data.folders);
+    if(data.items&&Array.isArray(data.items)){
+      for(const it of data.items){
+        const existing=await refMetaGet(it.id);
+        if(existing){
+          // merge meta/highlights/notes but keep blob if present
+          const merged=Object.assign({},existing,it,{id:existing.id});
+          if(existing.highlights&&!it.highlights)merged.highlights=existing.highlights;
+          await refMetaPut(merged);
+        }else{
+          await refMetaPut(Object.assign({},it,{missingBlob:!it._hasBlob}));
+        }
+      }
+    }
+    await refreshRefLibrary();
+  }
+
+  async function openRefMetadata(id){
+    const item=await refMetaGet(id);if(!item)return toast('Not found');
+    const m=item.meta||{};
+    const qGuess=(m.title||item.title||item.fileName||'').replace(/\.pdf$/i,'');
+    openModal('<h3>PDF metadata</h3>'+
+      '<p class="pq-help">Fetch from open libraries or edit manually. Complete metadata unlocks <strong>Add to sources</strong> for citing on the writing desk.</p>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+
+      '<input class="pq-inp" id="m-meta-q" placeholder="Title, DOI, or author…" style="flex:1;min-width:140px" value="'+escapeHtml(qGuess)+'">'+
+      '<select class="pq-sel" id="m-meta-lib" style="width:auto">'+
+      '<option value="openalex">OpenAlex</option>'+
+      '<option value="crossref">Crossref</option>'+
+      '<option value="semanticscholar">Semantic Scholar</option>'+
+      '<option value="europepmc">Europe PMC</option>'+
+      '<option value="doaj">DOAJ</option>'+
+      '</select>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-meta-fetch">Fetch</button>'+
+      '</div>'+
+      '<div id="m-meta-hits" style="max-height:22vh;overflow:auto;margin-bottom:8px"></div>'+
+      '<label class="pq-lbl">Type</label><select class="pq-sel" id="m-type">'+
+      ['article','book','chapter','thesis','report','website'].map(t=>'<option value="'+t+'"'+( (m.type||'article')===t?' selected':'')+'>'+t+'</option>').join('')+
+      '</select>'+
+      '<label class="pq-lbl">Authors (Last, First; semicolon-separated)</label>'+
+      '<input class="pq-inp" id="m-authors" style="width:100%" value="'+escapeHtml(m.authors||'')+'">'+
+      '<label class="pq-lbl">Title</label>'+
+      '<input class="pq-inp" id="m-title" style="width:100%" value="'+escapeHtml(m.title||item.title||'')+'">'+
+      '<label class="pq-lbl">Year</label>'+
+      '<input class="pq-inp" id="m-year" style="width:100%" value="'+escapeHtml(m.year||'')+'">'+
+      '<label class="pq-lbl">Journal / Container</label>'+
+      '<input class="pq-inp" id="m-container" style="width:100%" value="'+escapeHtml(m.container||'')+'">'+
+      '<label class="pq-lbl">Publisher</label>'+
+      '<input class="pq-inp" id="m-pub" style="width:100%" value="'+escapeHtml(m.publisher||'')+'">'+
+      '<div style="display:flex;gap:6px">'+
+      '<div style="flex:1"><label class="pq-lbl">Volume</label><input class="pq-inp" id="m-vol" style="width:100%" value="'+escapeHtml(m.volume||'')+'"></div>'+
+      '<div style="flex:1"><label class="pq-lbl">Issue</label><input class="pq-inp" id="m-iss" style="width:100%" value="'+escapeHtml(m.issue||'')+'"></div>'+
+      '<div style="flex:1"><label class="pq-lbl">Pages</label><input class="pq-inp" id="m-pages" style="width:100%" value="'+escapeHtml(m.pages||'')+'"></div>'+
+      '</div>'+
+      '<label class="pq-lbl">DOI</label>'+
+      '<input class="pq-inp" id="m-doi" style="width:100%" value="'+escapeHtml(m.doi||'')+'">'+
+      '<label class="pq-lbl">URL</label>'+
+      '<input class="pq-inp" id="m-url" style="width:100%" value="'+escapeHtml(m.url||'')+'">'+
+      '<label class="pq-lbl">Abstract</label>'+
+      '<textarea class="pq-inp" id="m-abstract" style="width:100%;min-height:70px">'+escapeHtml(m.abstract||'')+'</textarea>'+
+      '<div class="pq-modal-actions">'+
+      '<button type="button" class="pq-btn" id="m-cancel">Cancel</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-save">Save metadata</button>'+
+      '</div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    $('#m-cancel').onclick=closeModal;
+    const fillFields=hit=>{
+      if(!hit)return;
+      if(hit.type)$('#m-type').value=hit.type;
+      if(hit.authors!=null)$('#m-authors').value=hit.authors;
+      if(hit.title!=null)$('#m-title').value=hit.title;
+      if(hit.year!=null)$('#m-year').value=hit.year;
+      if(hit.container!=null)$('#m-container').value=hit.container;
+      if(hit.publisher!=null)$('#m-pub').value=hit.publisher;
+      if(hit.volume!=null)$('#m-vol').value=hit.volume;
+      if(hit.issue!=null)$('#m-iss').value=hit.issue;
+      if(hit.pages!=null)$('#m-pages').value=hit.pages;
+      if(hit.doi!=null)$('#m-doi').value=hit.doi;
+      if(hit.url!=null)$('#m-url').value=hit.url;
+      if(hit.abstract!=null)$('#m-abstract').value=hit.abstract;
+    };
+    $('#m-meta-fetch').onclick=async()=>{
+      const q=($('#m-meta-q').value||'').trim();
+      if(!q)return toast('Enter a title, DOI, or author');
+      const lib=$('#m-meta-lib').value;
+      const box=$('#m-meta-hits');
+      box.innerHTML='<p class="pq-help">Searching…</p>';
+      try{
+        const hits=await fetchRefMetaHits(q,lib);
+        if(!hits.length){box.innerHTML='<p class="pq-help">No results. Try another library or edit manually.</p>';return}
+        box.innerHTML=hits.map((h,i)=>
+          '<div class="pq-src-card" style="cursor:pointer;margin-bottom:6px" data-i="'+i+'">'+
+          '<strong>'+escapeHtml(h.title||'Untitled')+'</strong>'+
+          '<div class="pq-help">'+escapeHtml([h.authors,h.year,h.container,h.doi].filter(Boolean).join(' · '))+'</div>'+
+          (h.abstract?'<div class="pq-help" style="margin-top:4px">'+escapeHtml(String(h.abstract).slice(0,180))+'…</div>':'')+
+          '</div>'
+        ).join('');
+        $$('.pq-src-card',box).forEach(card=>{
+          card.onclick=()=>{
+            fillFields(hits[parseInt(card.dataset.i,10)]);
+            toast('Filled from library — review & save');
+          };
+        });
+      }catch(e){
+        console.error(e);
+        box.innerHTML='<p class="pq-help">Fetch failed. Check network or edit manually.</p>';
+      }
+    };
+    $('#m-save').onclick=async()=>{
+      const meta={
+        type:$('#m-type').value,
+        authors:($('#m-authors').value||'').trim(),
+        title:($('#m-title').value||'').trim(),
+        year:($('#m-year').value||'').trim(),
+        container:($('#m-container').value||'').trim(),
+        publisher:($('#m-pub').value||'').trim(),
+        volume:($('#m-vol').value||'').trim(),
+        issue:($('#m-iss').value||'').trim(),
+        pages:($('#m-pages').value||'').trim(),
+        doi:normalizeDoi($('#m-doi').value||''),
+        url:($('#m-url').value||'').trim(),
+        abstract:($('#m-abstract').value||'').trim()
+      };
+      if(!meta.title)return toast('Title required');
+      if(meta.doi&&!meta.url)meta.url='https://doi.org/'+meta.doi;
+      const it=await refMetaGet(id);if(!it)return;
+      it.meta=meta;
+      if(meta.title)it.title=meta.title;
+      it.updatedAt=new Date().toISOString();
+      await refMetaPut(it);
+      closeModal();
+      await refreshRefLibrary();
+      // refresh open reader info pane if same item
+      if(refState.openItemId===id)renderRefAnnoPanes(it);
+      toast('Metadata saved');
+    };
+  }
+  async function fetchRefMetaHits(query,lib){
+    const q=query.trim();
+    const results=[];
+    if(lib==='openalex'||!lib){
+      const doi=normalizeDoi(q);
+      let url;
+      if(/^10\.\d/.test(doi))url='https://api.openalex.org/works/doi:'+encodeURIComponent(doi)+'?mailto=paperquill@example.com';
+      else url='https://api.openalex.org/works?search='+encodeURIComponent(q)+'&per_page=8&mailto=paperquill@example.com';
+      const r=await fetch(url);
+      const data=await r.json();
+      const works=data.results||(data.id?[data]:[]);
+      works.forEach(w=>{const m=mapOpenAlexWork(w);if(m)results.push(m)});
+    }else if(lib==='crossref'){
+      const r=await fetch('https://api.crossref.org/works?query='+encodeURIComponent(q)+'&rows=8');
+      const data=await r.json();
+      (data.message&&data.message.items||[]).forEach(w=>{const m=mapCrossrefWork(w);if(m)results.push(m)});
+    }else if(lib==='semanticscholar'){
+      const r=await fetch('https://api.semanticscholar.org/graph/v1/paper/search?query='+encodeURIComponent(q)+'&limit=8&fields=title,authors,year,venue,abstract,externalIds,url');
+      const data=await r.json();
+      (data.data||[]).forEach(w=>{
+        const authors=(w.authors||[]).map(a=>a.name).filter(Boolean).map(n=>{
+          const p=String(n).trim().split(/\s+/);return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+        }).join('; ');
+        results.push({
+          type:'article',authors,title:w.title||'',year:w.year?String(w.year):'',
+          container:w.venue||'',publisher:'',volume:'',issue:'',pages:'',
+          doi:(w.externalIds&&w.externalIds.DOI)||'',url:w.url||'',abstract:w.abstract||'',
+          sourceLib:'Semantic Scholar'
+        });
+      });
+    }else if(lib==='europepmc'){
+      const r=await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query='+encodeURIComponent(q)+'&format=json&pageSize=8');
+      const data=await r.json();
+      (data.resultList&&data.resultList.result||[]).forEach(w=>{
+        results.push({
+          type:'article',
+          authors:(w.authorString||'').replace(/\s*,\s*/g,'; '),
+          title:w.title||'',year:w.pubYear?String(w.pubYear):'',
+          container:w.journalTitle||'',publisher:'',volume:w.journalVolume||'',issue:w.issue||'',
+          pages:w.pageInfo||'',doi:w.doi||'',url:w.doi?('https://doi.org/'+w.doi):'',
+          abstract:w.abstractText||'',sourceLib:'Europe PMC'
+        });
+      });
+    }else if(lib==='doaj'){
+      const r=await fetch('https://doaj.org/api/search/articles/'+encodeURIComponent(q)+'?pageSize=8');
+      const data=await r.json();
+      (data.results||[]).forEach(rec=>{
+        const b=rec.bibjson||{};
+        const authors=(b.author||[]).map(a=>a.name).filter(Boolean).map(n=>{
+          const p=String(n).trim().split(/\s+/);return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+        }).join('; ');
+        const idDoi=(b.identifier||[]).find(i=>i.type==='doi');
+        const doi=idDoi?normalizeDoi(idDoi.id):'';
+        results.push({
+          type:'article',authors,title:b.title||'',year:b.year?String(b.year):'',
+          container:(b.journal&&b.journal.title)||'',publisher:(b.journal&&b.journal.publisher)||'',
+          volume:(b.journal&&b.journal.volume)||'',issue:(b.journal&&b.journal.number)||'',
+          pages:[b.start_page,b.end_page].filter(Boolean).join('-'),
+          doi,url:doi?('https://doi.org/'+doi):((b.link&&b.link[0]&&b.link[0].url)||''),
+          abstract:b.abstract||'',sourceLib:'DOAJ'
+        });
+      });
+    }
+    return results;
+  }
+  async function refAddToSources(id){
+    const item=await refMetaGet(id);if(!item)return;
+    if(!refHasUsableMeta(item))return toast('Add metadata first');
+    const m=item.meta;
+    if(refIsInSources(item)){
+      toast('Already in source library');
+      await refreshRefLibrary();
+      return;
+    }
+    const src={
+      id:uid(),
+      type:m.type||'article',
+      authors:m.authors||'',
+      title:m.title||'',
+      year:m.year||'',
+      container:m.container||'',
+      publisher:m.publisher||'',
+      volume:m.volume||'',
+      issue:m.issue||'',
+      pages:m.pages||'',
+      doi:m.doi||'',
+      url:m.url||'',
+      abstract:m.abstract||'',
+      note:'',
+      fromRefId:item.id
+    };
+    state.sources.push(src);
+    item.linkedSourceId=src.id;
+    item.updatedAt=new Date().toISOString();
+    await refMetaPut(item);
+    try{if(typeof libPut==='function')await libPut(src)}catch(e){}
+    scheduleSave();
+    if(typeof renderSources==='function')renderSources();
+    await refreshRefLibrary();
+    toast('Added to sources — cite from the writing desk');
+  }
+
+  async function refDriveSync(){
+    try{
+      const token=await driveEnsureToken();
+      const items=await refMetaAll();
+      const folders=refReadFolders();
+      const payload={app:'PaperQuill-Refs',version:1,updatedAt:new Date().toISOString(),folders,items};
+      const bodyStr=JSON.stringify(payload,null,2);
+      const fileName='PaperQuill – Reference Library.json';
+      let fileId='';
+      try{fileId=localStorage.getItem('pq-ref-drive-file')||''}catch(e){}
+      let res;
+      if(fileId){
+        res=await fetch('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(fileId)+'?uploadType=media',{
+          method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:bodyStr
+        });
+      }else{
+        const boundary='paperquill_ref_'+Date.now();
+        const meta={name:fileName,mimeType:'application/json'};
+        const multipart=
+          '--'+boundary+'\r\n'+
+          'Content-Type: application/json; charset=UTF-8\r\n\r\n'+
+          JSON.stringify(meta)+'\r\n'+
+          '--'+boundary+'\r\n'+
+          'Content-Type: application/json\r\n\r\n'+
+          bodyStr+'\r\n'+
+          '--'+boundary+'--';
+        res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+          method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary},body:multipart
+        });
+      }
+      const data=await res.json();
+      if(!res.ok)throw new Error((data.error&&data.error.message)||'Drive upload failed');
+      if(data.id)try{localStorage.setItem('pq-ref-drive-file',data.id)}catch(e){}
+      toast('Reference library synced to Drive (metadata)');
+    }catch(e){
+      if(String(e.message)==='not_connected')toast('Connect Google Drive from Home first');
+      else toast('Drive sync failed: '+(e.message||'error'));
+      console.error(e);
+    }
+  }
+
+  function wireRefManager(){
+    const cap=$('#cap-refs');
+    if(cap)cap.onclick=()=>{
+      if($('#pq-ref').classList.contains('open'))closeRefManager();
+      else openRefManager();
+    };
+    const back=$('#ref-back-write');
+    if(back)back.onclick=()=>closeRefManager();
+    const home=$('#cap-home');
+    if(home)home.addEventListener('click',()=>{if($('#pq-ref').classList.contains('open'))closeRefManager()});
+    const up=$('#ref-upload');
+    const fin=$('#ref-file-input');
+    if(up&&fin){up.onclick=()=>fin.click();fin.onchange=()=>{refUploadFiles(fin.files);fin.value=''}}
+    const nf=$('#ref-new-folder');if(nf)nf.onclick=()=>refNewFolder();
+    const fa=$('#ref-folder-all');if(fa)fa.onclick=()=>{refState.activeFolderId='all';refState.libSearchHits=null;renderRefFolders();renderRefList()};
+    const search=$('#ref-search');
+    if(search){
+      let t=null;
+      search.oninput=()=>{
+        clearTimeout(t);
+        t=setTimeout(()=>{
+          const q=search.value.trim();
+          if(q.length>=2)refDeepSearch(q);
+          else{refState.libSearchQ='';refState.libSearchHits=null;renderRefList()}
+        },450);
+      };
+      search.onkeydown=e=>{if(e.key==='Enter'){clearTimeout(t);refDeepSearch(search.value.trim())}};
+    }
+    const exp=$('#ref-export-json');if(exp)exp.onclick=()=>refExportJson();
+    const imp=$('#ref-import-json');
+    const jin=$('#ref-json-input');
+    if(imp)imp.onclick=()=>refImportJson();
+    if(jin)jin.onchange=()=>{refImportJson(jin.files&&jin.files[0]);jin.value=''};
+    updateRefDiskStatus();
+    const ds=$('#ref-drive-sync');if(ds)ds.onclick=()=>refDriveSync();
+    const rc=$('#ref-reader-close');if(rc)rc.onclick=()=>closeRefReader();
+    const pp=$('#ref-page-prev');if(pp)pp.onclick=()=>{if(refState.page>1)refScrollToPage(refState.page-1)};
+    const pn=$('#ref-page-next');if(pn)pn.onclick=()=>{if(refState.pdfDoc&&refState.page<refState.pdfDoc.numPages)refScrollToPage(refState.page+1)};
+    const zi=$('#ref-zoom-in');if(zi)zi.onclick=async()=>{refState.scale=Math.min(3,refState.scale+0.15);await renderRefAllPages()};
+    const zo=$('#ref-zoom-out');if(zo)zo.onclick=async()=>{refState.scale=Math.max(0.5,refState.scale-0.15);await renderRefAllPages()};
+    const hl=$('#ref-hl-y');
+    if(hl){
+      // mousedown preventDefault keeps the text selection from collapsing before click
+      hl.onmousedown=e=>e.preventDefault();
+      hl.onclick=()=>refAddHighlightFromSelection('');
+      hl.title='Highlight selection (H)';
+    }
+    // Capture selection while reading (survives button click / fullscreen)
+    const pdfWrap=$('#ref-pdf-wrap');
+    if(pdfWrap){
+      const storeSel=()=>{
+        const cap=refCaptureSelection();
+        if(cap)refState.lastSel=cap;
+      };
+      pdfWrap.addEventListener('mouseup',storeSel);
+      pdfWrap.addEventListener('keyup',storeSel);
+      document.addEventListener('selectionchange',()=>{
+        if(!$('#ref-reader')||!$('#ref-reader').classList.contains('open'))return;
+        // debounce lightly
+        clearTimeout(pdfWrap._selT);
+        pdfWrap._selT=setTimeout(storeSel,50);
+      });
+    }
+    const an=$('#ref-add-note');if(an)an.onclick=()=>refAddNote();
+    const dl=$('#ref-dl-pdf');if(dl)dl.onclick=()=>refDownloadPdf();
+    const fs=$('#ref-fs');
+    if(fs)fs.onclick=()=>toggleRefFullscreen();
+    document.addEventListener('fullscreenchange',()=>{
+      const btn=$('#ref-fs');
+      const reader=$('#ref-reader');
+      if(!btn)return;
+      if(document.fullscreenElement){btn.textContent='Exit full'}
+      else{
+        btn.textContent='Fullscreen';
+        if(reader){reader.classList.remove('pq-ref-fs');reader.style.position='';reader.style.inset='';reader.style.zIndex=''}
+      }
+    });
+    const tog=$('#ref-toggle-folders');
+    if(tog)tog.onclick=()=>$('#ref-side').classList.toggle('collapsed');
+    // find in PDF
+    const fq=$('#ref-find-q');
+    if(fq){
+      let ft=null;
+      fq.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();refFindInPdf(fq.value)}};
+      fq.oninput=()=>{clearTimeout(ft);ft=setTimeout(()=>{if((fq.value||'').trim().length>=2)refFindInPdf(fq.value)},500)};
+    }
+    const fn=$('#ref-find-next');if(fn)fn.onclick=()=>refFindNext(1);
+    const fp=$('#ref-find-prev');if(fp)fp.onclick=()=>refFindNext(-1);
+    // keyboard in reader
+    document.addEventListener('keydown',e=>{
+      if(!$('#pq-ref').classList.contains('open')||!$('#ref-reader').classList.contains('open'))return;
+      const tag=(e.target&&e.target.tagName||'').toLowerCase();
+      if(tag==='input'||tag==='textarea'||(e.target&&e.target.isContentEditable))return;
+      if(e.key==='ArrowRight'||e.key==='PageDown'){
+        e.preventDefault();
+        if(refState.pdfDoc&&refState.page<refState.pdfDoc.numPages)refScrollToPage(refState.page+1);
+      }else if(e.key==='ArrowLeft'||e.key==='PageUp'){
+        e.preventDefault();
+        if(refState.page>1)refScrollToPage(refState.page-1);
+      }else if(e.key==='ArrowDown'){
+        const wrap=$('#ref-pdf-wrap');if(wrap)wrap.scrollBy({top:80,behavior:'smooth'});
+      }else if(e.key==='ArrowUp'){
+        const wrap=$('#ref-pdf-wrap');if(wrap)wrap.scrollBy({top:-80,behavior:'smooth'});
+      }else if(e.key==='f'&&(e.ctrlKey||e.metaKey)){
+        e.preventDefault();
+        const el=$('#ref-find-q');if(el)el.focus();
+      }else if(e.key==='h'||e.key==='H'){
+        e.preventDefault();
+        refAddHighlightFromSelection('');
+      }else if(e.key==='Escape'){
+        // exit fullscreen first if active, else close reader
+        if(document.fullscreenElement||($('#ref-reader')&&$('#ref-reader').classList.contains('pq-ref-fs'))){
+          toggleRefFullscreen();
+        }else{
+          closeRefReader();
+        }
+      }
+    });
+    $$('#ref-anno-panel .tabs button').forEach(btn=>{
+      btn.onclick=()=>{
+        $$('#ref-anno-panel .tabs button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const p=btn.dataset.rpane;
+        ['notes','highlights','info'].forEach(name=>{
+          const el=$('#ref-pane-'+name);
+          if(el)el.style.display=name===p?'':'none';
+        });
+      };
+    });
+  }
+
+  // styledPromptArea helper if missing
+  if(typeof styledPromptArea!=='function'){
+    window.styledPromptArea=async function(title,help,val){
+      return new Promise(resolve=>{
+        openModal('<h3>'+escapeHtml(title)+'</h3><p class="pq-help">'+escapeHtml(help||'')+'</p>'+
+          '<textarea class="pq-inp" id="m-area" style="width:100%;min-height:120px">'+(val||'').replace(/</g,'&lt;')+'</textarea>'+
+          '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-ok">OK</button></div>');
+        $('#m-cancel').onclick=()=>{closeModal();resolve(null)};
+        $('#m-ok').onclick=()=>{const v=$('#m-area').value;closeModal();resolve(v)};
+      });
+    };
+  }
+
+
+  wireRefManager();
   wireHighTrafficFeatures();
   (async()=>{
     driveLoadCachedToken();
