@@ -325,6 +325,19 @@
       display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.1)
     }
     .pq-table-del:hover{background:var(--danger);color:#fff}
+    .pq-cite{cursor:pointer;border-radius:3px;transition:background .12s}
+    .pq-cite:hover{background:color-mix(in srgb,var(--cite) 14%,transparent)}
+    .pq-ac-item.active,.pq-ac-item.kb-active{background:var(--hover);outline:1px solid var(--accent)}
+    .pq-diff-add{background:color-mix(in srgb,var(--ok) 16%,var(--paper));padding:2px 0}
+    .pq-diff-del{background:color-mix(in srgb,var(--danger) 14%,var(--paper));text-decoration:line-through;opacity:.85;padding:2px 0}
+    .pq-diff-sec{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:var(--paper)}
+    .pq-diff-sec h4{margin:0 0 6px;font-size:.9rem}
+    .pq-caption{font-size:.88rem;color:var(--muted);margin:4px 0 0;font-style:italic;text-align:left}
+    .pq-fig-wrap{margin:16px 0;clear:both}
+    .pq-fig-wrap img{max-width:100%;height:auto;border-radius:4px}
+    .pq-readiness-act{margin-top:6px}
+    .pq-readiness-act .pq-btn{font-size:.72rem;padding:4px 8px}
+
     #pq-root.pq-focus .pq-top,
     #pq-root.pq-focus .pq-toolbar,
     #pq-root.pq-focus .pq-sidebar,
@@ -644,7 +657,7 @@
     <button type="button" class="pq-btn pq-btn-primary" id="pq-insert-cite">Cite</button>
     <button type="button" class="pq-btn" id="pq-add-source">+ Source</button>
     <button type="button" class="pq-btn" id="pq-doi-fetch">DOI / ID</button>
-    <button type="button" class="pq-btn" id="pq-search-src" title="Search OpenAlex / Crossref">Find sources</button>
+    <button type="button" class="pq-btn" id="pq-search-src" title="Search OpenAlex, Crossref, Europe PMC, Semantic Scholar, DOAJ">Find sources</button>
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-hl-btn" title="Highlight selection">Highlight</button>
     <button type="button" class="pq-btn" id="pq-comment-btn" title="Comment on selection">Comment</button>
@@ -745,6 +758,8 @@
     <button type="button" class="pq-btn" id="tool-library">Shared source library</button>
     <button type="button" class="pq-btn" id="tool-import">Import sources (BibTeX/RIS)</button>
     <button type="button" class="pq-btn" id="tool-exportsrc">Export sources</button>
+    <button type="button" class="pq-btn" id="tool-csljson">Export CSL-JSON (local)</button>
+    <button type="button" class="pq-btn" id="tool-snapdiff">Compare snapshots</button>
     <button type="button" class="pq-btn" id="tool-dups">Find duplicate sources</button>
     <button type="button" class="pq-btn" id="tool-quote">Save selection as quote</button>
     <button type="button" class="pq-btn" id="tool-quotes">Quote bank</button>
@@ -752,6 +767,8 @@
     <button type="button" class="pq-btn" id="tool-templates">Templates</button>
     <button type="button" class="pq-btn" id="tool-outline">Outline view</button>
     <button type="button" class="pq-btn" id="tool-table">Insert table</button>
+    <button type="button" class="pq-btn" id="tool-figlist">Figures &amp; tables list</button>
+    <button type="button" class="pq-btn" id="tool-caption">Caption for table/figure</button>
     <button type="button" class="pq-btn" id="tool-footnote">Insert footnote</button>
     <button type="button" class="pq-btn" id="tool-xref">Cross-reference section</button>
     <button type="button" class="pq-btn" id="tool-titlepage">Title page fields</button>
@@ -939,7 +956,7 @@
         <p class="pq-help">A private research writing studio for solo researchers. Drafts stay in this browser (IndexedDB) with optional disk backups and Google Drive sync. No account required for local writing.</p>
         <ul class="pq-help" style="padding-left:18px;line-height:1.7">
           <li>Citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver)</li>
-          <li>Sources, DOI lookup, tutorial mode, LanguageTool, snapshots</li>
+          <li>Sources, multi-library search (OpenAlex / Crossref / Europe PMC / Semantic Scholar / DOAJ), DOI lookup, tutorial mode, LanguageTool, snapshots</li>
           <li>Export DOCX, PDF, Markdown, HTML · Drive sync</li>
         </ul>
       </div>
@@ -2152,7 +2169,7 @@
     });
     h+='<h2 class="bib-title">'+escapeHtml(bibliographyTitle(style))+'</h2>';
     let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
-    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b))||yearOf(a).localeCompare(yearOf(b)));
+    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a,style).localeCompare(inTextAuthor(b,style))||yearOf(a).localeCompare(yearOf(b)));
     list.forEach((s,i)=>{
       const tmp=document.createElement('div');
       tmp.innerHTML=formatBibliographyEntry(s,style,i,disamb);
@@ -2261,7 +2278,7 @@
       });
       ltPaint();updateLTBtn();renderLTPanel();
       toast(ltItems.length?ltItems.length+' issue(s) found':'No issues found');
-    }catch(e){console.warn(e);toast('LanguageTool unavailable (network or rate limit). Try again in a minute.')}
+    }catch(e){console.warn(e);const offline=!navigator.onLine;toast(offline?'LanguageTool needs a network connection. Your draft is fine offline — check grammar when you are back online.':'LanguageTool unavailable right now. Writing continues offline; try again later.')}
   }
   function clearLT(){clearTimeout(ltTimer);ltRun++;ltItems=[];clearLTMarks();state.ltOn=false;updateLTBtn();closeLTPop();$('#pq-lt-panel').classList.remove('open')}
   function recheckSoon(ms){if(!state.ltOn)return;clearTimeout(ltTimer);ltTimer=setTimeout(runLanguageTool,ms||1800)}
@@ -2404,7 +2421,8 @@
           type:m.type&&m.type.includes('journal')?'article':'book',
           authors,title:(m.title&&m.title[0])||'',year:(m.issued&&m.issued['date-parts']&&m.issued['date-parts'][0][0])||'',
           container:(m['container-title']&&m['container-title'][0])||'',volume:m.volume||'',issue:m.issue||'',
-          pages:m.page||'',publisher:m.publisher||'',url:'https://doi.org/'+doi,doi
+          pages:m.page||'',publisher:m.publisher||'',url:'https://doi.org/'+doi,doi,
+          note:m.abstract?String(m.abstract).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,2000):''
         };
       }
     }catch(e){}
@@ -2415,9 +2433,10 @@
         const r=data.resultList&&data.resultList.result&&data.resultList.result[0];
         if(r){
           return {
-            type:'article',authors:(r.authorString||'').replace(/, /g,'; '),title:r.title||'',
+            type:'article',authors:(r.authorString||'').replace(/, /g,'; '),title:(r.title||'').replace(/<[^>]+>/g,''),
             year:(r.pubYear||'')+'',container:r.journalTitle||'',volume:r.journalVolume||'',
-            pages:r.pageInfo||'',url:r.doi?'https://doi.org/'+r.doi:'',doi
+            issue:r.issue||'',pages:r.pageInfo||'',url:r.doi?'https://doi.org/'+r.doi:'',doi,
+            note:(r.abstractText||'').slice(0,2000)
           };
         }
       }
@@ -2429,10 +2448,19 @@
         const authors=(w.authorships||[]).map(a=>a.author&&a.author.display_name).filter(Boolean).map(n=>{
           const p=n.split(' ');return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
         }).join('; ');
+        const biblio=w.biblio||{};
+        let pages='';
+        if(biblio.first_page&&biblio.last_page)pages=biblio.first_page+'-'+biblio.last_page;
+        else if(biblio.first_page)pages=biblio.first_page;
+        let abstract='';
+        if(w.abstract_inverted_index){
+          try{const words=[];Object.keys(w.abstract_inverted_index).forEach(word=>{(w.abstract_inverted_index[word]||[]).forEach(i=>{words[i]=word})});abstract=words.filter(Boolean).join(' ')}catch(e){}
+        }
         return {
           type:'article',authors,title:w.title||'',year:(w.publication_year||'')+'',
           container:(w.primary_location&&w.primary_location.source&&w.primary_location.source.display_name)||'',
-          url:w.doi||('https://doi.org/'+doi),doi
+          volume:biblio.volume?String(biblio.volume):'',issue:biblio.issue?String(biblio.issue):'',pages,
+          url:w.doi||('https://doi.org/'+doi),doi,note:abstract.slice(0,2000)
         };
       }
     }catch(e){}
@@ -2455,57 +2483,563 @@
     };
   }
 
-  /* Search sources via OpenAlex (free, no key) */
-  async function searchSources(query){
+  /* Search sources — multi-library: OpenAlex, Crossref, Europe PMC, Semantic Scholar */
+  function openAlexInvertAbstract(inv){
+    if(!inv)return'';
+    if(typeof inv==='string')return inv;
+    try{
+      const words=[];
+      Object.keys(inv).forEach(word=>{
+        (inv[word]||[]).forEach(i=>{words[i]=word});
+      });
+      return words.filter(Boolean).join(' ');
+    }catch(e){return''}
+  }
+  function openAlexPickPdf(w){
+    if(!w)return'';
+    const cands=[
+      w.open_access&&w.open_access.oa_url,
+      w.best_oa_location&&(w.best_oa_location.pdf_url||w.best_oa_location.landing_page_url),
+      w.primary_location&&(w.primary_location.pdf_url||w.primary_location.landing_page_url)
+    ].filter(Boolean);
+    const pdf=cands.find(u=>/\.pdf(\?|$)/i.test(u)||/pdf/i.test(u));
+    return pdf||cands[0]||'';
+  }
+  function normalizeDoi(d){
+    return String(d||'').trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'');
+  }
+  function mapOpenAlexWork(w){
+    if(!w)return null;
+    const authors=(w.authorships||[]).map(a=>a.author&&a.author.display_name).filter(Boolean).map(n=>{
+      const p=String(n).trim().split(/\s+/);
+      return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+    }).join('; ');
+    const loc=w.primary_location||{};
+    const src=loc.source||{};
+    const biblio=w.biblio||{};
+    const doi=normalizeDoi(w.doi||'');
+    const container=src.display_name||(w.host_venue&&w.host_venue.display_name)||'';
+    const abstract=openAlexInvertAbstract(w.abstract_inverted_index)||(w.abstract||'');
+    const pdfUrl=openAlexPickPdf(w);
+    const isOa=!!(w.open_access&&w.open_access.is_oa)||!!pdfUrl;
+    const type=(w.type==='book'||w.type==='book-chapter')?(w.type==='book'?'book':'chapter'):'article';
+    const vol=biblio.volume||'';
+    const iss=biblio.issue||'';
+    let pages='';
+    if(biblio.first_page&&biblio.last_page)pages=biblio.first_page+'-'+biblio.last_page;
+    else if(biblio.first_page)pages=biblio.first_page;
+    const publisher=src.host_organization_name||src.publisher||(w.host_venue&&w.host_venue.publisher)||'';
+    const landing=loc.landing_page_url||(doi?'https://doi.org/'+doi:(w.id||''));
+    return {
+      type, authors,
+      title:w.title||w.display_name||'',
+      year:(w.publication_year!=null?String(w.publication_year):''),
+      container, publisher,
+      volume:vol?String(vol):'', issue:iss?String(iss):'', pages,
+      url:landing||'',
+      doi, abstract, pdfUrl, isOa,
+      openAlexId:w.id||'',
+      citedBy:w.cited_by_count!=null?w.cited_by_count:null,
+      oaStatus:(w.open_access&&w.open_access.oa_status)||'',
+      sourceLib:'OpenAlex'
+    };
+  }
+  function mapCrossrefWork(m){
+    if(!m)return null;
+    const authors=(m.author||[]).map(a=>[a.family,a.given].filter(Boolean).join(', ')).filter(Boolean).join('; ');
+    const doi=normalizeDoi(m.DOI||m.doi||'');
+    const container=(m['container-title']&&m['container-title'][0])||(m['short-container-title']&&m['short-container-title'][0])||'';
+    const year=(m.issued&&m.issued['date-parts']&&m.issued['date-parts'][0]&&m.issued['date-parts'][0][0])
+      ||(m.published&&m.published['date-parts']&&m.published['date-parts'][0]&&m.published['date-parts'][0][0])
+      ||(m.created&&m.created['date-parts']&&m.created['date-parts'][0]&&m.created['date-parts'][0][0])||'';
+    const typeRaw=(m.type||'').toLowerCase();
+    const type=typeRaw.includes('book-chapter')?'chapter':(typeRaw.includes('book')?'book':'article');
+    const abstract=m.abstract?String(m.abstract).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'';
+    let pdfUrl='';
+    if(m.link&&Array.isArray(m.link)){
+      const pdf=m.link.find(l=>l&&(/pdf/i.test(l['content-type']||'')||/\.pdf/i.test(l.URL||'')));
+      if(pdf&&pdf.URL)pdfUrl=pdf.URL;
+    }
+    return {
+      type, authors,
+      title:(m.title&&m.title[0])||'',
+      year:year?String(year):'',
+      container,
+      publisher:m.publisher||'',
+      volume:m.volume?String(m.volume):'',
+      issue:m.issue?String(m.issue):'',
+      pages:m.page||'',
+      url:doi?('https://doi.org/'+doi):(m.URL||''),
+      doi, abstract, pdfUrl, isOa:!!pdfUrl,
+      openAlexId:'', citedBy:m['is-referenced-by-count']!=null?m['is-referenced-by-count']:null,
+      oaStatus:pdfUrl?'link':'', sourceLib:'Crossref'
+    };
+  }
+  function mapEuropePmcWork(r){
+    if(!r)return null;
+    const doi=normalizeDoi(r.doi||'');
+    let authors=(r.authorString||'').replace(/\s*,\s*/g,'; ').replace(/\s*;\s*/g,'; ').trim();
+    if(!authors&&r.authorList&&r.authorList.author){
+      authors=(Array.isArray(r.authorList.author)?r.authorList.author:[r.authorList.author])
+        .map(a=>[a.lastName,a.firstName||a.initials].filter(Boolean).join(', ')).filter(Boolean).join('; ');
+    }
+    let pdfUrl='';
+    const ftl=r.fullTextUrlList&&r.fullTextUrlList.fullTextUrl;
+    if(ftl){
+      const arr=Array.isArray(ftl)?ftl:[ftl];
+      const pdf=arr.find(x=>x&&(/pdf/i.test(x.documentStyle||'')||/pdf/i.test(x.url||'')));
+      const any=pdf||arr.find(x=>x&&x.availability==='Open access')||arr[0];
+      if(any&&any.url)pdfUrl=any.url;
+    }
+    if(!pdfUrl&&r.pmcid)pdfUrl='https://www.ncbi.nlm.nih.gov/pmc/articles/'+r.pmcid+'/pdf/';
+    const abstract=(r.abstractText||r.abstract||'').trim();
+    return {
+      type:'article', authors,
+      title:(r.title||'').replace(/<[^>]+>/g,''),
+      year:r.pubYear?String(r.pubYear):'',
+      container:r.journalTitle||r.bookOrReportEditor||'',
+      publisher:r.publisher||'',
+      volume:r.journalVolume?String(r.journalVolume):'',
+      issue:r.issue?String(r.issue):'',
+      pages:r.pageInfo||'',
+      url:doi?('https://doi.org/'+doi):(r.fullTextUrlList?'':(r.id?('https://europepmc.org/article/'+(r.source||'MED')+'/'+r.id):'')),
+      doi, abstract, pdfUrl, isOa:!!pdfUrl||r.isOpenAccess==='Y',
+      openAlexId:'', citedBy:r.citedByCount!=null?+r.citedByCount:null,
+      oaStatus:r.isOpenAccess==='Y'?'oa':'', sourceLib:'Europe PMC',
+      pmid:r.pmid||'', pmcid:r.pmcid||''
+    };
+  }
+  function mapSemanticScholarWork(p){
+    if(!p)return null;
+    const authors=(p.authors||[]).map(a=>{
+      const n=(a.name||'').trim();if(!n)return'';
+      const parts=n.split(/\s+/);
+      return parts.length>1?parts[parts.length-1]+', '+parts.slice(0,-1).join(' '):n;
+    }).filter(Boolean).join('; ');
+    const ext=p.externalIds||{};
+    const doi=normalizeDoi(ext.DOI||'');
+    const venue=(p.publicationVenue&&p.publicationVenue.name)||p.venue||'';
+    const pdfUrl=(p.openAccessPdf&&p.openAccessPdf.url)||'';
+    return {
+      type:'article', authors,
+      title:p.title||'',
+      year:p.year!=null?String(p.year):'',
+      container:venue,
+      publisher:'',
+      volume:'', issue:'', pages:'',
+      url:p.url||(doi?('https://doi.org/'+doi):''),
+      doi, abstract:p.abstract||'', pdfUrl, isOa:!!pdfUrl,
+      openAlexId:'', citedBy:p.citationCount!=null?p.citationCount:null,
+      oaStatus:pdfUrl?'oa':'', sourceLib:'Semantic Scholar',
+      s2Id:p.paperId||''
+    };
+  }
+  function mapDoajArticle(rec){
+    if(!rec)return null;
+    const bj=rec.bibjson||rec;
+    const authors=(bj.author||[]).map(a=>{
+      const n=(a.name||[a.last_name,a.first_name].filter(Boolean).join(', ')||'').trim();
+      if(!n)return'';
+      if(n.includes(','))return n;
+      const p=n.split(/\s+/);
+      return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+    }).filter(Boolean).join('; ');
+    let doi='';
+    const ids=bj.identifier||[];
+    (Array.isArray(ids)?ids:[ids]).forEach(id=>{
+      if(!id)return;
+      const t=String(id.type||'').toLowerCase();
+      if(t==='doi'&&id.id)doi=normalizeDoi(id.id);
+    });
+    if(!doi&&bj.doi)doi=normalizeDoi(bj.doi);
+    const journal=bj.journal||{};
+    const container=journal.title||bj.journal_title||'';
+    let volume=journal.volume?String(journal.volume):(bj.volume?String(bj.volume):'');
+    let issue=journal.number?String(journal.number):(bj.number?String(bj.number):'');
+    let pages='';
+    if(journal.start_page&&journal.end_page)pages=journal.start_page+'-'+journal.end_page;
+    else if(journal.start_page)pages=String(journal.start_page);
+    else if(bj.start_page&&bj.end_page)pages=bj.start_page+'-'+bj.end_page;
+    else if(bj.start_page)pages=String(bj.start_page);
+    const year=bj.year?String(bj.year):(journal.year?String(journal.year):'');
+    let pdfUrl='', landing='';
+    const links=bj.link||[];
+    (Array.isArray(links)?links:[links]).forEach(l=>{
+      if(!l||!l.url)return;
+      const ct=String(l.content_type||l.type||'').toUpperCase();
+      if(ct==='PDF'||/\.pdf(\?|$)/i.test(l.url)){if(!pdfUrl)pdfUrl=l.url}
+      else if(!landing)landing=l.url;
+      if(/fulltext|html/i.test(ct)&&!landing)landing=l.url;
+    });
+    if(!pdfUrl&&landing&&/\.pdf(\?|$)/i.test(landing))pdfUrl=landing;
+    const url=landing||(doi?('https://doi.org/'+doi):(pdfUrl||''));
+    const publisher=(journal.publisher)||bj.publisher||'';
+    return {
+      type:'article',
+      authors,
+      title:bj.title||'',
+      year,
+      container,
+      publisher:typeof publisher==='string'?publisher:(publisher.name||''),
+      volume, issue, pages,
+      url,
+      doi,
+      abstract:(bj.abstract||'').trim(),
+      pdfUrl:pdfUrl||'',
+      isOa:true,
+      openAlexId:'',
+      citedBy:null,
+      oaStatus:'doaj',
+      sourceLib:'DOAJ',
+      doajId:rec.id||''
+    };
+  }
+  async function searchDoaj(query){
     const q=encodeURIComponent(query.trim());
     if(!q)return [];
-    try{
-      const res=await fetch('https://api.openalex.org/works?search='+q+'&per_page=12&mailto=paperquill@example.com');
-      if(!res.ok)return [];
-      const data=await res.json();
-      return (data.results||[]).map(w=>{
-        const authors=(w.authorships||[]).map(a=>a.author&&a.author.display_name).filter(Boolean).map(n=>{
-          const p=n.split(' ');return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
-        }).join('; ');
-        return {
-          type:'article',
-          authors,
-          title:w.title||'',
-          year:(w.publication_year||'')+'',
-          container:(w.primary_location&&w.primary_location.source&&w.primary_location.source.display_name)||'',
-          url:w.doi||w.id||'',
-          doi:(w.doi||'').replace('https://doi.org/',''),
-          openAlexId:w.id
-        };
-      });
-    }catch(e){return []}
+    // Public search — no API key required
+    const url='https://doaj.org/api/search/articles/'+q+'?pageSize=15&page=1';
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok)return [];
+    const data=await res.json();
+    const results=data.results||data;
+    if(!Array.isArray(results))return [];
+    return results.map(mapDoajArticle).filter(Boolean);
   }
-  function openSearchSources(){
-    openModal('<h3>Find sources</h3><p class="pq-help">Search OpenAlex (free, no key). Select results to add to your library.</p>'+
-      '<input class="pq-inp" id="m-qsrc" style="width:100%" placeholder="Keywords, title, author…">'+
-      '<div id="m-src-results" style="margin-top:10px;max-height:40vh;overflow:auto"></div>'+
+  async function fetchDoajArticleDetail(doajIdOrDoi){
+    if(!doajIdOrDoi)return null;
+    try{
+      const id=String(doajIdOrDoi);
+      if(/^10\.\d+\//.test(id)){
+        const res=await fetch('https://doaj.org/api/search/articles/'+encodeURIComponent('doi:'+id)+'?pageSize=1',{headers:{'Accept':'application/json'}});
+        if(!res.ok)return null;
+        const data=await res.json();
+        const r=(data.results||[])[0];
+        return r?mapDoajArticle(r):null;
+      }
+      const res=await fetch('https://doaj.org/api/articles/'+encodeURIComponent(id),{headers:{'Accept':'application/json'}});
+      if(!res.ok)return null;
+      return mapDoajArticle(await res.json());
+    }catch(e){return null}
+  }
+
+  async function enrichOaPdf(hit){
+    if(!hit||hit.pdfUrl||!hit.doi)return hit;
+    try{
+      const res=await fetch('https://api.unpaywall.org/v2/'+encodeURIComponent(hit.doi)+'?email=hello@authormasoncarter.com',{headers:{'Accept':'application/json'}});
+      if(!res.ok)return hit;
+      const data=await res.json();
+      const loc=data.best_oa_location||data.oa_locations&&data.oa_locations[0];
+      if(loc){
+        const u=loc.url_for_pdf||loc.url;
+        if(u){hit.pdfUrl=u;hit.isOa=true;hit.oaStatus=data.oa_status||hit.oaStatus||'oa'}
+      }
+    }catch(e){}
+    return hit;
+  }
+  async function searchOpenAlex(query){
+    const q=encodeURIComponent(query.trim());
+    if(!q)return [];
+    const url='https://api.openalex.org/works?search='+q+
+      '&per_page=15'+
+      '&select=id,doi,title,display_name,publication_year,type,authorships,primary_location,best_oa_location,open_access,biblio,abstract_inverted_index,cited_by_count,host_venue'+
+      '&mailto=hello@authormasoncarter.com';
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok)return [];
+    const data=await res.json();
+    return (data.results||[]).map(mapOpenAlexWork).filter(Boolean);
+  }
+  async function searchCrossref(query){
+    const q=encodeURIComponent(query.trim());
+    if(!q)return [];
+    const url='https://api.crossref.org/works?query='+q+'&rows=15&select=DOI,title,author,issued,published,created,container-title,short-container-title,volume,issue,page,publisher,type,abstract,link,URL,is-referenced-by-count';
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok)return [];
+    const data=await res.json();
+    return ((data.message&&data.message.items)||[]).map(mapCrossrefWork).filter(Boolean);
+  }
+  async function searchEuropePmc(query){
+    const q=encodeURIComponent(query.trim());
+    if(!q)return [];
+    const url='https://www.ebi.ac.uk/europepmc/webservices/rest/search?query='+q+'&format=json&pageSize=15&resultType=core';
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok)return [];
+    const data=await res.json();
+    return ((data.resultList&&data.resultList.result)||[]).map(mapEuropePmcWork).filter(Boolean);
+  }
+  async function searchSemanticScholar(query){
+    const q=encodeURIComponent(query.trim());
+    if(!q)return [];
+    const url='https://api.semanticscholar.org/graph/v1/paper/search?query='+q+'&limit=15&fields=title,abstract,authors,year,venue,externalIds,openAccessPdf,publicationVenue,citationCount,url';
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok)return [];
+    const data=await res.json();
+    return (data.data||[]).map(mapSemanticScholarWork).filter(Boolean);
+  }
+  async function searchSources(query, lib){
+    const q=(query||'').trim();
+    if(q.length<2)return [];
+    const which=(lib||'openalex').toLowerCase();
+    try{
+      if(which==='crossref')return await searchCrossref(q);
+      if(which==='europepmc'||which==='epmc')return await searchEuropePmc(q);
+      if(which==='semanticscholar'||which==='s2')return await searchSemanticScholar(q);
+      if(which==='doaj')return await searchDoaj(q);
+      return await searchOpenAlex(q);
+    }catch(e){console.warn('searchSources',e);return []}
+  }
+  async function fetchOpenAlexWorkDetail(openAlexIdOrDoi){
+    if(!openAlexIdOrDoi)return null;
+    try{
+      let path=String(openAlexIdOrDoi);
+      if(path.indexOf('http')===0)path=path.replace('https://openalex.org/','');
+      if(/^10\.\d+\//.test(path))path='https://doi.org/'+path;
+      else if(path.indexOf('https://')!==0&&path.indexOf('W')===0)path='https://openalex.org/'+path;
+      const res=await fetch('https://api.openalex.org/works/'+encodeURIComponent(path)+'?mailto=hello@authormasoncarter.com',{headers:{'Accept':'application/json'}});
+      if(!res.ok)return null;
+      return mapOpenAlexWork(await res.json());
+    }catch(e){return null}
+  }
+  async function fetchCrossrefDetail(doi){
+    doi=normalizeDoi(doi);if(!doi)return null;
+    try{
+      const res=await fetch('https://api.crossref.org/works/'+encodeURIComponent(doi),{headers:{'Accept':'application/json'}});
+      if(!res.ok)return null;
+      return mapCrossrefWork((await res.json()).message);
+    }catch(e){return null}
+  }
+  async function fetchEuropePmcDetail(doiOrPmid){
+    if(!doiOrPmid)return null;
+    try{
+      let q=String(doiOrPmid);
+      if(/^10\.\d+\//.test(q))q='DOI:'+q;
+      else if(/^\d+$/.test(q))q='EXT_ID:'+q;
+      const res=await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query='+encodeURIComponent(q)+'&format=json&resultType=core&pageSize=1');
+      if(!res.ok)return null;
+      const data=await res.json();
+      const r=data.resultList&&data.resultList.result&&data.resultList.result[0];
+      return r?mapEuropePmcWork(r):null;
+    }catch(e){return null}
+  }
+  async function enrichSourceHit(s){
+    if(!s)return s;
+    await enrichOaPdf(s);
+    // Fill missing abstract / volume from other libraries when DOI present
+    if(s.doi&&(!s.abstract||!s.volume||!s.container)){
+      try{
+        const cr=await fetchCrossrefDetail(s.doi);
+        if(cr){
+          if(!s.abstract&&cr.abstract)s.abstract=cr.abstract;
+          if(!s.volume&&cr.volume)s.volume=cr.volume;
+          if(!s.issue&&cr.issue)s.issue=cr.issue;
+          if(!s.pages&&cr.pages)s.pages=cr.pages;
+          if(!s.container&&cr.container)s.container=cr.container;
+          if(!s.publisher&&cr.publisher)s.publisher=cr.publisher;
+          if(!s.pdfUrl&&cr.pdfUrl){s.pdfUrl=cr.pdfUrl;s.isOa=true}
+        }
+      }catch(e){}
+      if(!s.abstract){
+        try{
+          const ep=await fetchEuropePmcDetail(s.doi);
+          if(ep){
+            if(!s.abstract&&ep.abstract)s.abstract=ep.abstract;
+            if(!s.volume&&ep.volume)s.volume=ep.volume;
+            if(!s.issue&&ep.issue)s.issue=ep.issue;
+            if(!s.pages&&ep.pages)s.pages=ep.pages;
+            if(!s.container&&ep.container)s.container=ep.container;
+            if(!s.pdfUrl&&ep.pdfUrl){s.pdfUrl=ep.pdfUrl;s.isOa=true}
+          }
+        }catch(e){}
+      }
+    }
+    return s;
+  }
+  function addSourceFromHit(s){
+    if(!s)return false;
+    if(s.doi&&state.sources.some(x=>(x.doi||'').toLowerCase()===s.doi.toLowerCase())){
+      toast('Already in library (same DOI)');
+      return false;
+    }
+    if(!s.doi&&s.title&&state.sources.some(x=>(x.title||'').toLowerCase()===(s.title||'').toLowerCase()&&(x.year||'')===(s.year||''))){
+      toast('Already in library (same title + year)');
+      return false;
+    }
+    const rec={
+      id:uid(),
+      type:s.type||'article',
+      authors:s.authors||'',
+      title:s.title||'',
+      year:s.year||'',
+      container:s.container||'',
+      publisher:s.publisher||'',
+      volume:s.volume||'',
+      issue:s.issue||'',
+      pages:s.pages||'',
+      url:s.url||(s.doi?('https://doi.org/'+s.doi):''),
+      doi:s.doi||'',
+      note:s.abstract?String(s.abstract).slice(0,2000):(s.note||''),
+      openAlexId:s.openAlexId||'',
+      pdfUrl:s.pdfUrl||'',
+      sourceLib:s.sourceLib||''
+    };
+    state.sources.push(rec);
+    scheduleSave();renderSources();
+    toast('Added: '+(rec.title||'').slice(0,48));
+    return true;
+  }
+  function showSourceHitDetail(s,hitsCache){
+    if(!s)return;
+    const abs=s.abstract?escapeHtml(s.abstract.slice(0,3500)):'<em>No abstract returned for this record. Try “Refresh metadata” or switch library (Europe PMC / Semantic Scholar often include abstracts).</em>';
+    const meta=[
+      s.sourceLib&&('<div><strong>Source library</strong> '+escapeHtml(s.sourceLib)+'</div>'),
+      s.authors&&('<div><strong>Authors</strong> '+escapeHtml(s.authors)+'</div>'),
+      s.year&&('<div><strong>Year</strong> '+escapeHtml(s.year)+'</div>'),
+      s.container&&('<div><strong>Journal / venue</strong> '+escapeHtml(s.container)+'</div>'),
+      s.publisher&&('<div><strong>Publisher</strong> '+escapeHtml(s.publisher)+'</div>'),
+      (s.volume||s.issue||s.pages)&&('<div><strong>Vol / issue / pages</strong> '+escapeHtml([s.volume&&('vol. '+s.volume),s.issue&&('no. '+s.issue),s.pages&&('pp. '+s.pages)].filter(Boolean).join(', '))+'</div>'),
+      s.doi&&('<div><strong>DOI</strong> '+escapeHtml(s.doi)+'</div>'),
+      s.pmid&&('<div><strong>PMID</strong> '+escapeHtml(s.pmid)+'</div>'),
+      s.pmcid&&('<div><strong>PMCID</strong> '+escapeHtml(s.pmcid)+'</div>'),
+      s.citedBy!=null&&('<div><strong>Cited by</strong> '+s.citedBy+'</div>'),
+      (s.isOa||s.pdfUrl)&&('<div><strong>Open access</strong> '+(escapeHtml(s.oaStatus||'available'))+'</div>')
+    ].filter(Boolean).join('');
+    const pdfLabel=s.pdfUrl?( /\.pdf(\?|$)/i.test(s.pdfUrl)?'Download / open PDF':'Open full text'):'';
+    openModal('<h3>Source preview</h3>'+
+      '<p style="font-size:1.05rem;font-weight:600;margin:0 0 8px;line-height:1.35">'+escapeHtml(s.title||'Untitled')+'</p>'+
+      '<div class="pq-help" style="margin-bottom:10px;line-height:1.55">'+meta+'</div>'+
+      '<div class="pq-src-card" style="max-height:32vh;overflow:auto"><strong>Abstract</strong><p class="pq-help" style="margin:6px 0 0;white-space:pre-wrap;line-height:1.55">'+abs+'</p></div>'+
+      (s.pdfUrl
+        ?'<p class="pq-help" style="margin-top:10px">A public full-text link was found. You can open or download it; availability still depends on the publisher.</p>'
+        :'<p class="pq-help" style="margin-top:10px">No public full-text URL is listed yet. You can still add full citation metadata. Use <strong>Refresh metadata</strong> to probe Unpaywall / Crossref / Europe PMC.</p>')+
+      '<div class="pq-modal-actions" style="justify-content:flex-start;flex-wrap:wrap;gap:8px">'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-add-src">Add to library</button>'+
+      (s.pdfUrl?'<a class="pq-btn" id="m-pdf" href="'+escapeHtml(s.pdfUrl)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(pdfLabel)+'</a>':'')+
+      (s.doi?'<a class="pq-btn" href="https://doi.org/'+encodeURIComponent(s.doi)+'" target="_blank" rel="noopener noreferrer">Open DOI</a>':'')+
+      '<button type="button" class="pq-btn" id="m-enrich">Refresh metadata</button>'+
+      '<button type="button" class="pq-btn" id="m-back-search">Back to results</button>'+
+      '</div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    $('#m-add-src').onclick=()=>{addSourceFromHit(s)};
+    $('#m-back-search').onclick=()=>{openSearchSources(hitsCache&&hitsCache.query,hitsCache&&hitsCache.hits,hitsCache&&hitsCache.lib)};
+    $('#m-enrich').onclick=async()=>{
+      const btn=$('#m-enrich');if(btn)btn.textContent='Loading…';
+      try{
+        let rich=null;
+        if(s.openAlexId)rich=await fetchOpenAlexWorkDetail(s.openAlexId);
+        if(!rich&&s.doi){
+          rich=await fetchCrossrefDetail(s.doi);
+          const ep=await fetchEuropePmcDetail(s.doi);
+          if(ep){
+            rich=rich?Object.assign({},rich):{};
+            if(ep.abstract)rich.abstract=ep.abstract;
+            if(ep.pdfUrl){rich.pdfUrl=ep.pdfUrl;rich.isOa=true}
+            if(ep.volume)rich.volume=ep.volume;
+            if(ep.issue)rich.issue=ep.issue;
+            if(ep.pages)rich.pages=ep.pages;
+            if(ep.container)rich.container=ep.container;
+            if(ep.pmid)rich.pmid=ep.pmid;
+            if(ep.pmcid)rich.pmcid=ep.pmcid;
+          }
+          try{
+            const dj=await fetchDoajArticleDetail(s.doajId||s.doi);
+            if(dj){
+              rich=rich?Object.assign({},rich):{};
+              if(dj.abstract&&!rich.abstract)rich.abstract=dj.abstract;
+              if(dj.pdfUrl&&!rich.pdfUrl){rich.pdfUrl=dj.pdfUrl;rich.isOa=true}
+              if(dj.volume&&!rich.volume)rich.volume=dj.volume;
+              if(dj.issue&&!rich.issue)rich.issue=dj.issue;
+              if(dj.pages&&!rich.pages)rich.pages=dj.pages;
+              if(dj.container&&!rich.container)rich.container=dj.container;
+              if(dj.doajId)rich.doajId=dj.doajId;
+              rich.oaStatus=rich.oaStatus||'doaj';
+            }
+          }catch(e){}
+          if(s.openAlexId||s.doi){
+            const oa=await fetchOpenAlexWorkDetail(s.openAlexId||s.doi);
+            if(oa){
+              rich=Object.assign({},oa,rich||{});
+              if(oa.abstract&&!(rich.abstract))rich.abstract=oa.abstract;
+            }
+          }
+        }
+        if(rich)Object.assign(s,rich);
+        await enrichSourceHit(s);
+        showSourceHitDetail(s,hitsCache);
+        toast('Metadata refreshed');
+      }catch(e){
+        if(btn)btn.textContent='Refresh metadata';
+        toast('Could not refresh this record');
+      }
+    };
+  }
+  function openSearchSources(presetQuery,presetHits,presetLib){
+    const lib0=presetLib||'openalex';
+    openModal('<h3>Find sources</h3>'+
+      '<p class="pq-help">Search scholarly indexes by keyword, title, or author. Pick a library, then click a result for <strong>abstract</strong>, full metadata (journal, volume, issue, pages, DOI), and a public PDF link when available. Adding a source stores complete fields for citing.</p>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:8px">'+
+      '<div style="flex:1;min-width:160px">'+
+      '<label class="pq-lbl" for="m-lib">Library</label>'+
+      '<select class="pq-sel" id="m-lib" style="width:100%;font-size:.88rem;padding:8px 10px;border-radius:8px;appearance:auto">'+
+      '<option value="openalex"'+(lib0==='openalex'?' selected':'')+'>OpenAlex — broad academic graph</option>'+
+      '<option value="crossref"'+(lib0==='crossref'?' selected':'')+'>Crossref — DOI registry &amp; journals</option>'+
+      '<option value="europepmc"'+(lib0==='europepmc'?' selected':'')+'>Europe PMC — life sciences + OA full text</option>'+
+      '<option value="semanticscholar"'+(lib0==='semanticscholar'?' selected':'')+'>Semantic Scholar — AI abstracts &amp; OA PDFs</option>'+
+      '<option value="doaj"'+(lib0==='doaj'?' selected':'')+'>DOAJ — curated open-access journals</option>'+
+      '</select></div>'+
+      '<div style="flex:2;min-width:200px">'+
+      '<label class="pq-lbl" for="m-qsrc">Query</label>'+
+      '<input class="pq-inp" id="m-qsrc" style="width:100%" placeholder="Keywords, title, author…" value="'+escapeHtml(presetQuery||'')+'"></div>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-run-src" style="min-height:40px">Search</button>'+
+      '</div>'+
+      '<div id="m-src-results" style="margin-top:6px;max-height:48vh;overflow:auto"></div>'+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
     $('#m-cancel').onclick=closeModal;
-    const run=async()=>{
-      const q=$('#m-qsrc').value.trim();
-      if(q.length<2)return;
-      $('#m-src-results').innerHTML='<p class="pq-help">Searching…</p>';
-      const hits=await searchSources(q);
-      if(!hits.length){$('#m-src-results').innerHTML='<p class="pq-help">No results</p>';return}
-      $('#m-src-results').innerHTML=hits.map((s,i)=>'<div class="pq-src-card" style="cursor:pointer" data-i="'+i+'"><strong>'+escapeHtml(s.title)+'</strong><div class="pq-src-meta">'+escapeHtml(s.authors+(s.year?' · '+s.year:''))+(s.container?' · '+escapeHtml(s.container):'')+'</div></div>').join('');
+    let hits=presetHits||[];
+    const currentLib=()=>(($('#m-lib')&&$('#m-lib').value)||'openalex');
+    const renderHits=()=>{
+      if(!hits.length){$('#m-src-results').innerHTML='<p class="pq-help">No results — try another query or library.</p>';return}
+      $('#m-src-results').innerHTML=hits.map((s,i)=>{
+        const badges=[];
+        if(s.isOa||s.pdfUrl)badges.push('<span style="color:var(--ok);font-weight:600">OA</span>');
+        if(s.abstract)badges.push('<span style="color:var(--cite)">abstract</span>');
+        if(s.doi)badges.push('DOI');
+        const badgeStr=badges.length?' · '+badges.join(' · '):'';
+        const meta=escapeHtml([s.authors,s.year,s.container,s.volume&&('vol. '+s.volume),s.issue&&('no. '+s.issue)].filter(Boolean).join(' · '));
+        const libTag=s.sourceLib?'<span class="pq-status draft" style="margin-left:6px">'+escapeHtml(s.sourceLib)+'</span>':'';
+        return '<div class="pq-src-card" style="cursor:pointer" data-i="'+i+'"><strong>'+escapeHtml(s.title||'Untitled')+'</strong>'+libTag+
+          '<div class="pq-src-meta">'+meta+badgeStr+'</div></div>';
+      }).join('');
       $$('#m-src-results .pq-src-card').forEach(card=>{
-        card.onclick=()=>{
+        card.onclick=async()=>{
           const s=hits[+card.dataset.i];
-          s.id=uid();
-          state.sources.push(s);
-          scheduleSave();renderSources();
-          toast('Added: '+(s.title||'').slice(0,40));
+          const cache={query:$('#m-qsrc').value.trim(),hits,lib:currentLib()};
+          card.style.opacity='.6';
+          try{await enrichSourceHit(s)}catch(e){}
+          card.style.opacity='';
+          showSourceHitDetail(s,cache);
         };
       });
     };
+    const run=async()=>{
+      const q=$('#m-qsrc').value.trim();
+      if(q.length<2){toast('Enter at least 2 characters');return}
+      $('#m-src-results').innerHTML='<p class="pq-help">Searching '+escapeHtml(currentLib())+'…</p>';
+      hits=await searchSources(q,currentLib());
+      renderHits();
+      if(!hits.length)toast('No hits — try another library or simpler keywords');
+    };
+    if(presetHits&&presetHits.length)renderHits();
     let t=null;
-    $('#m-qsrc').oninput=()=>{clearTimeout(t);t=setTimeout(run,400)};
+    $('#m-qsrc').oninput=()=>{clearTimeout(t);t=setTimeout(run,500)};
     $('#m-qsrc').onkeydown=e=>{if(e.key==='Enter'){clearTimeout(t);run()}};
+    const runBtn=$('#m-run-src');if(runBtn)runBtn.onclick=()=>{clearTimeout(t);run()};
+    const libSel=$('#m-lib');
+    if(libSel)libSel.onchange=()=>{
+      const q=$('#m-qsrc').value.trim();
+      if(q.length>=2){clearTimeout(t);run()}
+    };
+    if(presetQuery&&!presetHits)setTimeout(run,50);
   }
 
   /* Disk save */
@@ -2573,11 +3107,30 @@
     if(raw.length===2)return authorLastFirst(raw[0])+' and '+authorLastFirst(raw[1]);
     return authorLastFirst(raw[0])+' et al.';
   }
-  function inTextAuthor(src){
-    const raw=(src.authors||'').split(/;\s*/)[0]||'Anonymous';
-    if(raw.includes(','))return raw.split(',')[0].trim();
-    const p=raw.trim().split(/\s+/);
+  function authorLastOnly(name){
+    name=(name||'').trim();if(!name)return'Anonymous';
+    if(name.includes(','))return name.split(',')[0].trim();
+    const p=name.split(/\s+/);
     return p[p.length-1];
+  }
+  function inTextAuthor(src,style){
+    const styleX=style||state.style||'mla9';
+    const raw=(src.authors||'').split(/;\s*/).map(x=>x.trim()).filter(Boolean);
+    if(!raw.length)return'Anonymous';
+    const lasts=raw.map(authorLastOnly);
+    // APA 7 / Harvard / Chicago AD in-text: 1; 2 with &; 3+ et al.
+    if(styleX==='apa7'||styleX==='harvard'||styleX==='chicago-ad'){
+      if(lasts.length===1)return lasts[0];
+      if(lasts.length===2)return lasts[0]+' & '+lasts[1];
+      return lasts[0]+' et al.';
+    }
+    if(styleX==='mla9'){
+      if(lasts.length===1)return lasts[0];
+      if(lasts.length===2)return lasts[0]+' and '+lasts[1];
+      return lasts[0]+' et al.';
+    }
+    // numeric styles unused for author string
+    return lasts[0];
   }
   function yearOf(src){return String(src.year||'n.d.').slice(0,4)}
 
@@ -2588,7 +3141,7 @@
     cited.forEach(id=>{
       const src=state.sources.find(s=>s.id===id);
       if(!src)return;
-      const key=inTextAuthor(src).toLowerCase()+'|'+yearOf(src);
+      const key=authorLastOnly((src.authors||'').split(/;\s*/)[0]||'').toLowerCase()+'|'+yearOf(src);
       if(!map.has(key))map.set(key,[]);
       map.get(key).push(src);
     });
@@ -2677,7 +3230,7 @@
     return p;
   }
   function formatInText(src,style,page,disamb,citeIndex){
-    const last=inTextAuthor(src),year=yearOf(src);
+    const last=inTextAuthor(src,style),year=yearOf(src);
     const loc=formatLocator(page,style);
     const letter=(disamb&&disamb.get(src.id))||'';
     const yearDisp=year+(letter||'');
@@ -2707,7 +3260,7 @@
     $('#pq-works').className='pq-works'+(style==='ieee'||style==='vancouver'?' '+style:'');
     const disamb=buildDisambiguation();
     let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
-    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b))||yearOf(a).localeCompare(yearOf(b)));
+    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a,style).localeCompare(inTextAuthor(b,style))||yearOf(a).localeCompare(yearOf(b)));
     worksBody.innerHTML=list.length?list.map((s,i)=>'<div class="pq-bib-entry">'+formatBibliographyEntry(s,style,i,disamb)+(state.annBib&&s.note?' <em style="text-indent:0;display:block;margin-top:4px;font-size:.9em">'+escapeHtml(s.note)+'</em>':'')+'</div>').join(''):'<p class="pq-help" style="text-indent:0;padding:0">No citations yet. Cite sources to build the bibliography.</p>';
   }
 
@@ -2806,7 +3359,7 @@
   }
   function renderSources(){
     const list=$('#pq-side-sources');
-    if(!state.sources.length){list.innerHTML='<p class="pq-help">No sources. Add, fetch DOI, or search OpenAlex.</p>';return}
+    if(!state.sources.length){list.innerHTML='<p class="pq-help">No sources. Add, fetch DOI, or Find sources (OpenAlex / Crossref / Europe PMC / Semantic Scholar / DOAJ).</p>';return}
     list.innerHTML=state.sources.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml((s.authors||'')+(s.year?' · '+s.year:''))+'</div><div class="pq-src-actions"><button type="button" class="pq-btn pq-cite-btn" data-id="'+s.id+'">Cite</button><button type="button" class="pq-btn pq-edit-src" data-id="'+s.id+'">Edit</button><button type="button" class="pq-btn pq-del-src" data-id="'+s.id+'">Del</button></div></div>').join('');
     list.querySelectorAll('.pq-cite-btn').forEach(b=>b.onclick=()=>insertCitation(b.dataset.id));
     list.querySelectorAll('.pq-edit-src').forEach(b=>b.onclick=()=>editSource(b.dataset.id));
@@ -3570,7 +4123,7 @@
       spacing:{line,type:'auto',before:line,after:0}
     }));
     let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
-    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a).localeCompare(inTextAuthor(b))||yearOf(a).localeCompare(yearOf(b)));
+    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a,style).localeCompare(inTextAuthor(b,style))||yearOf(a).localeCompare(yearOf(b)));
     list.forEach((src,i)=>{
       const tmp=document.createElement('div');
       tmp.innerHTML=formatBibliographyEntry(src,style,i,disamb);
@@ -4342,7 +4895,8 @@
     if(rowsIn===null)return;
     const cols=Math.min(8,Math.max(2,parseInt(colsIn,10)||3));
     const rows=Math.min(20,Math.max(2,parseInt(rowsIn,10)||3));
-    let html='<div class="pq-table-wrap" contenteditable="false">'+
+    const n=countDocTables()+1;
+    let html='<div class="pq-table-wrap" contenteditable="false" data-pq-table="1">'+
       '<button type="button" class="pq-table-del" title="Delete table" contenteditable="false">×</button>'+
       '<table contenteditable="true"><thead><tr>';
     for(let c=0;c<cols;c++)html+='<th><br></th>';
@@ -4352,7 +4906,7 @@
       for(let c=0;c<cols;c++)html+='<td><br></td>';
       html+='</tr>';
     }
-    html+='</tbody></table></div><p><br></p>';
+    html+='</tbody></table><p class="pq-caption" contenteditable="true">Table '+n+'. </p></div><p><br></p>';
     editor.focus();
     try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
     wireTableControls();
@@ -5011,7 +5565,7 @@
   /* Command palette */
   function openPalette(){
     const cmds=[
-      ['Citation audit','audit'],['Ready to submit','ready'],['Recovery & backups','recovery'],['Readability','read'],['Find & replace','fr'],['Outline','outline'],
+      ['Citation audit','audit'],['Ready to submit','ready'],['Figures & tables','figlist'],['Compare snapshots','snapdiff'],['Export CSL-JSON','csljson'],['Recovery & backups','recovery'],['Readability','read'],['Find & replace','fr'],['Outline','outline'],
       ['Quote bank','quotes'],['Shared library','lib'],['Import sources','imp'],['Export sources','expsrc'],
       ['LanguageTool','lt'],['Templates','tmpl'],['Focus timer','pomo'],['Toggle tutorial','tut'],
       ['Snapshot paper','psnap'],['Export Markdown','md'],['Export DOCX','docx'],['Search paper','search'],
@@ -5034,7 +5588,7 @@
   function runCmd(c){
     const map={audit:openCitationAudit,ready:openReadiness,recovery:openRecoveryCenter,read:openReadability,fr:openFindReplace,outline:openOutline,quotes:openQuoteBank,
       lib:openLibrary,imp:openImportSources,expsrc:openExportSources,lt:runLanguageTool,tmpl:openTemplates,pomo:openPomodoro,
-      tut:toggleTutorial,psnap:takePaperSnapshot,md:exportMarkdown,docx:exportDocx,search:openSearch,
+      tut:toggleTutorial,figlist:openFiguresTablesList,snapdiff:openSnapshotDiff,csljson:exportCslJson,psnap:takePaperSnapshot,md:exportMarkdown,docx:exportDocx,search:openSearch,
       vocab:openVocab,signpost:openSignposting,underpin:openUnderpin,sentlab:openSentenceLab};
     if(map[c])map[c]();
   }
@@ -5924,6 +6478,338 @@
   const dashDriveDisc=$('#pq-dash-drive-disconnect');
   if(dashDriveDisc) dashDriveDisc.onclick=()=>driveDisconnect();
 
+
+  /* ========== High-traffic-safe local upgrades (no rate-limited APIs) ========== */
+  function countDocTables(){
+    saveCurrent();
+    let n=0;
+    state.sections.forEach(s=>{
+      const d=document.createElement('div');d.innerHTML=s.content||'';
+      n+=d.querySelectorAll('.pq-table-wrap,table').length;
+    });
+    return n;
+  }
+  function collectFiguresAndTables(){
+    saveCurrent();
+    const out=[];
+    const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    let tNum=0,fNum=0;
+    sorted.forEach(sec=>{
+      if(sec.key==='title'||sec.key==='works')return;
+      const d=document.createElement('div');d.innerHTML=sec.content||'';
+      d.querySelectorAll('.pq-table-wrap').forEach(w=>{
+        tNum++;
+        const cap=(w.querySelector('.pq-caption')||{}).textContent||('Table '+tNum);
+        out.push({kind:'table',n:tNum,caption:cap.trim(),section:sec.title,sectionId:sec.id});
+      });
+      // bare tables
+      d.querySelectorAll('table').forEach(tbl=>{
+        if(tbl.closest('.pq-table-wrap'))return;
+        tNum++;
+        out.push({kind:'table',n:tNum,caption:'Table '+tNum,section:sec.title,sectionId:sec.id});
+      });
+      d.querySelectorAll('.pq-fig-wrap, figure, img.pq-figure').forEach(el=>{
+        fNum++;
+        const cap=(el.querySelector('.pq-caption, figcaption')||{}).textContent||('Figure '+fNum);
+        out.push({kind:'figure',n:fNum,caption:cap.trim(),section:sec.title,sectionId:sec.id});
+      });
+    });
+    return out;
+  }
+  function openFiguresTablesList(){
+    const items=collectFiguresAndTables();
+    if(!items.length)return toast('No tables or figures found — insert a table or add a captioned figure');
+    openModal('<h3>Figures &amp; tables</h3><p class="pq-help">Numbered in document order. Captions come from table/figure caption lines. Jump opens the section.</p>'+
+      items.map(it=>'<div class="pq-src-card"><strong>'+escapeHtml(it.kind==='table'?'Table ':'Figure ')+it.n+'</strong>'+
+        '<div class="pq-help">'+escapeHtml(it.caption)+'</div>'+
+        '<div class="pq-help">Section: '+escapeHtml(it.section||'')+'</div>'+
+        '<button type="button" class="pq-btn m-jump" data-sid="'+it.sectionId+'">Open section</button></div>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-jump').forEach(b=>b.onclick=()=>{closeModal();if(b.dataset.sid)switchSection(b.dataset.sid)});
+  }
+  async function insertCaption(){
+    const kind=await styledPrompt('Caption type','Type "table" or "figure".','table','Next','Cancel');
+    if(kind===null)return;
+    const isFig=/fig/i.test(kind);
+    const label=isFig?'Figure':'Table';
+    const n=collectFiguresAndTables().filter(x=>x.kind===(isFig?'figure':'table')).length+1;
+    const text=await styledPrompt('Caption','Caption text after the number.','','Insert','Cancel');
+    if(text===null)return;
+    const html='<p class="pq-caption"><strong>'+label+' '+n+'.</strong> '+escapeHtml(text.trim())+'</p><p><br></p>';
+    editor.focus();
+    try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
+    saveCurrent();scheduleSave();toast(label+' caption inserted');
+  }
+  function sourceToCslJson(src){
+    const authors=(src.authors||'').split(/;\s*/).map(x=>x.trim()).filter(Boolean).map(a=>{
+      if(a.includes(',')){
+        const [family,...rest]=a.split(',').map(s=>s.trim());
+        return {family:family||a,given:(rest.join(' ')||'').trim()};
+      }
+      const p=a.split(/\s+/);
+      if(p.length===1)return {family:p[0]};
+      return {family:p[p.length-1],given:p.slice(0,-1).join(' ')};
+    });
+    const typeMap={article:'article-journal',journal:'article-journal',book:'book',chapter:'chapter',web:'webpage',website:'webpage',thesis:'thesis',report:'report'};
+    const t=typeMap[(src.type||'book').toLowerCase()]||'document';
+    const o={
+      id:src.id,type:t,title:src.title||'Untitled',
+      author:authors.length?authors:[{family:'Anonymous'}],
+      issued:src.year?{'date-parts':[[parseInt(String(src.year).slice(0,4),10)||0]]}:undefined,
+      'container-title':src.container||undefined,
+      publisher:src.publisher||undefined,
+      volume:src.volume||undefined,
+      issue:src.issue||undefined,
+      page:src.pages||undefined,
+      DOI:src.doi||undefined,
+      URL:src.url||undefined,
+      note:src.note||undefined
+    };
+    Object.keys(o).forEach(k=>{if(o[k]===undefined)delete o[k]});
+    return o;
+  }
+  function exportCslJson(){
+    const data=(state.sources||[]).map(sourceToCslJson);
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    if(typeof saveAs==='function')saveAs(blob,(state.paperTitle||'sources').replace(/[^\w\-]+/g,'_')+'-csl.json');
+    toast('CSL-JSON exported ('+data.length+' sources) — local file, no API');
+  }
+  function plainTextFromHtml(html){
+    const d=document.createElement('div');d.innerHTML=html||'';
+    return (d.innerText||'').replace(/\r/g,'').trim();
+  }
+  function simpleLineDiff(a,b){
+    const la=(a||'').split('\n');
+    const lb=(b||'').split('\n');
+    const sa=new Set(la);
+    const sb=new Set(lb);
+    const rows=[];
+    la.forEach(line=>{
+      if(!line.trim())return;
+      if(!sb.has(line))rows.push({type:'del',text:line});
+    });
+    lb.forEach(line=>{
+      if(!line.trim())return;
+      if(!sa.has(line))rows.push({type:'add',text:line});
+    });
+    return rows;
+  }
+  function openSnapshotDiff(){
+    const snaps=state.paperSnapshots||[];
+    if(!snaps.length)return toast('Save a paper snapshot first, then compare');
+    openModal('<h3>Compare snapshots</h3>'+
+      '<p class="pq-help">Diff is computed locally in your browser (no server). Choose a snapshot to compare against the <strong>current</strong> paper.</p>'+
+      snaps.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.name)+'</strong><div class="pq-help">'+escapeHtml(String(s.at).slice(0,19))+'</div>'+
+        '<button type="button" class="pq-btn pq-btn-primary m-diff" data-id="'+s.id+'">Diff vs current</button></div>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-diff').forEach(b=>b.onclick=()=>{
+      const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
+      showSnapshotDiffResult(snap);
+    });
+  }
+  function showSnapshotDiffResult(snap){
+    saveCurrent();
+    const curByKey={};
+    state.sections.forEach(s=>{curByKey[s.key||s.id]=s});
+    const parts=[];
+    let changes=0;
+    (snap.sections||[]).forEach(oldSec=>{
+      const cur=state.sections.find(s=>s.id===oldSec.id)||state.sections.find(s=>s.key&&s.key===oldSec.key);
+      const oldT=plainTextFromHtml(oldSec.content);
+      const newT=cur?plainTextFromHtml(cur.content):'';
+      if(oldT===newT && (cur&&cur.title)===oldSec.title)return;
+      changes++;
+      const rows=simpleLineDiff(oldT,newT);
+      parts.push('<div class="pq-diff-sec"><h4>'+escapeHtml(oldSec.title||'Section')+
+        (cur&&cur.title!==oldSec.title?' → '+escapeHtml(cur.title):'')+
+        (!cur?' <em>(removed)</em>':'')+'</h4>'+
+        (rows.length?rows.slice(0,80).map(r=>'<div class="'+(r.type==='add'?'pq-diff-add':'pq-diff-del')+'">'+escapeHtml(r.text.slice(0,500))+'</div>').join(''):
+          '<p class="pq-help">Title or structure changed, or only whitespace differences.</p>')+
+        '</div>');
+    });
+    // sections only in current
+    state.sections.forEach(s=>{
+      const old=(snap.sections||[]).find(x=>x.id===s.id||(x.key&&x.key===s.key));
+      if(!old){
+        changes++;
+        parts.push('<div class="pq-diff-sec"><h4>'+escapeHtml(s.title||'Section')+' <em>(new)</em></h4>'+
+          '<div class="pq-diff-add">'+escapeHtml(plainTextFromHtml(s.content).slice(0,800))+'</div></div>');
+      }
+    });
+    openModal('<h3>Diff: '+escapeHtml(snap.name)+' → current</h3>'+
+      '<p class="pq-help">'+changes+' section(s) differ · computed offline</p>'+
+      (parts.join('')||'<p class="pq-help">No textual differences detected.</p>')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-back">Back</button><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-back').onclick=()=>openSnapshotDiff();
+  }
+
+  // Override readiness with actionable buttons
+  const _gatherReadinessOrig=typeof gatherReadiness==='function'?gatherReadiness:null;
+  function openReadinessActionable(){
+    const r=gatherReadiness();
+    const pct=Math.round(100*r.score/r.total);
+    const act=(c)=>{
+      if(c.ok)return'';
+      const lab=(c.label||'').toLowerCase();
+      let btn='';
+      if(lab.indexOf('title')>=0)btn='<button type="button" class="pq-btn r-act" data-act="title">Edit title page</button>';
+      else if(lab.indexOf('abstract')>=0)btn='<button type="button" class="pq-btn r-act" data-act="sec" data-key="abstract">Open Abstract</button>';
+      else if(lab.indexOf('objective')>=0||lab.indexOf('question')>=0)btn='<button type="button" class="pq-btn r-act" data-act="sec" data-key="objectives">Open Objectives</button>';
+      else if(lab.indexOf('citation')>=0||lab.indexOf('source')>=0||lab.indexOf('bibliograph')>=0)btn='<button type="button" class="pq-btn r-act" data-act="audit">Citation audit</button>';
+      else if(lab.indexOf('claim')>=0)btn='<button type="button" class="pq-btn r-act" data-act="claims">Open claims</button>';
+      else if(lab.indexOf('status')>=0||lab.indexOf('section')>=0||lab.indexOf('draft')>=0)btn='<button type="button" class="pq-btn r-act" data-act="outline">Outline</button>';
+      else if(lab.indexOf('method')>=0)btn='<button type="button" class="pq-btn r-act" data-act="sec" data-key="method">Open Methods</button>';
+      if(!btn)return'';
+      return '<div class="pq-readiness-act">'+btn+'</div>';
+    };
+    openModal('<h3>Ready to submit?</h3>'+
+      '<p class="pq-help"><strong>'+r.score+' / '+r.total+'</strong> checks passed · '+pct+'%</p>'+
+      '<div class="pq-progress-bar" style="height:8px;margin-bottom:12px"><i style="width:'+pct+'%;display:block;height:100%;background:var(--ok);border-radius:999px"></i></div>'+
+      r.checks.map(c=>'<div class="pq-src-card" style="display:flex;gap:8px;align-items:flex-start">'+
+        '<span style="font-size:1.1rem;line-height:1">'+(c.ok?'✅':'⬜')+'</span>'+
+        '<div style="flex:1"><strong style="font-size:.88rem">'+escapeHtml(c.label)+'</strong>'+
+        (c.fix&&!c.ok?'<div class="pq-help" style="margin:2px 0 0">'+escapeHtml(c.fix)+'</div>':'')+
+        act(c)+
+        '</div></div>').join('')+
+      '<div class="pq-modal-actions" style="justify-content:flex-start;flex-wrap:wrap">'+
+      '<button type="button" class="pq-btn" id="m-audit">Citation audit</button>'+
+      '<button type="button" class="pq-btn" id="m-claims">Claims</button>'+
+      '<button type="button" class="pq-btn" id="m-title">Title fields</button>'+
+      '<button type="button" class="pq-btn" id="m-fig">Figures &amp; tables</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-audit').onclick=()=>{closeModal();openCitationAudit()};
+    $('#m-claims').onclick=()=>{closeModal();openClaims()};
+    $('#m-title').onclick=()=>{closeModal();openTitlePage()};
+    const mf=$('#m-fig');if(mf)mf.onclick=()=>{closeModal();openFiguresTablesList()};
+    $$('.r-act').forEach(b=>b.onclick=()=>{
+      const a=b.dataset.act;
+      closeModal();
+      if(a==='title')openTitlePage();
+      else if(a==='audit')openCitationAudit();
+      else if(a==='claims')openClaims();
+      else if(a==='outline')openOutline();
+      else if(a==='sec'&&b.dataset.key){
+        const sec=state.sections.find(s=>s.key===b.dataset.key);
+        if(sec)switchSection(sec.id);
+      }
+    });
+  }
+  openReadiness=openReadinessActionable;
+
+  // Click citation to edit locator
+  function wireCiteClicks(){
+    if(!editor)return;
+    editor.querySelectorAll('.pq-cite').forEach(span=>{
+      if(span._pqCiteWired)return;
+      span._pqCiteWired=true;
+      span.title='Click to edit locator (page, para, …)';
+      span.addEventListener('click',async e=>{
+        e.preventDefault();e.stopPropagation();
+        const cur=span.dataset.page||'';
+        const next=await styledPrompt('Citation locator','Page, pages, paragraph, chapter (optional). Leave empty for none.',cur,'Update','Cancel');
+        if(next===null)return;
+        span.dataset.page=next.trim();
+        const src=state.sources.find(s=>s.id===span.dataset.sourceId);
+        if(src){
+          const style=state.style;
+          const disamb=buildDisambiguation();
+          const order=citedSourceIds();
+          const idx=order.indexOf(src.id);
+          span.textContent=formatInText(src,style,next.trim(),disamb,idx);
+        }
+        saveCurrent();scheduleSave();rebuildWorksCited();
+        toast(next.trim()?'Locator updated':'Locator cleared');
+      });
+    });
+  }
+  const _loadSectionOrig=loadSection;
+  // augment loadSection
+  const _ls=loadSection;
+  loadSection=function(){
+    _ls.apply(this,arguments);
+    try{wireCiteClicks()}catch(e){}
+  };
+
+  // Keyboard navigation for @ cite menu
+  let acIndex=-1;
+  function acKeyNav(e){
+    if(!acEl||!acEl.classList.contains('open'))return false;
+    const items=$$('.pq-ac-item',acEl);
+    if(!items.length)return false;
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      acIndex=Math.min(items.length-1,acIndex+1);
+      items.forEach((el,i)=>el.classList.toggle('kb-active',i===acIndex));
+      return true;
+    }
+    if(e.key==='ArrowUp'){
+      e.preventDefault();
+      acIndex=Math.max(0,acIndex-1);
+      items.forEach((el,i)=>el.classList.toggle('kb-active',i===acIndex));
+      return true;
+    }
+    if(e.key==='Enter'&&acIndex>=0&&items[acIndex]){
+      e.preventDefault();
+      items[acIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true}));
+      acIndex=-1;
+      return true;
+    }
+    if(e.key==='Escape'){
+      acEl.classList.remove('open');acIndex=-1;return true;
+    }
+    return false;
+  }
+  editor.addEventListener('keydown',e=>{
+    if(acKeyNav(e))return;
+  },true);
+
+  // Patch @ menu open to reset index — hook after existing input handler by wrapping ac open class
+  const _acObs=new MutationObserver(()=>{
+    if(acEl&&acEl.classList.contains('open'))acIndex=-1;
+  });
+  if(acEl)_acObs.observe(acEl,{attributes:true,attributeFilter:['class']});
+
+  // Enhance viewPaperSnapshots with Diff button
+  const _viewPaperSnapshots=viewPaperSnapshots;
+  viewPaperSnapshots=function(){
+    const snaps=state.paperSnapshots||[];
+    if(!snaps.length)return toast('No paper snapshots yet');
+    openModal('<h3>Paper snapshots</h3>'+
+      snaps.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.name)+'</strong><p class="pq-help">'+escapeHtml(String(s.at).slice(0,19))+' · '+(s.sections||[]).length+' sections</p>'+
+        '<button type="button" class="pq-btn pq-btn-primary m-rest" data-id="'+s.id+'">Restore</button> '+
+        '<button type="button" class="pq-btn m-diff" data-id="'+s.id+'">Diff vs current</button></div>').join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $$('.m-rest').forEach(b=>b.onclick=async()=>{
+      const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
+      if(!(await styledConfirm('Restore snapshot','Restore this full-paper snapshot? Current content will be replaced.','Restore','Cancel')))return;
+      state.sections=JSON.parse(JSON.stringify(snap.sections));
+      state.sources=JSON.parse(JSON.stringify(snap.sources||state.sources));
+      if(snap.paperTitle)state.paperTitle=snap.paperTitle;
+      if(snap.style)state.style=snap.style;
+      state.activeSectionId=state.sections[0].id;
+      normalizeState();renderAll();scheduleSave();closeModal();toast('Paper restored');
+    });
+    $$('.m-diff').forEach(b=>b.onclick=()=>{
+      const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
+      showSnapshotDiffResult(snap);
+    });
+  };
+
+  // Wire new tools when DOM ready (called from existing wire block via flag)
+  function wireHighTrafficFeatures(){
+    const a=$('#tool-figlist');if(a)a.onclick=()=>{closeTools();openFiguresTablesList()};
+    const b=$('#tool-caption');if(b)b.onclick=()=>{closeTools();insertCaption()};
+    const d=$('#tool-csljson');if(d)d.onclick=()=>{closeTools();exportCslJson()};
+    const e=$('#tool-snapdiff');if(e)e.onclick=()=>{closeTools();openSnapshotDiff()};
+  }
+
+
+  wireHighTrafficFeatures();
   (async()=>{
     driveLoadCachedToken();
     const fromOAuth = await driveHandleOAuthReturn();
