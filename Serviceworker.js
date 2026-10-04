@@ -1,7 +1,8 @@
 /* PaperQuill service worker — offline-first app shell + IndexedDB helpers
- * Cache bump (v9) pushes editable title page, open desktop sidebar, polished sections panel.
+ * Cache bump (v10) pushes Reference Manager, sharp PDF viewer, metadata/sources,
+ * linked disk save, fullscreen highlights, and modal-in-fullscreen fixes.
  */
-const CACHE = 'paperquill-v9';
+const CACHE = 'paperquill-v10';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
@@ -16,10 +17,12 @@ const ASSETS = [
   './icon-512.png',
 ];
 
-/** Third-party scripts the writing desk needs offline (export, etc.). */
+/** Third-party scripts the desk + reference manager need offline. */
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js',
   'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@400;500;600&display=swap',
 ];
 
@@ -32,6 +35,10 @@ function isOnlineOnly(url) {
       h === 'api.languagetool.org' ||
       h === 'api.crossref.org' ||
       h === 'api.openalex.org' ||
+      h === 'api.semanticscholar.org' ||
+      h === 'doaj.org' ||
+      h.endsWith('.doaj.org') ||
+      h === 'www.ebi.ac.uk' ||
       h.endsWith('googleapis.com') ||
       h.endsWith('googleusercontent.com') ||
       h === 'accounts.google.com' ||
@@ -59,7 +66,6 @@ function openSwDb() {
     req.onerror = () => reject(req.error);
   });
 }
-
 async function idbPut(key, value) {
   const db = await openSwDb();
   return new Promise((resolve, reject) => {
@@ -69,7 +75,6 @@ async function idbPut(key, value) {
     tx.onerror = () => reject(tx.error);
   });
 }
-
 async function idbGet(key) {
   const db = await openSwDb();
   return new Promise((resolve, reject) => {
@@ -79,7 +84,6 @@ async function idbGet(key) {
     q.onerror = () => reject(q.error);
   });
 }
-
 async function queueAdd(entry) {
   const db = await openSwDb();
   return new Promise((resolve, reject) => {
@@ -92,7 +96,6 @@ async function queueAdd(entry) {
     tx.onerror = () => reject(tx.error);
   });
 }
-
 async function queueAll() {
   const db = await openSwDb();
   return new Promise((resolve, reject) => {
@@ -102,7 +105,6 @@ async function queueAll() {
     q.onerror = () => reject(q.error);
   });
 }
-
 async function queueClear() {
   const db = await openSwDb();
   return new Promise((resolve, reject) => {
@@ -128,7 +130,7 @@ self.addEventListener('install', (e) => {
           } catch (__) {}
         }
       }
-      // Best-effort CDN cache for offline export / fonts
+      // Best-effort CDN cache for offline export / PDF.js / fonts
       for (const url of CDN_ASSETS) {
         try {
           const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
@@ -162,10 +164,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-
   const url = req.url;
-
-  // Never intercept online-only APIs (Drive, LT, DOI, etc.)
+  // Never intercept online-only APIs (Drive, LT, DOI, OpenAlex, etc.)
   if (isOnlineOnly(url)) return;
 
   // Navigations: app shell offline fallback
@@ -174,12 +174,12 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Same-origin static / cached
+  // Same-origin static / cached / CDN
   e.respondWith(assetHandler(req));
 });
 
 async function navigationHandler(req) {
-  // Network-first for HTML so deploys (install button, etc.) reach clients quickly
+  // Network-first for HTML so deploys reach clients quickly
   try {
     const net = await fetch(req, { cache: 'no-store' });
     if (net && net.ok) {
@@ -188,6 +188,11 @@ async function navigationHandler(req) {
         await cache.put(req, net.clone());
         await cache.put('./', net.clone());
         await cache.put('./index.html', net.clone());
+        // Also store as PaperQuill.html when serving the main desk
+        const path = new URL(req.url).pathname || '';
+        if (path.endsWith('PaperQuill.html') || path.endsWith('/') || path.endsWith('index.html')) {
+          await cache.put('./PaperQuill.html', net.clone());
+        }
       } catch (_) {}
       return net;
     }
@@ -199,7 +204,7 @@ async function navigationHandler(req) {
     (await caches.match('./PaperQuill.html'));
   if (cached) return cached;
   return new Response(
-    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>PaperQuill offline</title></head><body style="font-family:system-ui;padding:2rem"><h1>Offline</h1><p>PaperQuill shell is not cached yet. Connect once to install the app, then your drafts stay available offline via IndexedDB.</p></body></html>',
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PaperQuill offline</title></head><body style="font-family:system-ui;padding:2rem;max-width:32rem;margin:auto;line-height:1.5"><h1>Offline</h1><p>PaperQuill shell is not cached yet. Connect once to install the app, then your drafts, sources, and reference PDFs stay available offline via IndexedDB.</p><p style="color:#666;font-size:.9rem">Papers, sources, scaffold, and reference library (PDF blobs + highlights + notes) are stored in the page IndexedDB — not in this service worker.</p></body></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
   );
 }
@@ -207,7 +212,7 @@ async function navigationHandler(req) {
 async function assetHandler(req) {
   const cached = await caches.match(req);
   if (cached) {
-    // Stale-while-revalidate for CDN / fonts
+    // Stale-while-revalidate for CDN / fonts / pdf.js
     eRevalidate(req);
     return cached;
   }
@@ -221,16 +226,20 @@ async function assetHandler(req) {
     }
     return res;
   } catch (_) {
-    // Offline and not cached
-    if (req.destination === 'script' || req.destination === 'style' || req.destination === 'font') {
-      return new Response('', { status: 503, statusText: 'Offline' });
+    // Offline and not cached — try bare URL match without query
+    try {
+      const u = new URL(req.url);
+      const bare = await caches.match(u.origin + u.pathname);
+      if (bare) return bare;
+    } catch (__) {}
+    if (req.destination === 'script' || req.destination === 'style' || req.destination === 'font' || req.destination === 'worker') {
+      return new Response('/* offline */', { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'application/javascript' } });
     }
-    return cached || new Response('', { status: 503, statusText: 'Offline' });
+    return new Response('', { status: 503, statusText: 'Offline' });
   }
 }
 
 function eRevalidate(req) {
-  // Fire-and-forget update
   fetch(req)
     .then(async (res) => {
       if (res && res.ok) {
@@ -248,13 +257,11 @@ self.addEventListener('message', (e) => {
     if (e.ports && e.ports[0]) e.ports[0].postMessage(payload);
     else if (e.source) e.source.postMessage(payload);
   };
-
   if (data.type === 'SKIP_WAITING') {
     self.skipWaiting();
     reply({ ok: true });
     return;
   }
-
   if (data.type === 'GET_STATUS') {
     (async () => {
       const version = await idbGet('cacheVersion');
@@ -264,38 +271,38 @@ self.addEventListener('message', (e) => {
         cache: CACHE,
         storedVersion: version,
         queueLength: queue.length,
-        offline: !self.navigator?.onLine,
+        offline: !(self.navigator && self.navigator.onLine),
       });
     })().catch((err) => reply({ ok: false, error: String(err) }));
     return;
   }
-
   if (data.type === 'QUEUE_OFFLINE_ACTION') {
-    // Optional: page can enqueue failed network actions for later
     queueAdd(data.action || { kind: 'unknown' })
       .then((id) => reply({ ok: true, id }))
       .catch((err) => reply({ ok: false, error: String(err) }));
     return;
   }
-
   if (data.type === 'CLEAR_QUEUE') {
     queueClear()
       .then(() => reply({ ok: true }))
       .catch((err) => reply({ ok: false, error: String(err) }));
     return;
   }
-
   if (data.type === 'CACHE_URLS') {
     const urls = Array.isArray(data.urls) ? data.urls : [];
     (async () => {
       const cache = await caches.open(CACHE);
+      let n = 0;
       for (const u of urls) {
         try {
           const res = await fetch(u, { mode: 'cors', credentials: 'omit' });
-          if (res && res.ok) await cache.put(u, res.clone());
+          if (res && res.ok) {
+            await cache.put(u, res.clone());
+            n++;
+          }
         } catch (_) {}
       }
-      reply({ ok: true, cached: urls.length });
+      reply({ ok: true, cached: n });
     })().catch((err) => reply({ ok: false, error: String(err) }));
   }
 });
@@ -306,10 +313,9 @@ self.addEventListener('sync', (e) => {
     e.waitUntil(
       (async () => {
         const items = await queueAll();
-        // App data lives in the page's IndexedDB (paperquill-db).
+        // App data lives in the page's IndexedDB (papers, sources, ref PDFs).
         // This queue is only for optional deferred network actions.
         if (!items.length) return;
-        // Notify clients to process queue when online
         const clients = await self.clients.matchAll({ type: 'window' });
         for (const client of clients) {
           client.postMessage({ type: 'FLUSH_QUEUE', items });
