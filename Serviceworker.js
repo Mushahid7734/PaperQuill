@@ -1,7 +1,7 @@
 /* PaperQuill service worker — offline-first app shell + IndexedDB helpers
- * Cache bump (v6) pushes install-button UI + dashboard/focus fixes.
+ * Cache bump (v8) pushes SEO meta/thumbnail, default sections fix, tutorials & dissertation templates.
  */
-const CACHE = 'paperquill-v6';
+const CACHE = 'paperquill-v8';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
