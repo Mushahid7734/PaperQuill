@@ -274,21 +274,82 @@
     .pq-progress-wrap{display:flex;align-items:center;gap:8px;min-width:120px;max-width:180px}
     .pq-progress-bar{flex:1;height:6px;border-radius:999px;background:var(--border);overflow:hidden}
     .pq-progress-bar>i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .3s}
-    .pq-dash-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 14px;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+    .pq-dash-tabs{
+      display:flex;gap:4px;flex-wrap:wrap;margin:16px 0 14px;padding:5px;
+      background:var(--panel);border:1px solid var(--border);border-radius:14px;
+      position:relative;z-index:2
+    }
     .pq-dash-tabs button{
-      font:inherit;font-size:.82rem;font-weight:500;padding:8px 14px;min-height:40px;
+      font:inherit;font-size:.82rem;font-weight:500;padding:9px 14px;min-height:42px;
       border:1px solid transparent;background:transparent;color:var(--muted);
-      border-radius:999px;cursor:pointer;flex:1 1 auto;text-align:center
+      border-radius:999px;cursor:pointer;flex:1 1 0;min-width:5.5rem;text-align:center;
+      transition:background .15s,color .15s,border-color .15s,box-shadow .15s;
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation
     }
     .pq-dash-tabs button:hover{background:var(--hover);color:var(--ink)}
-    .pq-dash-tabs button.active{background:var(--accent);color:var(--paper);border-color:var(--accent);font-weight:600}
+    .pq-dash-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .pq-dash-tabs button.active{
+      background:var(--accent);color:var(--paper);border-color:var(--accent);font-weight:600;
+      box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 35%,transparent)
+    }
     .pq-dash-pane{display:none!important}
     .pq-dash-pane.active{display:block!important}
+    .pq-dash-pane[hidden]{display:none!important}
+    .pq-dash-pane.active:not([hidden]){display:block!important}
     .pq-dash-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
-    .pq-ach{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--paper)}
-    .pq-ach.locked{opacity:.55}
-    .pq-ach .ico{font-size:1.4rem;line-height:1}
+    .pq-dash-card>strong{display:block;font-size:.95rem;margin-bottom:6px}
+    #pq-dash-drive-card .pq-drive-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+    #pq-dash-drive-card .pq-drive-badge{
+      display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;
+      padding:3px 10px;border-radius:999px;border:1px solid var(--border);margin-bottom:6px
+    }
+    #pq-dash-drive-card .pq-drive-badge.on{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+    #pq-dash-drive-card .pq-drive-badge.off{color:var(--muted)}
+    .pq-ach{
+      display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--border);
+      border-radius:12px;margin-bottom:8px;background:var(--paper);transition:opacity .15s,border-color .15s
+    }
+    .pq-ach.unlocked{border-color:color-mix(in srgb,var(--ok) 45%,var(--border))}
+    .pq-ach.locked{opacity:.5;filter:grayscale(.2)}
+    .pq-ach .ico{
+      width:2.25rem;height:2.25rem;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:1.25rem;line-height:1;background:var(--bg);border:1px solid var(--border);flex-shrink:0
+    }
+    .pq-ach.unlocked .ico{background:color-mix(in srgb,var(--ok) 14%,var(--paper));border-color:var(--ok)}
+    .pq-ach .ach-title{font-weight:600;font-size:.9rem;margin:0 0 2px}
+    .pq-ach .ach-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+    .pq-ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
     .pq-level-badge{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--accent);color:var(--paper);font-size:.75rem;font-weight:600}
+    .pq-ach-summary{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+    .pq-ach-count{font-size:.8rem;color:var(--muted)}
+    .pq-free-card{
+      position:relative;overflow:hidden;border-radius:14px;padding:18px 18px 16px;margin-bottom:12px;
+      border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));
+      background:
+        linear-gradient(135deg,
+          color-mix(in srgb,var(--accent) 10%,var(--paper)) 0%,
+          var(--paper) 48%,
+          color-mix(in srgb,var(--ok) 8%,var(--paper)) 100%);
+      box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 8%,transparent)
+    }
+    .pq-free-card::before{
+      content:'';position:absolute;inset:0 auto 0 0;width:4px;border-radius:14px 0 0 14px;
+      background:linear-gradient(180deg,var(--accent),var(--ok))
+    }
+    .pq-free-kicker{
+      display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;letter-spacing:.06em;
+      text-transform:uppercase;color:var(--accent);margin:0 0 8px
+    }
+    .pq-free-card h3{
+      font-family:"Source Serif 4",Georgia,serif;font-size:1.2rem;font-weight:600;margin:0 0 8px;line-height:1.3;color:var(--ink)
+    }
+    .pq-free-card p{margin:0 0 10px;font-size:.86rem;line-height:1.55;color:var(--ink)}
+    .pq-free-card p:last-child{margin-bottom:0}
+    .pq-free-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .pq-free-actions a.pq-btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .pq-legal-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .pq-legal-row a.pq-btn{text-decoration:none}
+    .pq-legal-meta{font-size:.75rem;color:var(--muted);margin-top:10px;line-height:1.45}
     @media(max-width:800px){
       #pq-root{--sidebar:min(280px,85vw)}
       #pq-root:not(.pq-side-collapsed) .pq-sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.12);max-width:85vw}
@@ -533,17 +594,28 @@
       </div>
       <div class="pq-dash-card" id="pq-dash-drive-card">
         <strong>Google Drive</strong>
-        <p class="pq-help" id="pq-dash-drive-status">Not connected</p>
+        <div id="pq-dash-drive-badge" class="pq-drive-badge off">Not connected</div>
+        <p class="pq-help" id="pq-dash-drive-status">Connect to sync papers to your Drive.</p>
         <p class="pq-help" id="pq-dash-drive-sync">Last sync: —</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <div class="pq-drive-row">
           <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-drive-connect">Connect</button>
           <button type="button" class="pq-btn" id="pq-dash-drive-open">Open file</button>
           <button type="button" class="pq-btn" id="pq-dash-drive-sync">Sync current</button>
           <button type="button" class="pq-btn" id="pq-dash-drive-disconnect">Disconnect</button>
         </div>
       </div>
+      <div class="pq-free-card" id="pq-free-forever">
+        <div class="pq-free-kicker">✦ Our promise</div>
+        <h3>Free forever</h3>
+        <p>PaperQuill will stay free — no paywall on the writing desk, no account required for local drafts. Your research workflow should not cost a subscription.</p>
+        <p class="pq-help" style="margin:0">If you want to support the work, you can buy the books. To report bugs or suggest features, use the PaperQuill post on the main site.</p>
+        <div class="pq-free-actions">
+          <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/p/books-series.html" target="_blank" rel="noopener noreferrer">Buy the books</a>
+          <a class="pq-btn" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Bugs &amp; ideas</a>
+        </div>
+      </div>
     </div>
-    <div class="pq-dash-pane" id="pane-progress">
+    <div class="pq-dash-pane" id="pane-progress" hidden>
       <div class="pq-dash-card">
         <strong>Writing stats</strong>
         <p class="pq-help" id="pq-stat-total">Total words stored: —</p>
@@ -556,23 +628,41 @@
         <div id="pq-progress-papers"></div>
       </div>
     </div>
-    <div class="pq-dash-pane" id="pane-achievements">
+    <div class="pq-dash-pane" id="pane-achievements" hidden>
       <div class="pq-dash-card">
         <p class="pq-help">Earn badges as you write. Levels rise with lifetime words across all papers on this device.</p>
         <div id="pq-ach-list"></div>
       </div>
     </div>
-    <div class="pq-dash-pane" id="pane-about">
+    <div class="pq-dash-pane" id="pane-about" hidden>
       <div class="pq-dash-card">
         <strong>About PaperQuill</strong>
-        <p class="pq-help">A private research writing studio for solo researchers. Your drafts stay in this browser (IndexedDB) with optional disk JSON backups. No accounts, no tracking servers for your prose.</p>
+        <p class="pq-help">A private research writing studio for solo researchers. Your drafts stay in this browser (IndexedDB) with optional disk JSON backups and Google Drive sync. No accounts required for local writing.</p>
         <ul class="pq-help" style="padding-left:18px;line-height:1.7">
           <li>Citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver) with live re-render</li>
-          <li>Shared source library across papers · DOI &amp; OpenAlex · BibTeX/RIS import</li>
+          <li>Shared source library · DOI &amp; OpenAlex · BibTeX/RIS import</li>
           <li>Tutorial mode, templates, LanguageTool, quote bank, snapshots</li>
-          <li>Export DOCX, PDF (print), Markdown, HTML</li>
+          <li>Export DOCX, PDF (print), Markdown, HTML · Google Drive sync</li>
         </ul>
         <p class="pq-help" style="margin-top:10px">Tip: open <strong>Tools</strong> for LanguageTool, Tutorial, Templates, and the rest of the studio toolkit.</p>
+      </div>
+      <div class="pq-free-card">
+        <div class="pq-free-kicker">✦ Our promise</div>
+        <h3>Free forever</h3>
+        <p>PaperQuill is promised free forever for the core writing studio. Support is optional — buy the books if you wish, or simply use the desk.</p>
+        <div class="pq-free-actions">
+          <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/p/books-series.html" target="_blank" rel="noopener noreferrer">Books &amp; series</a>
+          <a class="pq-btn" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Report bugs · suggest features</a>
+        </div>
+      </div>
+      <div class="pq-dash-card">
+        <strong>Legal</strong>
+        <p class="pq-help">Read how PaperQuill handles your data and the rules of use. Opens on the main site.</p>
+        <div class="pq-legal-row">
+          <a class="pq-btn" href="https://www.authormasoncarter.com/p/terms-of-service-for-paperquill.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+          <a class="pq-btn" href="https://www.authormasoncarter.com/p/privacy-policy-for-paperquill.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        </div>
+        <p class="pq-legal-meta">Effective 4 October 2026 · Author Mason Carter</p>
       </div>
     </div>
   </div></div>
@@ -1149,31 +1239,75 @@
   }
   const ACHIEVEMENTS=[
     {id:'first_words',title:'First ink',desc:'Write at least 50 words',ico:'✍️',test:s=>s.total>=50},
-    {id:'hundred',title:'Century',desc:'Reach 100 words in the library',ico:'📄',test:s=>s.total>=100},
+    {id:'hundred',title:'Century',desc:'Reach 100 words stored',ico:'📄',test:s=>s.total>=100},
+    {id:'five_hundred',title:'Half-k draft',desc:'500 words across papers',ico:'🪶',test:s=>s.total>=500},
     {id:'thousand',title:'Thousand club',desc:'1,000 words stored',ico:'📚',test:s=>s.total>=1000},
     {id:'five_k',title:'Deep draft',desc:'5,000 words across papers',ico:'🏔️',test:s=>s.total>=5000},
+    {id:'ten_k',title:'Ten thousand',desc:'10,000 lifetime words',ico:'📖',test:s=>s.total>=10000},
+    {id:'twenty_five_k',title:'Manuscript scale',desc:'25,000 lifetime words',ico:'🏛️',test:s=>s.total>=25000},
     {id:'cite_one',title:'In conversation',desc:'Add at least one source',ico:'🔗',test:s=>s.sources>=1},
-    {id:'cite_ten',title:'Well read',desc:'10 sources in a paper',ico:'📖',test:s=>s.sources>=10},
+    {id:'cite_five',title:'Building the shelf',desc:'5 sources in the current paper',ico:'📑',test:s=>s.sources>=5},
+    {id:'cite_ten',title:'Well read',desc:'10 sources in a paper',ico:'📗',test:s=>s.sources>=10},
+    {id:'cite_twenty',title:'Literature dense',desc:'20 sources in a paper',ico:'📕',test:s=>s.sources>=20},
+    {id:'section_done',title:'Section closed',desc:'Mark at least one section Done',ico:'✅',test:s=>s.sectionsDone>=1},
+    {id:'half_done',title:'Halfway structure',desc:'Mark half of a paper’s sections Done',ico:'🧩',test:s=>s.halfDone},
+    {id:'paper_done',title:'Paper complete',desc:'Mark every section Done in a paper',ico:'🏁',test:s=>s.paperDone},
     {id:'streak_3',title:'Three-day streak',desc:'Write on 3 consecutive days',ico:'🔥',test:s=>s.streak>=3},
     {id:'streak_7',title:'Week of focus',desc:'7-day writing streak',ico:'⭐',test:s=>s.streak>=7},
+    {id:'streak_14',title:'Fortnight',desc:'14-day writing streak',ico:'🌟',test:s=>s.streak>=14},
+    {id:'streak_30',title:'Month of craft',desc:'30-day writing streak',ico:'💎',test:s=>s.streak>=30},
     {id:'multi',title:'Portfolio',desc:'Keep 3 or more papers',ico:'🗂️',test:s=>s.papers>=3},
+    {id:'multi_five',title:'Series author',desc:'Keep 5 or more papers',ico:'📚',test:s=>s.papers>=5},
     {id:'snapshot',title:'Time traveler',desc:'Save a paper snapshot',ico:'💾',test:s=>s.snapshots>=1},
+    {id:'snap_three',title:'Version vault',desc:'Keep 3 paper snapshots',ico:'🗄️',test:s=>s.snapshots>=3},
+    {id:'quotes',title:'Quote bank',desc:'Save 3 quotes',ico:'💬',test:s=>s.quotes>=3},
+    {id:'claims',title:'Claim tracker',desc:'Track 3 claims with evidence',ico:'⚖️',test:s=>s.claimsTracked>=3},
+    {id:'drive_sync',title:'Cloud desk',desc:'Sync a paper to Google Drive',ico:'☁️',test:s=>s.driveSynced},
+    {id:'level_3',title:'Level 3',desc:'Reach researcher level 3',ico:'🥉',test:s=>s.level>=3},
     {id:'level_5',title:'Level 5',desc:'Reach researcher level 5',ico:'🎓',test:s=>s.level>=5},
-    {id:'month_2k',title:'Productive month',desc:'2,000 words logged this month',ico:'📈',test:s=>s.month>=2000}
+    {id:'level_10',title:'Level 10',desc:'Reach researcher level 10',ico:'🥇',test:s=>s.level>=10},
+    {id:'month_2k',title:'Productive month',desc:'2,000 words logged this month',ico:'📈',test:s=>s.month>=2000},
+    {id:'month_5k',title:'Heavy month',desc:'5,000 words logged this month',ico:'🚀',test:s=>s.month>=5000},
+    {id:'daily_goal',title:'Daily target met',desc:'Hit today’s daily word goal at least once',ico:'🎯',test:s=>s.dailyHit},
+    {id:'session_goal',title:'Session finisher',desc:'Reach a session word goal',ico:'⏱️',test:s=>s.sessionHit}
   ];
   async function gatherStats(){
     let list=[];try{list=await idbAll()}catch(e){}
-    let total=0;
+    let total=0,sectionsDone=0,halfDone=false,paperDone=false,maxSources=0,maxSnaps=0,maxQuotes=0,maxClaims=0,driveSynced=false;
     list.forEach(p=>{
-      if(p.wordCount!=null)total+=p.wordCount;
-      else if(p.state&&p.state.sections)total+=p.state.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0);
+      let words=0;
+      if(p.state&&p.state.sections){
+        words=p.state.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0);
+        const secs=p.state.sections.length||0;
+        const done=p.state.sections.filter(x=>x.status==='done').length;
+        sectionsDone+=done;
+        if(secs&&done>=Math.ceil(secs/2))halfDone=true;
+        if(secs&&done===secs)paperDone=true;
+      }else if(p.wordCount!=null)words=p.wordCount;
+      total+=words;
+      const src=(p.state&&p.state.sources)?p.state.sources.length:0;
+      if(src>maxSources)maxSources=src;
+      const snaps=(p.state&&p.state.paperSnapshots)?p.state.paperSnapshots.length:0;
+      if(snaps>maxSnaps)maxSnaps=snaps;
+      const q=(p.state&&p.state.quotes)?p.state.quotes.length:0;
+      if(q>maxQuotes)maxQuotes=q;
+      const cl=(p.state&&p.state.claims)?p.state.claims.filter(c=>c.hasEvidence||c.hasCitation).length:0;
+      if(cl>maxClaims)maxClaims=cl;
+      if(p.state&&(p.state.driveLastSync||p.state.driveFileId))driveSynced=true;
     });
-    const sources=(state.sources||[]).length;
-    const snapshots=(state.paperSnapshots||[]).length;
+    const sources=Math.max(maxSources,(state.sources||[]).length);
+    const snapshots=Math.max(maxSnaps,(state.paperSnapshots||[]).length);
+    const quotes=Math.max(maxQuotes,(state.quotes||[]).length);
+    const claimsTracked=Math.max(maxClaims,(state.claims||[]).filter(c=>c.hasEvidence||c.hasCitation).length);
+    if(state.driveLastSync||state.driveFileId)driveSynced=true;
     const streak=getStreak();
     const month=getMonthWords();
     const level=levelFromWords(total);
-    return {total,sources,snapshots,streak,month,level,papers:list.length,list};
+    const dailyHit=getDailyWords()>=getDailyTarget()&&getDailyTarget()>0;
+    const sessionTarget=(state.goals&&state.goals.sessionTarget)||500;
+    const sessionNow=Math.max(0,totalWords()-(state.goals&&state.goals.sessionBase!=null?state.goals.sessionBase:sessionBase));
+    const sessionHit=sessionTarget>0&&sessionNow>=sessionTarget;
+    return {total,sources,snapshots,streak,month,level,papers:list.length,list,sectionsDone,halfDone,paperDone,quotes,claimsTracked,driveSynced,dailyHit,sessionHit};
   }
   async function renderProgressPane(){
     const s=await gatherStats();
@@ -1198,11 +1332,18 @@
   async function renderAchievements(){
     const s=await gatherStats();
     const box=$('#pq-ach-list');if(!box)return;
-    box.innerHTML='<p class="pq-help" style="margin-bottom:10px">Level <span class="pq-level-badge">'+s.level+'</span> · '+s.total.toLocaleString()+' lifetime words</p>'+
+    const unlocked=ACHIEVEMENTS.filter(a=>a.test(s)).length;
+    box.innerHTML=
+      '<div class="pq-ach-summary">'+
+        '<span class="pq-level-badge">Level '+s.level+'</span>'+
+        '<span class="pq-ach-count">'+unlocked+' / '+ACHIEVEMENTS.length+' badges · '+s.total.toLocaleString()+' lifetime words</span>'+
+      '</div>'+
+      '<div class="pq-ach-grid">'+
       ACHIEVEMENTS.map(a=>{
         const ok=a.test(s);
-        return '<div class="pq-ach'+(ok?'':' locked')+'"><div class="ico">'+(ok?a.ico:'🔒')+'</div><div><strong>'+escapeHtml(a.title)+'</strong><div class="pq-help">'+escapeHtml(a.desc)+'</div></div></div>';
-      }).join('');
+        return '<div class="pq-ach '+(ok?'unlocked':'locked')+'"><div class="ico">'+(ok?a.ico:'🔒')+'</div><div><div class="ach-title">'+escapeHtml(a.title)+'</div><div class="ach-desc">'+escapeHtml(a.desc)+'</div></div></div>';
+      }).join('')+
+      '</div>';
   }
   const GREETINGS=[
     'Ready when you are.',
@@ -3807,26 +3948,41 @@
     await renderAchievements();
   };
   function switchDashTab(paneId){
+    if(!paneId)return;
+    const dash=$('#pq-dash');
     const tabs=$('#pq-dash-tabs');
-    if(!tabs)return;
-    $$('#pq-dash-tabs button').forEach(b=>{
-      b.classList.toggle('active',b.dataset.pane===paneId);
-    });
-    $$('.pq-dash-pane').forEach(p=>{
-      p.classList.toggle('active',p.id==='pane-'+paneId);
+    if(tabs){
+      $$('button[data-pane]',tabs).forEach(b=>{
+        const on=b.getAttribute('data-pane')===paneId;
+        b.classList.toggle('active',on);
+        b.setAttribute('aria-selected',on?'true':'false');
+      });
+    }
+    const panes=dash?$$('.pq-dash-pane',dash):$$('.pq-dash-pane');
+    panes.forEach(p=>{
+      const on=p.id==='pane-'+paneId;
+      p.classList.toggle('active',on);
+      if(on)p.removeAttribute('hidden');
+      else p.setAttribute('hidden','');
     });
     if(paneId==='progress')renderProgressPane();
     if(paneId==='achievements')renderAchievements();
   }
-  const dashTabs=$('#pq-dash-tabs');
-  if(dashTabs){
-    dashTabs.addEventListener('click',e=>{
-      const btn=e.target.closest('button[data-pane]');
-      if(!btn||!dashTabs.contains(btn))return;
-      e.preventDefault();
-      switchDashTab(btn.dataset.pane);
+  (function wireDashTabs(){
+    const tabs=$('#pq-dash-tabs');
+    if(!tabs)return;
+    tabs.setAttribute('role','tablist');
+    $$('button[data-pane]',tabs).forEach(btn=>{
+      btn.setAttribute('role','tab');
+      btn.setAttribute('type','button');
+      btn.setAttribute('aria-selected',btn.classList.contains('active')?'true':'false');
+      btn.addEventListener('click',e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        switchDashTab(btn.getAttribute('data-pane'));
+      });
     });
-  }
+  })();
   const dailySet=$('#pq-daily-set');
   if(dailySet)dailySet.onclick=()=>{
     const v=parseInt($('#pq-daily-target').value,10)||500;
@@ -4214,15 +4370,23 @@
       else panelInfo.textContent='';
     }
     if(panelBtn){
+      panelBtn.disabled=!connected;
       panelBtn.title=connected?(state&&state.driveFileId?'Update paper on Google Drive':'Upload paper to Google Drive'):'Connect Drive from Home first';
     }
+    const badge=$('#pq-dash-drive-badge');
     const st=$('#pq-dash-drive-status');
     const sy=$('#pq-dash-drive-sync');
     const btnConn=$('#pq-dash-drive-connect');
     const btnOpen=$('#pq-dash-drive-open');
     const btnSync=$('#pq-dash-drive-sync');
     const btnDisc=$('#pq-dash-drive-disconnect');
-    if(st) st.textContent=connected?'Connected'+(state&&state.driveFileId?' · file linked':''):'Not connected';
+    if(badge){
+      badge.className='pq-drive-badge '+(connected?'on':'off');
+      badge.textContent=connected?'Connected':'Not connected';
+    }
+    if(st) st.textContent=connected
+      ?(state&&state.driveFileId?'This paper is linked to a Drive file.':'Connected — sync to upload this paper.')
+      :'Connect to sync papers to your Drive.';
     if(sy) sy.textContent='Last sync: '+last;
     if(btnConn) btnConn.style.display=connected?'none':'';
     if(btnOpen) btnOpen.style.display=connected?'':'none';
