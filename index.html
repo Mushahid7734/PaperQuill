@@ -4064,7 +4064,7 @@
     clientId: '620970730079-n0278i879j8q3onhdt1f8rrbgu1950t9.apps.googleusercontent.com',
     // Change with Tools → Set Worker URL if needed (saved in localStorage)
     workerUrl: (function(){
-      try{return (localStorage.getItem('pq-worker-url')||'https://paperquill-api.authormasoncarter.com').replace(/\/$/,'')}catch(e){return 'https://paperquill-api.authormasoncarter.com'}
+      try{return (localStorage.getItem('pq-worker-url')||'https://paperquill.authormasoncarter.com/api').replace(/\/$/,'')}catch(e){return 'https://paperquill.authormasoncarter.com/api'}
     })(),
     redirectUri: 'https://paperquill.authormasoncarter.com/',
     scope: 'https://www.googleapis.com/auth/drive.file',
@@ -4101,11 +4101,19 @@
   }
 
   async function driveWorker(path, body){
-    const res = await fetch(PQ_DRIVE.workerUrl + path, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(body||{}),
-    });
+    let res;
+    try{
+      res = await fetch(PQ_DRIVE.workerUrl + path, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body||{}),
+      });
+    }catch(netErr){
+      const err = new Error('Worker unreachable ('+PQ_DRIVE.workerUrl+'). Check DNS / deploy.');
+      err.detail = {network:String(netErr&&netErr.message||netErr)};
+      err.status = 0;
+      throw err;
+    }
     let data = {};
     try{data = await res.json()}catch(e){}
     if(!res.ok){
@@ -4163,8 +4171,9 @@
       toast('Drive connected'+(data.email?(' · '+data.email):''));
       return true;
     }catch(e){
-      console.error(e);
-      toast('Drive connect failed — check Worker URL & secrets');
+      console.error('Drive OAuth exchange failed', e, e&&e.detail);
+      const msg = (e&&e.message)||'unknown error';
+      toast('Drive connect failed: '+msg.slice(0,120));
       return false;
     }
   }
