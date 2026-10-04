@@ -3,12 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>PaperQuill – Research Writing Studio</title>
-  <meta name="description" content="Private, offline-first research writing studio for solo researchers. Automatic citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver), LanguageTool, DOI lookup, templates, tutorials, and rich DOCX export.">
+  <title>PaperQuill – Research Writing Studio | Offline Academic Writing &amp; Citations</title>
+  <meta name="description" content="PaperQuill is a private, offline-first research writing studio for solo researchers and graduate students. Draft papers and dissertations with MLA, APA, Chicago, Harvard, IEEE &amp; Vancouver citations, DOI lookup, scaffolds, templates, LanguageTool, and DOCX export—no account required for local writing.">
+  <meta name="keywords" content="research writing software, academic writing app, offline citation manager, MLA APA Chicago citations, dissertation writing tool, thesis writing software, research paper editor, PaperQuill, offline-first writing, PhD dissertation template">
+  <meta name="author" content="Mason Carter">
+  <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#3d4f5f">
+  <link rel="canonical" href="https://paperquill.authormasoncarter.com/">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PaperQuill">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="PaperQuill – Research Writing Studio">
+  <meta property="og:description" content="Private, offline-first research writing studio. Automatic citations, dissertation templates, scaffolds, and rich DOCX export—drafts stay on your device.">
+  <meta property="og:url" content="https://paperquill.authormasoncarter.com/">
+  <meta property="og:image" content="https://blogger.googleusercontent.com/img/a/AVvXsEh68Eof13biPBljvGpQkO9JiaEb9_M6qOajZcnHpkY1Z31nh5EjYdyFeJhBMgdwMQvCWXtxM324rAmYvnnRTm85PuvFhOGn85lHdYkKDVCewc6cirCpBFapT8aDu_JEQ35mjYqlMgXj3pD1q2Ky8PogMfV-6rhUv7MEBrEek3a1TU4JSSt68GaH3GRQ5-S_=s1168">
+  <meta property="og:image:alt" content="PaperQuill Research Writing Studio – private offline-first academic writing">
+  <meta property="og:image:width" content="1168">
+  <meta property="og:image:height" content="657">
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PaperQuill – Research Writing Studio">
+  <meta name="twitter:description" content="Offline-first academic writing with MLA, APA, Chicago &amp; more. Citations, templates, and DOCX export—no account required for local drafts.">
+  <meta name="twitter:image" content="https://blogger.googleusercontent.com/img/a/AVvXsEh68Eof13biPBljvGpQkO9JiaEb9_M6qOajZcnHpkY1Z31nh5EjYdyFeJhBMgdwMQvCWXtxM324rAmYvnnRTm85PuvFhOGn85lHdYkKDVCewc6cirCpBFapT8aDu_JEQ35mjYqlMgXj3pD1q2Ky8PogMfV-6rhUv7MEBrEek3a1TU4JSSt68GaH3GRQ5-S_=s1168">
+  <meta name="twitter:image:alt" content="PaperQuill Research Writing Studio promo">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PaperQuill",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Private, offline-first research writing studio for solo researchers. Automatic citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver), dissertation templates, LanguageTool, and DOCX export.",
+    "url": "https://paperquill.authormasoncarter.com/",
+    "image": "https://blogger.googleusercontent.com/img/a/AVvXsEh68Eof13biPBljvGpQkO9JiaEb9_M6qOajZcnHpkY1Z31nh5EjYdyFeJhBMgdwMQvCWXtxM324rAmYvnnRTm85PuvFhOGn85lHdYkKDVCewc6cirCpBFapT8aDu_JEQ35mjYqlMgXj3pD1q2Ky8PogMfV-6rhUv7MEBrEek3a1TU4JSSt68GaH3GRQ5-S_=s1168",
+    "author": {
+      "@type": "Person",
+      "name": "Mason Carter"
+    },
+    "featureList": [
+      "Offline-first drafting",
+      "MLA APA Chicago Harvard IEEE Vancouver citations",
+      "PhD and MS dissertation templates",
+      "Research questions and objectives guidance",
+      "DOCX Markdown HTML export",
+      "Google Drive optional sync"
+    ]
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
@@ -283,15 +333,42 @@
     }
     .pq-focus-timer-bar .pq-btn:hover{background:color-mix(in srgb,#fff 28%,transparent)}
     #pq-root.pq-focus .pq-focus-timer-bar{padding-right:120px}
+    .pq-title-page{
+      max-width:42em;margin:0 auto 24px;padding:48px 28px 56px;min-height:70vh;
+      border:1px solid var(--border);border-radius:4px;background:var(--paper);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;font-family:"Source Serif 4",Georgia,serif;line-height:1.6;
+      box-shadow:0 2px 16px color-mix(in srgb,var(--ink) 6%,transparent)
+    }
+    .pq-title-page .tp-univ{font-size:.95rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 28px}
+    .pq-title-page .tp-title{font-size:1.55rem;font-weight:600;margin:0 0 28px;line-height:1.35;max-width:22em}
+    .pq-title-page .tp-line{margin:0 0 6px;font-size:1rem}
+    .pq-title-page .tp-muted{color:var(--muted);font-size:.92rem;margin:0 0 6px}
+    .pq-title-page .tp-block{margin:22px 0}
+    .pq-title-page .tp-footer{margin-top:auto;padding-top:36px;font-size:.92rem}
+    .pq-title-page.tp-apa .tp-title{font-size:1.35rem;font-weight:400;text-transform:none}
+    .pq-title-page.tp-mla .tp-title{font-size:1.25rem;font-weight:400}
+    .pq-title-page.tp-mla{align-items:flex-start;text-align:left;justify-content:flex-start;padding-top:24px;min-height:auto}
+    .pq-title-page.tp-ieee .tp-title{font-size:1.4rem;font-weight:600}
+    .pq-title-page.tp-diss .tp-title{font-size:1.45rem;font-weight:600;text-transform:none}
+    .pq-title-page.tp-diss .tp-degree{font-style:italic;margin:12px 0}
+    #pq-root.pq-title-sec .pq-editor{display:none}
+    #pq-root.pq-title-sec .pq-section-title{display:none}
+    #pq-root.pq-title-sec .pq-works{display:none}
+    .pq-title-page-wrap{max-width:42em;margin:0 auto 16px}
+    .pq-title-page-wrap .pq-help{margin:8px 0 0;text-align:center}
     .pq-guide{
-      max-width:42em;margin:0 auto 16px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
-      background:color-mix(in srgb,var(--accent) 8%,var(--paper));font-size:.82rem;line-height:1.55;display:none;
+      max-width:42em;margin:0 auto 16px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);
+      background:color-mix(in srgb,var(--accent) 8%,var(--paper));font-size:.84rem;line-height:1.6;display:none;
     }
     .pq-guide.open{display:block}
-    .pq-guide h4{margin:0 0 6px;font-size:.9rem;color:var(--accent)}
-    .pq-guide ul{margin:6px 0 0;padding-left:18px}
-    .pq-guide .pq-vocab{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-    .pq-guide .pq-vocab span{font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--border)}
+    .pq-guide h4{margin:0 0 8px;font-size:.95rem;color:var(--accent);font-family:"Source Serif 4",Georgia,serif}
+    .pq-guide p{margin:0 0 8px}
+    .pq-guide ul{margin:6px 0 10px;padding-left:18px}
+    .pq-guide li{margin-bottom:4px}
+    .pq-guide .pq-vocab{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+    .pq-guide .pq-vocab span{font-size:.72rem;padding:3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--ink)}
+    .pq-guide .pq-guide-foot{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted)}
     .pq-tmpl-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;background:var(--paper)}
     .pq-tmpl-card:hover{border-color:var(--accent)}
     .pq-tmpl-card h4{margin:0 0 4px}
@@ -556,6 +633,7 @@
       </div>
       <div class="pq-editor-wrap">
         <input type="text" class="pq-section-title" id="pq-sec-title" placeholder="Section title…">
+        <div class="pq-title-page-wrap" id="pq-title-page-wrap" style="display:none" aria-label="Formal title page preview"></div>
         <div class="pq-guide" id="pq-guide"></div>
         <div class="pq-editor" id="pq-editor" contenteditable="true" data-placeholder="Write your research… Cite with @ or Cite button. Double-click a word for synonyms. Turn on Tutorial for guidance." spellcheck="true"></div>
         <div class="pq-works" id="pq-works"><h2 id="pq-works-heading">Works Cited</h2><div id="pq-works-body"></div></div>
@@ -602,6 +680,7 @@
     <button type="button" class="pq-btn" id="tool-pasteclean">Clean paste mode</button>
     <button type="button" class="pq-btn" id="tool-autocap">Auto-capitalize: on</button>
     <div class="pq-tools-cat">Academic craft</div>
+    <button type="button" class="pq-btn" id="tool-readiness">Ready to submit?</button>
     <button type="button" class="pq-btn" id="tool-vocab">Relational vocabulary</button>
     <button type="button" class="pq-btn" id="tool-signpost">Academic signposting</button>
     <button type="button" class="pq-btn" id="tool-underpin">Academic underpinning</button>
@@ -625,6 +704,7 @@
     <button type="button" class="pq-btn" id="tool-titlepage">Title page fields</button>
     <button type="button" class="pq-btn" id="tool-sectarget">Section word target</button>
     <div class="pq-tools-cat">Focus &amp; progress</div>
+    <button type="button" class="pq-btn" id="tool-focus-session">Start focus session</button>
     <button type="button" class="pq-btn" id="tool-pomodoro">Focus timer</button>
     <button type="button" class="pq-btn" id="tool-session-goal">Session word goal</button>
     <button type="button" class="pq-btn" id="tool-daily-goal">Daily word goal</button>
@@ -633,8 +713,6 @@
     <button type="button" class="pq-btn" id="tool-snaps">View snapshots</button>
     <button type="button" class="pq-btn" id="tool-papersnap">Snapshot whole paper</button>
     <button type="button" class="pq-btn" id="tool-papersnaps">Paper snapshots</button>
-    <div class="pq-tools-cat">Google Drive</div>
-    <button type="button" class="pq-btn" id="tool-drive-worker">Set Worker URL</button>
     <div class="pq-tools-cat">System</div>
     <button type="button" class="pq-btn" id="tool-search">Search paper</button>
     <button type="button" class="pq-btn" id="tool-notes">Research notes</button>
@@ -642,6 +720,7 @@
     <button type="button" class="pq-btn" id="tool-theme">Toggle theme</button>
     <button type="button" class="pq-btn" id="tool-shortcuts">Keyboard shortcuts</button>
     <button type="button" class="pq-btn" id="tool-json">Backup JSON</button>
+    <button type="button" class="pq-btn" id="tool-recovery">Recovery &amp; backups</button>
   </div>
   <div class="pq-focus-timer-bar" id="pq-focus-timer-bar" aria-live="polite">
     <span id="pq-focus-timer-label">Focus · 25:00</span>
@@ -847,6 +926,7 @@
 
   const DEFAULT_SECTIONS=[
     {key:'title',title:'Title Page'},{key:'abstract',title:'Abstract'},{key:'intro',title:'Introduction'},
+    {key:'objectives',title:'Research Questions & Objectives'},
     {key:'litreview',title:'Literature Review'},{key:'theory',title:'Theoretical Framework'},
     {key:'method',title:'Methodology'},{key:'significance',title:'Significance / Rationale'},
     {key:'results',title:'Results'},{key:'discussion',title:'Discussion'},
@@ -857,17 +937,20 @@
   const TEMPLATES={
     blank:{
       name:'Blank paper',
-      desc:'Minimal starting point with standard research sections.',
-      sections:DEFAULT_SECTIONS
+      desc:'Minimal starting point with standard research sections, including research questions & objectives.',
+      kind:'article',
+      get sections(){return DEFAULT_SECTIONS.map(s=>({key:s.key,title:s.title}))},
     },
     'tf-article':{
       name:'Taylor & Francis article',
-      desc:'Typical T&F journal structure: title, abstract, keywords, intro, materials/methods, results, discussion, conclusion, acknowledgements, references.',
+      desc:'Typical T&F journal structure with keywords and research objectives.',
+      kind:'article',
       sections:[
         {key:'title',title:'Title'},
         {key:'abstract',title:'Abstract'},
         {key:'keywords',title:'Keywords'},
         {key:'intro',title:'Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
         {key:'method',title:'Materials and methods'},
         {key:'results',title:'Results'},
         {key:'discussion',title:'Discussion'},
@@ -878,13 +961,15 @@
     },
     'elsevier':{
       name:'Elsevier / ScienceDirect article',
-      desc:'Common Elsevier layout with highlights, graphical abstract placeholder, and structured body.',
+      desc:'Common Elsevier layout with highlights and research objectives.',
+      kind:'article',
       sections:[
         {key:'title',title:'Title'},
         {key:'highlights',title:'Highlights'},
         {key:'abstract',title:'Abstract'},
         {key:'keywords',title:'Keywords'},
         {key:'intro',title:'Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
         {key:'method',title:'Methods'},
         {key:'results',title:'Results'},
         {key:'discussion',title:'Discussion'},
@@ -895,12 +980,14 @@
     },
     'springer':{
       name:'Springer Nature article',
-      desc:'Springer-style article with abstract, keywords, main text sections, and declarations.',
+      desc:'Springer-style article with abstract, keywords, objectives, and declarations.',
+      kind:'article',
       sections:[
         {key:'title',title:'Title'},
         {key:'abstract',title:'Abstract'},
         {key:'keywords',title:'Keywords'},
         {key:'intro',title:'Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
         {key:'method',title:'Methods'},
         {key:'results',title:'Results'},
         {key:'discussion',title:'Discussion'},
@@ -911,11 +998,13 @@
     },
     'ieee-article':{
       name:'IEEE conference / journal',
-      desc:'IEEE-oriented structure emphasizing contributions and technical detail.',
+      desc:'IEEE-oriented structure with contributions and research objectives.',
+      kind:'article',
       sections:[
         {key:'title',title:'Title'},
         {key:'abstract',title:'Abstract'},
         {key:'intro',title:'Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
         {key:'related',title:'Related Work'},
         {key:'method',title:'Proposed Method / System'},
         {key:'results',title:'Experimental Results'},
@@ -927,13 +1016,15 @@
     },
     'thesis':{
       name:'Thesis / dissertation chapters',
-      desc:'Longer form with dedicated chapters for literature, theory, methods, findings, and contribution.',
+      desc:'Longer form with objectives, literature, theory, methods, findings, and contribution.',
+      kind:'dissertation',
       sections:[
         {key:'title',title:'Title Page'},
         {key:'abstract',title:'Abstract'},
         {key:'ack',title:'Acknowledgements'},
         {key:'toc',title:'Table of Contents'},
         {key:'intro',title:'Chapter 1: Introduction'},
+        {key:'objectives',title:'Chapter 1b: Research Questions & Objectives'},
         {key:'litreview',title:'Chapter 2: Literature Review'},
         {key:'theory',title:'Chapter 3: Theoretical Framework'},
         {key:'method',title:'Chapter 4: Methodology'},
@@ -944,12 +1035,57 @@
         {key:'appendices',title:'Appendices'}
       ]
     },
+    'phd-dissertation':{
+      name:'PhD Dissertation',
+      desc:'Doctoral dissertation structure: formal title page, abstract, objectives, full chapter sequence, contribution, and appendices.',
+      kind:'phd',
+      sections:[
+        {key:'title',title:'Title Page'},
+        {key:'abstract',title:'Abstract'},
+        {key:'ack',title:'Acknowledgements'},
+        {key:'dedication',title:'Dedication'},
+        {key:'toc',title:'Table of Contents'},
+        {key:'listfig',title:'List of Figures & Tables'},
+        {key:'intro',title:'Chapter 1: Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
+        {key:'litreview',title:'Chapter 2: Literature Review'},
+        {key:'theory',title:'Chapter 3: Theoretical Framework'},
+        {key:'method',title:'Chapter 4: Methodology'},
+        {key:'results',title:'Chapter 5: Findings / Results'},
+        {key:'discussion',title:'Chapter 6: Discussion'},
+        {key:'conclusion',title:'Chapter 7: Conclusion & Original Contribution'},
+        {key:'works',title:'References'},
+        {key:'appendices',title:'Appendices'}
+      ]
+    },
+    'ms-dissertation':{
+      name:'MS / MPhil Dissertation',
+      desc:'Master’s dissertation structure: formal title page, abstract, research questions & objectives, core chapters, and references.',
+      kind:'masters',
+      sections:[
+        {key:'title',title:'Title Page'},
+        {key:'abstract',title:'Abstract'},
+        {key:'ack',title:'Acknowledgements'},
+        {key:'toc',title:'Table of Contents'},
+        {key:'intro',title:'Chapter 1: Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
+        {key:'litreview',title:'Chapter 2: Literature Review'},
+        {key:'method',title:'Chapter 3: Methodology'},
+        {key:'results',title:'Chapter 4: Findings / Results'},
+        {key:'discussion',title:'Chapter 5: Discussion'},
+        {key:'conclusion',title:'Chapter 6: Conclusion'},
+        {key:'works',title:'References'},
+        {key:'appendices',title:'Appendices'}
+      ]
+    },
     'grant':{
       name:'Grant / research proposal',
       desc:'Proposal-oriented sections: aims, background, methods, timeline, impact.',
+      kind:'proposal',
       sections:[
         {key:'title',title:'Project Title'},
         {key:'summary',title:'Executive Summary / Abstract'},
+        {key:'objectives',title:'Research Questions & Objectives'},
         {key:'aims',title:'Aims & Objectives'},
         {key:'bg',title:'Background & Rationale'},
         {key:'litreview',title:'Literature & Gap'},
@@ -963,11 +1099,13 @@
     },
     'imrad':{
       name:'IMRaD (classic empirical)',
-      desc:'Introduction, Methods, Results, and Discussion — the most common empirical structure.',
+      desc:'Introduction, Methods, Results, and Discussion — with research questions & objectives.',
+      kind:'article',
       sections:[
         {key:'title',title:'Title'},
         {key:'abstract',title:'Abstract'},
         {key:'intro',title:'Introduction'},
+        {key:'objectives',title:'Research Questions & Objectives'},
         {key:'method',title:'Methods'},
         {key:'results',title:'Results'},
         {key:'discussion',title:'Discussion'},
@@ -980,105 +1118,244 @@
   const GUIDE={
     abstract:{
       title:'Writing the Abstract',
-      body:`An abstract is a self-contained miniature of the paper (usually 150–250 words for journals; check your target venue).
+      body:`<p>An abstract is a self-contained miniature of the paper. Journals often want <strong>150–250 words</strong> (sometimes structured); dissertations may allow a longer abstract — always check your venue or school handbook.</p>
       <ul>
-        <li><strong>Unstructured</strong>: single paragraph covering background → aim → methods → key results → conclusion.</li>
-        <li><strong>Structured</strong>: labelled subsections (Background, Methods, Results, Conclusions) — common in medicine and some social sciences.</li>
-        <li>Do not cite in the abstract unless the journal explicitly allows it.</li>
-        <li>Write it last, after the paper is stable, so numbers and claims match the body.</li>
+        <li><strong>Unstructured</strong>: one paragraph — background → aim/questions → methods → key results → conclusion/implication.</li>
+        <li><strong>Structured</strong>: labelled blocks (Background, Methods, Results, Conclusions) — common in medicine and some social sciences.</li>
+        <li>Prefer precise numbers and claims over vague hype; do not introduce evidence that does not appear in the body.</li>
+        <li>Citations in abstracts are usually avoided unless the journal allows them.</li>
+        <li>Write it <em>last</em>, when findings and wording are stable.</li>
       </ul>
-      <p><strong>Typical flow:</strong> what problem → what you did → what you found → why it matters.</p>`
+      <p><strong>Checklist:</strong> problem stated? question or aim clear? method named? one or two headline results? so-what in one line?</p>
+      <div class="pq-vocab"><span>this study examines</span><span>drawing on</span><span>findings indicate</span><span>we conclude that</span><span>implications for</span></div>`
     },
     intro:{
-      title:'Introduction',
-      body:`Open with the broader problem or phenomenon, then narrow to your specific question or contribution.
+      title:'Introduction — from field to focus',
+      body:`<p>Open with the broader problem or phenomenon, then narrow to your specific question, gap, and contribution. By the end of the introduction the reader should know <em>what</em> you study, <em>why</em> it matters, and <em>how</em> the paper is organised.</p>
       <ul>
-        <li>State the research gap or lacuna clearly — what is missing or contested in prior work.</li>
-        <li>End with aims, research questions, or hypotheses and a brief roadmap of the paper.</li>
-        <li>Citations here establish the conversation; they do not “prove” your point by authority alone.</li>
+        <li>Establish context without a full literature review (save depth for the review chapter/section).</li>
+        <li>State the gap or tension clearly — what is missing, contested, or outdated.</li>
+        <li>Preview aims, research questions, or hypotheses (detail can live in the Objectives section).</li>
+        <li>End with a short roadmap of the paper or chapters.</li>
+        <li>Citations situate the conversation; they do not “prove” your claim by authority alone.</li>
       </ul>
       <p><strong>Relational vocabulary:</strong></p>
-      <div class="pq-vocab"><span>building on</span><span>extending</span><span>in contrast to</span><span>despite</span><span>little is known about</span><span>this study addresses</span></div>`
+      <div class="pq-vocab"><span>building on</span><span>extending</span><span>in contrast to</span><span>despite</span><span>little is known about</span><span>this study addresses</span><span>the paper proceeds as follows</span></div>`
+    },
+    objectives:{
+      title:'Research Questions & Objectives',
+      body:`<p>This section turns a broad interest into a <strong>researchable agenda</strong>. Questions name what you seek to understand; objectives name what you will <em>do</em> to answer them. In dissertations this block often sits after the introduction and before the literature review; in articles it may be folded into the introduction — keep it explicit if your template has a dedicated section.</p>
+      <p><strong>Research questions (RQs)</strong></p>
+      <ul>
+        <li>Open, investigable, and aligned with a gap you can defend from the literature.</li>
+        <li>Match design: exploratory “how/why” fits qualitative work; “to what extent / what is the relationship” fits many quantitative designs.</li>
+        <li>Prefer a small set of sharp questions over a long list you cannot fully answer.</li>
+        <li>Avoid yes/no questions unless a binary outcome is truly the point; avoid questions that only restate the topic (“What is X?”) without an analytical edge.</li>
+      </ul>
+      <p><strong>Objectives</strong></p>
+      <ul>
+        <li>Concrete, often numbered: <em>to examine…, to compare…, to develop…, to evaluate…</em></li>
+        <li>Each objective should map forward to methods and, later, to findings — if you cannot say how you will achieve it, rewrite it.</li>
+        <li>Distinguish primary vs secondary objectives when useful; keep scope realistic for the time and data you have.</li>
+        <li>Hypotheses (if used) should be testable statements linked to specific questions, not vague hopes.</li>
+      </ul>
+      <p><strong>Quality tests</strong></p>
+      <ul>
+        <li><strong>Alignment:</strong> gap → questions → objectives → methods → analysis.</li>
+        <li><strong>Feasibility:</strong> can you access data, cases, or texts needed for each objective?</li>
+        <li><strong>Contribution:</strong> answering these would change what the field knows or does — not only repeat a textbook definition.</li>
+      </ul>
+      <p><strong>Mini structure you can adapt:</strong></p>
+      <ul>
+        <li>One short paragraph linking the gap to the agenda.</li>
+        <li>Numbered research questions (RQ1, RQ2…).</li>
+        <li>Numbered objectives that operationalise each question (or a clear many-to-one mapping).</li>
+        <li>Optional: hypotheses under the relevant RQ.</li>
+      </ul>
+      <div class="pq-vocab"><span>this study asks</span><span>the primary research question is</span><span>specifically, the study aims to</span><span>in order to address</span><span>the objectives are threefold</span><span>RQ1 explores</span><span>to examine the extent to which</span><span>to compare</span><span>to develop an account of</span></div>`
     },
     litreview:{
       title:'Literature Review — the funnel',
-      body:`Start broad (the field or phenomenon), then progressively narrow to the specific conversation your paper joins, and end at the gap your work fills.
+      body:`<p>Start broad (the field or phenomenon), then narrow to the conversation your study joins, and end at the gap your work fills. The review is an argument about the state of knowledge — not a stack of summaries.</p>
       <ul>
-        <li>Organise thematically or methodologically, not as a chronological “A said, B said” list.</li>
-        <li>Synthesise: show agreements, tensions, and blind spots across studies.</li>
-        <li>The final paragraphs should make the lacuna obvious and motivate your study.</li>
+        <li>Organise thematically, methodologically, or by debate — not as a chronological “A said, B said” list.</li>
+        <li>Synthesise: agreements, tensions, blind spots, and how definitions of key terms have shifted.</li>
+        <li>Position methods and theories used in prior work; note what they enable and what they exclude.</li>
+        <li>Final paragraphs should make the lacuna obvious and motivate your questions/objectives.</li>
+        <li>Cite to show the conversation; evaluate quality of evidence rather than collecting authorities.</li>
       </ul>
-      <p><strong>Useful phrases:</strong></p>
-      <div class="pq-vocab"><span>a growing body of work</span><span>prior studies have focused on</span><span>comparatively little attention has been paid to</span><span>this review reveals</span><span>the present study therefore</span></div>`
+      <div class="pq-vocab"><span>a growing body of work</span><span>prior studies have focused on</span><span>comparatively little attention has been paid to</span><span>this review reveals</span><span>the present study therefore</span><span>taken together</span><span>a tension remains between</span></div>`
     },
     theory:{
       title:'Theoretical Framework & Underpinning',
-      body:`Theory is not decoration. It provides the lenses and assumptions that shape what you look for and how you interpret findings.
+      body:`<p>Theory is not decoration. It supplies lenses, assumptions, and concepts that shape what you look for and how you interpret findings. If removing the theory leaves the argument unchanged, it is not doing work.</p>
       <ul>
-        <li><strong>Underpinned by / informed by / premised on / draws on</strong> — signal the relationship clearly.</li>
-        <li>Explain why this theory (or combination) is appropriate for your question.</li>
-        <li>Operationalise: how do key constructs appear in your design or analysis?</li>
+        <li>Signal the relationship clearly: <strong>underpinned by / informed by / premised on / draws on / grounded in</strong>.</li>
+        <li>Justify why this theory (or combination) fits your questions better than plausible alternatives.</li>
+        <li>Operationalise: how do key constructs appear in design, coding, measures, or close reading?</li>
+        <li>Keep scope honest — one well-used framework beats name-dropping three.</li>
       </ul>
-      <p><strong>Relational vocabulary:</strong></p>
-      <div class="pq-vocab"><span>underpinned by</span><span>informed by</span><span>premised on</span><span>draws on</span><span>grounded in</span><span>building upon the work of</span><span>in the tradition of</span></div>`
+      <div class="pq-vocab"><span>underpinned by</span><span>informed by</span><span>premised on</span><span>draws on</span><span>grounded in</span><span>building upon the work of</span><span>in the tradition of</span><span>operationalised as</span></div>`
     },
     method:{
       title:'Methodology',
-      body:`Readers should be able to judge trustworthiness and, where relevant, reproduce the logic of your design.
+      body:`<p>Readers should be able to judge trustworthiness and, where relevant, follow the logic of your design. Match the depth of description to your tradition (experimental protocol vs ethnographic openness).</p>
       <ul>
-        <li>Design, sampling / case selection, data sources, procedures, analysis approach, ethics, and limitations of the method.</li>
-        <li>Justify choices (why this design rather than alternatives).</li>
-        <li>Be precise about instruments, software, coding schemes, and quality criteria (validity, reliability, trustworthiness, etc.).</li>
-      </ul>`
+        <li>Cover design, sampling or case selection, data sources, procedures, analysis approach, ethics, and methodological limitations.</li>
+        <li>Justify choices — why this design rather than strong alternatives.</li>
+        <li>Be precise about instruments, software, coding schemes, and quality criteria (validity, reliability, trustworthiness, reflexivity, etc.).</li>
+        <li>Connect each major procedure back to an objective or research question.</li>
+      </ul>
+      <div class="pq-vocab"><span>this study adopts</span><span>participants were</span><span>data were collected through</span><span>analysis proceeded by</span><span>to enhance trustworthiness</span><span>ethical approval was</span></div>`
     },
     results:{
       title:'Results / Findings',
-      body:`Report what you found without heavy interpretation (save that for Discussion).
+      body:`<p>Report what you found without heavy interpretation (save that for Discussion). Order findings so they answer your research questions or hypotheses systematically.</p>
       <ul>
-        <li>Use tables and figures efficiently; do not duplicate every number in text.</li>
-        <li>Order findings to answer research questions or hypotheses systematically.</li>
-        <li>Flag unexpected or null results honestly.</li>
-      </ul>`
+        <li>Use tables and figures efficiently; do not duplicate every number in prose.</li>
+        <li>Flag unexpected, null, or negative results honestly.</li>
+        <li>In qualitative work, balance claim, quotation, and analytic commentary without drowning the reader in undigested extract.</li>
+        <li>Keep a clear line between description of data and theoretical interpretation.</li>
+      </ul>
+      <div class="pq-vocab"><span>the analysis shows</span><span>as shown in Table</span><span>participants described</span><span>contrary to expectation</span><span>no significant difference was observed</span></div>`
     },
     discussion:{
       title:'Discussion',
-      body:`Interpret findings in light of the literature and theory. Explain, do not merely restate.
+      body:`<p>Interpret findings in light of the literature, theory, and your stated questions. Explain — do not merely restate results.</p>
       <ul>
         <li>How do results confirm, extend, or challenge prior work?</li>
         <li>Mechanisms, alternative explanations, and boundary conditions.</li>
         <li>Limitations of the study and implications for research and practice.</li>
+        <li>Return explicitly to each research question or objective where possible.</li>
       </ul>
-      <p><strong>Argument moves:</strong> claim → evidence (your data + cited work) → warrant (why the evidence supports the claim) → qualification.</p>`
+      <p><strong>Argument move:</strong> claim → evidence (your data + cited work) → warrant (why the evidence supports the claim) → qualification.</p>
+      <div class="pq-vocab"><span>these findings suggest</span><span>one interpretation is</span><span>this extends</span><span>an alternative explanation</span><span>a limitation is</span><span>future research should</span></div>`
     },
     conclusion:{
       title:'Conclusion',
-      body:`Synthesise contribution; avoid introducing new data or long literature summaries.
+      body:`<p>Synthesise contribution; avoid new data or long literature digests. Keep length proportional — often shorter than Discussion.</p>
       <ul>
         <li>Restate the problem, what you did, and the core contribution in plain language.</li>
+        <li>Answer the research questions at a high level (without repeating the whole results section).</li>
         <li>Broader implications and concrete next steps for research or practice.</li>
-        <li>Keep it proportional — often shorter than Discussion.</li>
-      </ul>`
+        <li>In dissertations, stress original contribution and what the work enables next.</li>
+      </ul>
+      <div class="pq-vocab"><span>this study has shown</span><span>the contribution lies in</span><span>taken together</span><span>practically, these findings</span><span>further work is needed to</span></div>`
     },
     significance:{
       title:'Significance / Rationale',
-      body:`Why does this study matter? Distinguish scholarly significance (gap, theory, method) from practical or societal relevance.
+      body:`<p>Why does this study matter? Separate <strong>scholarly</strong> significance (gap, theory, method) from <strong>practical or societal</strong> relevance without overclaiming.</p>
       <ul>
         <li>Who benefits from clearer knowledge on this question?</li>
-        <li>What decisions, policies, or designs could change if your account is right?</li>
+        <li>What decisions, policies, designs, or readings could change if your account is right?</li>
+        <li>Link significance to your objectives — importance without a feasible agenda is only aspiration.</li>
+      </ul>
+      <div class="pq-vocab"><span>the significance of this study lies in</span><span>for practitioners</span><span>theoretically, the work</span><span>policy relevance</span></div>`
+    },
+    title:{
+      title:'Title page',
+      body:`<p>The title page is formal metadata — not a free-writing section. Use <strong>Tools → Title page fields</strong> for title, author, institution, degree, department, supervisor, and year. The on-screen preview follows your <strong>citation style</strong> and template (article vs MS/PhD dissertation).</p>
+      <ul>
+        <li>Dissertation title pages usually name the degree, faculty/department, and a submission statement.</li>
+        <li>APA emphasises title, author, affiliation, and course/instructor details; MLA uses a left header block.</li>
+        <li>Keep the paper title informative and searchable; avoid unexplained acronyms.</li>
       </ul>`
     },
-    general:{
-      title:'Making arguments & using citations',
-      body:`<strong>Citations do not validate a claim by authority.</strong> A citation situates your work in a conversation, gives credit, and lets readers check sources. Validity comes from the quality of evidence and reasoning, not from who said something.
+    keywords:{
+      title:'Keywords',
+      body:`<p>Choose terms that help indexing and discovery — specific enough to be useful, not so narrow that no one searches them.</p>
       <ul>
-        <li><strong>Deduction</strong>: general principle → specific case. If the premises are true and the form is valid, the conclusion follows.</li>
-        <li><strong>Induction</strong>: specific observations → broader generalisation (always provisional).</li>
-        <li><strong>Abduction</strong>: inference to the best explanation given incomplete data — common in qualitative and exploratory work.</li>
+        <li>Typically 4–6 words or short phrases; follow the journal’s limit.</li>
+        <li>Mix topic, method, and population/context where relevant.</li>
+        <li>Avoid repeating the entire title verbatim; add complementary terms.</li>
+      </ul>`
+    },
+    highlights:{
+      title:'Highlights',
+      body:`<p>Highlights (common in Elsevier-style journals) are short bullet claims of the paper’s core contribution — not a second abstract.</p>
+      <ul>
+        <li>Usually 3–5 bullets; each a single, specific finding or contribution.</li>
+        <li>Write for skimming experts; avoid background filler.</li>
+        <li>Every highlight should be supportable from the results/discussion.</li>
+      </ul>`
+    },
+    ack:{
+      title:'Acknowledgements',
+      body:`<p>Thank those who supported the work without implying authorship: funders, supervisors, participants, colleagues who gave feedback, and institutions that provided access.</p>
+      <ul>
+        <li>Disclose funding and grant numbers where required.</li>
+        <li>Keep tone professional; avoid overly personal or jokey notes in formal submissions.</li>
+        <li>Conflicts of interest may belong here or in a separate declarations section — follow your template.</li>
+      </ul>`
+    },
+    dedication:{
+      title:'Dedication',
+      body:`<p>Optional and brief. A single line or short paragraph is enough. This is personal, not scholarly argument — keep it dignified and short.</p>`
+    },
+    toc:{
+      title:'Table of Contents',
+      body:`<p>In the manuscript, list chapter/section titles in order. When you export, check that headings match final titles. Many schools generate TOC in Word from heading styles after DOCX export — keep section titles clean and consistent.</p>`
+    },
+    listfig:{
+      title:'List of Figures & Tables',
+      body:`<p>Number figures and tables in order of appearance (Figure 1, Table 1…). Captions should be self-contained enough to read without the full paragraph of context. Update this list after major structural edits.</p>`
+    },
+    related:{
+      title:'Related Work',
+      body:`<p>Position your contribution against closest prior systems, studies, or texts. Be specific about differences in problem formulation, method, data, or claims — not only “we are the first.”</p>
+      <div class="pq-vocab"><span>unlike prior work</span><span>closest to our approach</span><span>we differ in</span><span>building on</span><span>we address a gap left by</span></div>`
+    },
+    declarations:{
+      title:'Declarations',
+      body:`<p>Follow the journal or school list: competing interests, funding, ethics approval, data availability, author contributions, AI use disclosure where required. Be factual and complete; incomplete declarations delay review.</p>`
+    },
+    appendices:{
+      title:'Appendices',
+      body:`<p>Place material that supports the argument but would interrupt the main text: instruments, codebooks, extended tables, additional analyses, ethics documents. Refer to each appendix from the body (e.g. “see Appendix B”).</p>`
+    },
+    aims:{
+      title:'Aims & Objectives',
+      body:`<p>In proposals, aims state the overall ambition; objectives break it into achievable work packages. Keep a clear line from aims → methods → deliverables → timeline.</p>
+      <div class="pq-vocab"><span>the overarching aim is</span><span>work package 1 will</span><span>success criteria include</span></div>`
+    },
+    summary:{
+      title:'Executive Summary',
+      body:`<p>A proposal summary is pitched to busy readers: problem, approach, expected outputs, and why fund or approve it. Prefer clarity over jargon; match length to the call.</p>`
+    },
+    bg:{
+      title:'Background & Rationale',
+      body:`<p>Explain the problem context and why action or new knowledge is needed now. Link to policy, practice, or scholarly urgency without inflating claims.</p>`
+    },
+    timeline:{
+      title:'Timeline & Work Plan',
+      body:`<p>Break work into phases with realistic dates and dependencies. Show what is done when — literature, data collection, analysis, writing, dissemination — and build in contingency.</p>`
+    },
+    impact:{
+      title:'Expected Impact & Outcomes',
+      body:`<p>Distinguish outputs (papers, datasets, tools) from outcomes (changes in knowledge, practice, or policy). Name beneficiaries and pathways to impact where the funder asks for them.</p>`
+    },
+    budget:{
+      title:'Budget Justification',
+      body:`<p>Every major cost should map to an activity in the work plan. Be specific (rates, durations, equipment). Unexplained round numbers invite cuts.</p>`
+    },
+    team:{
+      title:'Team & Resources',
+      body:`<p>Show that the team has the skills and access required. Link people to work packages; mention facilities, data access, or partnerships that make the project feasible.</p>`
+    },
+    general:{
+      title:'Arguments, evidence & citations',
+      body:`<p><strong>Citations do not validate a claim by authority.</strong> A citation situates your work in a conversation, gives credit, and lets readers check sources. Validity comes from the quality of evidence and reasoning.</p>
+      <ul>
+        <li><strong>Deduction</strong> — general principle → specific case (valid form + true premises → conclusion follows).</li>
+        <li><strong>Induction</strong> — specific observations → broader generalisation (always provisional).</li>
+        <li><strong>Abduction</strong> — inference to the best explanation under incomplete data (common in qualitative and exploratory work).</li>
       </ul>
-      <p>When you cite, you are usually: (1) avoiding plagiarism, (2) showing the conversation you join, or (3) extending / challenging arguments you engage with. Disagreement is healthy when reasoned.</p>
-      <div class="pq-vocab"><span>claims that</span><span>argues</span><span>demonstrates</span><span>suggests</span><span>in contrast</span><span>however</span><span>therefore</span><span>this implies</span></div>`
+      <p>When you cite you are usually: (1) avoiding plagiarism, (2) showing the conversation you join, or (3) extending or challenging arguments you engage with. Disagreement is healthy when reasoned.</p>
+      <p><strong>Studio tips:</strong> use <strong>Ready to submit?</strong> before export; track claims under Tools; keep locators (p., para.) on citations; scaffold discussion boxes before drafting long paragraphs.</p>
+      <div class="pq-vocab"><span>claims that</span><span>argues</span><span>demonstrates</span><span>suggests</span><span>in contrast</span><span>however</span><span>therefore</span><span>this implies</span><span>the evidence indicates</span></div>`
     }
   };
+
 
   let state={
     style:'mla9',theme:'light',autoCap:true,ltOn:false,tutorial:false,
@@ -1156,11 +1433,11 @@
   }
 
   function emptyState(title){
-    const sections=DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[],wordTarget:0}));
+    const sections=(typeof makeDefaultSections==='function'?makeDefaultSections():DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[],wordTarget:0})));
     return {
       style:'mla9',theme:'light',autoCap:true,ltOn:false,tutorial:false,annBib:false,
       sections,activeSectionId:sections[0].id,sources:[],
-      paperTitle:title||'Untitled paper',authorName:'',institution:'',course:'',runningHead:'',
+      paperTitle:title||'Untitled paper',authorName:'',institution:'',course:'',runningHead:'',department:'',faculty:'',degree:'',supervisor:'',city:'',submissionYear:'',templateKey:'blank',
       notes:'',annotations:[],quotes:[],claims:[],paperSnapshots:[],footnotes:[],
       goals:{sessionTarget:500,sessionBase:0},
       scaffold:{open:false,wide:false,boxes:[]}
@@ -1209,16 +1486,29 @@
       localStorage.setItem(key,JSON.stringify(log));
     }catch(e){}
   }
+  function makeDefaultSections(){
+    return DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[],wordTarget:0}));
+  }
   function normalizeState(){
-    if(!state.sections||!state.sections.length){
-      state.sections=DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[],wordTarget:0}));
+    if(!state.sections||!Array.isArray(state.sections)||!state.sections.length){
+      state.sections=makeDefaultSections();
     }
-    state.sections.forEach((s,i)=>{
+    // Drop broken entries; ensure each has id + title
+    state.sections=state.sections.filter(s=>s&&(s.id||s.key||s.title)).map((s,i)=>{
+      if(!s.id)s.id=uid();
+      if(!s.title)s.title=(s.key&&DEFAULT_SECTIONS.find(d=>d.key===s.key)?.title)||('Section '+(i+1));
+      if(!s.key)s.key='custom';
       if(!s.status)s.status='draft';
       if(!s.snapshots)s.snapshots=[];
       if(s.order==null)s.order=i;
       if(s.wordTarget==null)s.wordTarget=0;
+      if(s.content==null)s.content='';
+      return s;
     });
+    if(!state.sections.length){
+      state.sections=makeDefaultSections();
+    }
+    state.sections.forEach((s,i)=>{ if(s.order==null)s.order=i; });
     if(!state.sources)state.sources=[];
     if(state.autoCap==null)state.autoCap=true;
     if(state.tutorial==null)state.tutorial=false;
@@ -1228,6 +1518,15 @@
     if(!state.claims)state.claims=[];
     if(!state.paperSnapshots)state.paperSnapshots=[];
     if(!state.footnotes)state.footnotes=[];
+    if(!state.paperDict)state.paperDict=[];
+    if(state.department==null)state.department='';
+    if(state.faculty==null)state.faculty='';
+    if(state.degree==null)state.degree='';
+    if(state.supervisor==null)state.supervisor='';
+    if(state.city==null)state.city='';
+    if(state.submissionYear==null)state.submissionYear='';
+    if(state.templateKey==null)state.templateKey='blank';
+    if(state.ltSectionOnly==null)state.ltSectionOnly=false;
     if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
     if(state.annBib==null)state.annBib=false;
     if(!state.scaffold)state.scaffold={open:false,wide:false,boxes:[]};
@@ -1712,7 +2011,7 @@
     $('#m-pdf').onclick=()=>{closeModal();exportPdf()};
     $('#m-md').onclick=()=>{closeModal();exportMarkdown()};
     $('#m-html').onclick=()=>{closeModal();exportHtml()};
-    $('#m-json').onclick=()=>{closeModal();saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');toast('JSON downloaded')};
+    $('#m-json').onclick=()=>{closeModal();saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');try{const x=readMeta();x.lastJsonBackup=new Date().toISOString();writeMeta(x)}catch(e){}toast('JSON downloaded')};
   }
   function getExportLayout(style){
     // Academic page layout rules by citation style family
@@ -1786,7 +2085,7 @@
       'h2.bib-title{text-align:center;margin-top:1.5em}\n'+
       '@media print{body{padding:0}}\n'+
       '</style></head><body>';
-    h+='<h1 class="title">'+escapeHtml(state.paperTitle||'Untitled')+'</h1>';
+    h+='<div class="title-page">'+titlePagePlainLines().map(function(t){return '<p style="text-align:center;margin:0.4em 0">'+escapeHtml(t)+'</p>';}).join('')+'</div><hr style="margin:2em 0">';
     if(state.authorName)h+='<p class="meta">'+escapeHtml(state.authorName)+'</p>';
     if(state.institution)h+='<p class="meta">'+escapeHtml(state.institution)+'</p>';
     if(state.course)h+='<p class="meta">'+escapeHtml(state.course)+'</p>';
@@ -1958,10 +2257,20 @@
     const m=readMeta();
     openModal('<h3>Writing check settings</h3><label class="pq-lbl">Language</label><select class="pq-sel" id="m-lang" style="width:100%"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="en-AU">English (Australia)</option><option value="en-CA">English (Canada)</option><option value="auto">Detect automatically</option></select>'+
       '<label style="display:block;margin:10px 0"><input type="checkbox" id="m-nostyle"> Hide style suggestions (spelling and grammar only)</label>'+
-      '<p class="pq-help">Your dictionary: '+escapeHtml((m.userDict||[]).join(', ')||'empty')+'</p><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-reset">Reset ignored items</button><button type="button" class="pq-btn pq-btn-primary" id="m-ok">Save and re-check</button></div>');
+      '<label style="display:block;margin:10px 0"><input type="checkbox" id="m-section"> Check active section only</label>'+
+      '<label class="pq-lbl">Paper dictionary (comma-separated proper nouns / terms)</label>'+
+      '<input class="pq-inp" id="m-paperdict" style="width:100%" value="'+escapeHtml((state.paperDict||[]).join(', '))+'" placeholder="e.g. Caruth, narratology, PaperQuill">'+
+      '<p class="pq-help">Global dictionary: '+escapeHtml((m.userDict||[]).join(', ')||'empty')+'</p>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-reset">Reset ignored items</button><button type="button" class="pq-btn pq-btn-primary" id="m-ok">Save and re-check</button></div>');
     $('#m-lang').value=m.ltLang||'en-US';$('#m-nostyle').checked=!!m.ltNoStyle;
+    $('#m-section').checked=!!state.ltSectionOnly;
     $('#m-reset').onclick=()=>{state.ltIgnore=[];const x=readMeta();x.userDict=[];writeMeta(x);toast('Ignored items cleared');closeModal();runLanguageTool()};
-    $('#m-ok').onclick=()=>{const x=readMeta();x.ltLang=$('#m-lang').value;x.ltNoStyle=$('#m-nostyle').checked;writeMeta(x);closeModal();runLanguageTool()};
+    $('#m-ok').onclick=()=>{
+      const x=readMeta();x.ltLang=$('#m-lang').value;x.ltNoStyle=$('#m-nostyle').checked;writeMeta(x);
+      state.ltSectionOnly=$('#m-section').checked;
+      state.paperDict=($('#m-paperdict').value||'').split(/[,;]+/).map(s=>s.trim()).filter(Boolean);
+      scheduleSave();closeModal();runLanguageTool();
+    };
   }
 
   /* Dictionary / synonyms — fixed replacement */
@@ -2297,18 +2606,36 @@
     }
     return authors+'. '+yearDisp+'. <i>'+escapeHtml(title)+'</i>. '+(pub?pub+'.':'');
   }
+  function formatLocator(page,style){
+    const p=(page||'').trim();
+    if(!p)return'';
+    // Preserve user-provided prefixes (p., pp., para., §, ch., loc.)
+    if(/^(pp?\.|para\.?|¶|§|ch\.?|chap(ter)?\.?|loc\.?|n\.)\s/i.test(p)) return p;
+    if(/^(pp?\.|para\.?|¶|§)/i.test(p)) return p;
+    // Numeric range → pp. for APA-like; plain for MLA
+    if(/^\d+\s*[-–—]\s*\d+/.test(p)){
+      if(style==='mla9'||style==='chicago-nb'||style==='chicago-ad') return p.replace(/\s*[-–—]\s*/,'–');
+      return 'pp. '+p.replace(/\s*[-–—]\s*/,'–');
+    }
+    if(/^\d+/.test(p)){
+      if(style==='mla9'||style==='chicago-nb'||style==='chicago-ad') return p;
+      return 'p. '+p;
+    }
+    return p;
+  }
   function formatInText(src,style,page,disamb,citeIndex){
-    const last=inTextAuthor(src),year=yearOf(src),p=(page||'').trim();
+    const last=inTextAuthor(src),year=yearOf(src);
+    const loc=formatLocator(page,style);
     const letter=(disamb&&disamb.get(src.id))||'';
     const yearDisp=year+(letter||'');
-    if(style==='mla9')return p?'('+last+' '+p+')':'('+last+')';
+    if(style==='mla9')return loc?'('+last+' '+loc+')':'('+last+')';
     if(style==='ieee'||style==='vancouver'){
       const idx=citeIndex!=null?citeIndex:citedSourceIds().indexOf(src.id);
       return '['+(idx>=0?idx+1:'?')+']';
     }
-    if(style==='chicago-nb')return p?'('+last+' '+yearDisp+', '+p+')':'('+last+' '+yearDisp+')';
+    if(style==='chicago-nb')return loc?'('+last+' '+yearDisp+', '+loc+')':'('+last+' '+yearDisp+')';
     // APA, Harvard, Chicago AD
-    return p?'('+last+', '+yearDisp+', p. '+p+')':'('+last+', '+yearDisp+')';
+    return loc?'('+last+', '+yearDisp+', '+loc+')':'('+last+', '+yearDisp+')';
   }
   function bibliographyTitle(style){
     if(style==='mla9')return'Works Cited';
@@ -2368,6 +2695,11 @@
   let dragId=null;
   function renderSections(){
     const list=$('#pq-side-sections');
+    if(!list)return;
+    if(!state.sections||!state.sections.length){
+      state.sections=typeof makeDefaultSections==='function'?makeDefaultSections():DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[],wordTarget:0}));
+      if(!state.activeSectionId)state.activeSectionId=state.sections[0].id;
+    }
     const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
     list.innerHTML=sorted.map(s=>'<div class="pq-item'+(s.id===state.activeSectionId?' active':'')+'" data-id="'+s.id+'" draggable="true">'+
       '<span class="pq-drag" title="Drag to reorder">⠿</span>'+
@@ -2431,6 +2763,7 @@
     const sec=getActiveSection();if(!sec)return;
     secTitle.value=sec.title||'';
     editor.innerHTML=sec.content||'';
+    try{updateTitlePagePreview()}catch(e){}
     sec.content=editor.innerHTML;
     editor.style.display=(sec.key==='works')?'none':'';
     const st=$('#pq-sec-status');if(st)st.value=sec.status||'draft';
@@ -2449,7 +2782,20 @@
   function renderAll(){
     $('#pq-style').value=state.style;
     ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');
+    // Ensure default sections exist before painting the sidebar
+    if(!state.sections||!state.sections.length){
+      state.sections=(typeof makeDefaultSections==='function'?makeDefaultSections():DEFAULT_SECTIONS.map((s,i)=>({id:uid(),key:s.key,title:s.title,content:'',order:i,status:'draft',snapshots:[],wordTarget:0})));
+      state.activeSectionId=state.sections[0].id;
+    }
     renderSections();renderSources();loadSection();updateWc();updateDiskStatus();
+    const sideSec=$('#pq-side-sections'), sideSrc=$('#pq-side-sources');
+    if(sideSec) sideSec.style.display='';
+    if(sideSrc) sideSrc.style.display='none';
+    $$('.pq-side-tabs button').forEach(b=>{
+      const on=b.dataset.side==='sections';
+      b.classList.toggle('active',on);
+    });
+    const addBtn=$('#pq-add-section'); if(addBtn) addBtn.style.display='';
     $('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off');
     updateTutorialBtn();
     applyScaffoldChrome();renderScaffold();
@@ -2552,6 +2898,7 @@
         '<button type="button" class="pq-btn pq-btn-primary scaf-add-u" data-box="'+box.id+'">+ Underpinning</button>'+
         '<button type="button" class="pq-btn scaf-add-e" data-box="'+box.id+'">+ Engagement</button>'+
         '<button type="button" class="pq-btn scaf-ins-all" data-box="'+box.id+'">Insert all</button>'+
+        '<button type="button" class="pq-btn pq-btn-primary scaf-compose" data-box="'+box.id+'">Compose ¶</button>'+
         '<button type="button" class="pq-btn scaf-used" data-box="'+box.id+'">'+(box.used?'Mark open':'Mark used')+'</button>'+
         '<button type="button" class="pq-btn scaf-del-box" data-box="'+box.id+'">Delete box</button>'+
         '</div></div>';
@@ -2654,6 +3001,15 @@
       scafInsertText(parts.join('\n\n'));
       box.used=true;scheduleSave();renderScaffold();
     });
+    list.querySelectorAll('.scaf-compose').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const text=scafComposeBox(box);
+      if(!text)return toast('Box is empty');
+      scafInsertText(text);
+      box.used=true;scheduleSave();renderScaffold();
+      toast('Composed paragraph inserted');
+    });
     list.querySelectorAll('.scaf-used').forEach(b=>b.onclick=e=>{
       e.stopPropagation();
       const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
@@ -2667,7 +3023,14 @@
     });
   }
 
-  function openModal(h){$('#pq-modal').innerHTML=h;$('#pq-modal').classList.remove('pq-slab-wide');$('#pq-modal-bg').classList.add('open')}
+  function openModal(h){
+    const m=$('#pq-modal'),bg=$('#pq-modal-bg');
+    m.innerHTML=h;m.classList.remove('pq-slab-wide');
+    m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');
+    bg.classList.add('open');
+    const focusable=m.querySelector('button,input,select,textarea,[href]');
+    if(focusable)try{focusable.focus()}catch(e){}
+  }
   function closeModal(){$('#pq-modal-bg').classList.remove('open');const m=$('#pq-modal');if(m)m.classList.remove('pq-slab-wide')}
   /** Styled confirm — replaces window.confirm. Returns Promise&lt;boolean&gt;. */
   function styledConfirm(title,message,okLabel,cancelLabel){
@@ -2750,7 +3113,7 @@
   }
   async function insertCitation(sourceId){
     const src=state.sources.find(s=>s.id===sourceId);if(!src)return;
-    const pageIn=await styledPrompt('Page number','Optional page or locator for this citation.','','Cite','Cancel');
+    const pageIn=await styledPrompt('Locator','Optional page, range, or locator (e.g. 42 · 12–15 · para. 4 · ch. 3). Leave blank for author–year only.','','Cite','Cancel');
     if(pageIn===null)return;
     const page=pageIn.trim();
     const disamb=buildDisambiguation();
@@ -2785,7 +3148,12 @@
       };
     });
     state.activeSectionId=state.sections[0].id;
+    state.templateKey=key;
+    if(tmpl.kind==='phd'&&!state.degree)state.degree='Doctor of Philosophy';
+    if(tmpl.kind==='masters'&&!state.degree)state.degree='Master of Science';
+    if((tmpl.kind==='phd'||tmpl.kind==='masters'||tmpl.kind==='dissertation')&&!state.submissionYear)state.submissionYear=String(new Date().getFullYear());
     scheduleSave();renderAll();
+    try{updateTitlePagePreview()}catch(e){}
     toast('Template applied: '+tmpl.name);
     closeModal();
   }
@@ -2811,9 +3179,13 @@
     if(!state.tutorial){g.classList.remove('open');g.innerHTML='';return}
     const sec=getActiveSection();
     const key=sec?sec.key:'';
-    const info=GUIDE[key]||GUIDE.general;
-    g.innerHTML='<h4>'+escapeHtml(info.title)+'</h4>'+info.body+
-      (key!=='general'?'<p class="pq-help" style="margin-top:10px"><em>Also see general guidance on arguments & citations in Tools → Tutorial tips.</em></p>':'');
+    // Map alternate keys (e.g. acks → ack)
+    const alias={acks:'ack',acknowledgements:'ack',acknowledgment:'ack',ref:'works',references:'works',works_cited:'works'};
+    const info=GUIDE[key]||GUIDE[alias[key]]||GUIDE.general;
+    const foot=key!=='general'
+      ? '<p class="pq-guide-foot">Section guide · turn off anytime via <strong>Tools → Tutorial guidance</strong>. For arguments &amp; citations, open a section without a specific guide or see general tips below when browsing unknown sections.</p>'
+      : '<p class="pq-guide-foot">General guide · shown when the section has no dedicated tutorial. Enable section-specific tips by switching chapters while Tutorial is on.</p>';
+    g.innerHTML='<h4>'+escapeHtml(info.title)+'</h4>'+info.body+foot;
     g.classList.add('open');
   }
   function toggleTutorial(){
@@ -3100,41 +3472,30 @@
       });
     };
 
-    // Title block
-    children.push(new Paragraph({
-      children:[new TextRun({text:state.paperTitle||'Untitled',bold:true,font,size:L.titleSize})],
-      alignment:AlignmentType.CENTER,
-      spacing:{line,type:'auto',after:0,before:0}
-    }));
-    if(state.authorName){
+    // Formal title page (style + template aware)
+    const tpLines=titlePagePlainLines();
+    const tpAlign=(state.style==='mla9')?AlignmentType.LEFT:AlignmentType.CENTER;
+    tpLines.forEach((t,i)=>{
+      const isTitle=i===tpLines.findIndex(x=>x===(state.paperTitle||'').trim())||(t===(state.paperTitle||'').trim());
       children.push(new Paragraph({
-        children:[new TextRun({text:state.authorName,font,size:sz})],
-        alignment:AlignmentType.CENTER,
-        spacing:{line,type:'auto',after:0,before:0}
+        children:[new TextRun({text:t||' ',bold:!!isTitle,font,size:isTitle?L.titleSize:sz})],
+        alignment:tpAlign,
+        spacing:{line,type:'auto',after:0,before:isTitle?line:0}
       }));
+    });
+    children.push(new Paragraph({children:[new TextRun({text:' ',font,size:sz})],spacing:{line,type:'auto'}}));
+    try{
+      if(PageBreak){
+        children.push(new Paragraph({children:[new PageBreak()]}));
+      }else{
+        children.push(new Paragraph({children:[new TextRun({text:'',font,size:sz})],spacing:{line,type:'auto',before:line*2}}));
+      }
+    }catch(e){
+      children.push(new Paragraph({children:[new TextRun({text:'',font,size:sz})],spacing:{line,type:'auto',before:line*2}}));
     }
-    if(state.institution){
-      children.push(new Paragraph({
-        children:[new TextRun({text:state.institution,font,size:sz})],
-        alignment:AlignmentType.CENTER,
-        spacing:{line,type:'auto',after:0,before:0}
-      }));
-    }
-    if(state.course){
-      children.push(new Paragraph({
-        children:[new TextRun({text:state.course,font,size:sz})],
-        alignment:AlignmentType.CENTER,
-        spacing:{line,type:'auto',after:0,before:0}
-      }));
-    }
-    // blank line after title block
-    children.push(new Paragraph({
-      children:[new TextRun({text:' ',font,size:sz})],
-      spacing:{line,type:'auto'}
-    }));
 
     state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
-      if(sec.key==='works')return;
+      if(sec.key==='works'||sec.key==='title')return;
       children.push(new Paragraph({
         children:[new TextRun({text:sec.title||'Section',bold:true,font,size:L.headingSize})],
         alignment:L.headingCenter?AlignmentType.CENTER:AlignmentType.LEFT,
@@ -3219,6 +3580,185 @@
     if(typeof saveAs==='function')saveAs(blob,(state.paperTitle||'paperquill').replace(/[^\w\-]+/g,'_')+'.docx');
     toast('DOCX exported · '+style.toUpperCase()+' layout');
   }
+
+
+  /* ========== Studio upgrades: readiness, recovery, focus session, outline+, LT paper dict ========== */
+  function gatherReadiness(){
+    saveCurrent();
+    const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).filter(s=>s.key!=='works');
+    const cited=citedSourceIds();
+    const orphan=[];
+    const re=/data-source-id="([^"]+)"/g;
+    const htmlAll=state.sections.map(s=>s.content||'').join(' ');
+    let m;const seen=new Set();
+    while((m=re.exec(htmlAll))){if(seen.has(m[1]))continue;seen.add(m[1]);if(!state.sources.find(s=>s.id===m[1]))orphan.push(m[1]);}
+    const unused=state.sources.filter(s=>!cited.includes(s.id));
+    const emptySecs=sorted.filter(s=>wordCount(s.content)<20);
+    const notDone=sorted.filter(s=>(s.status||'draft')!=='done');
+    const weakClaims=(state.claims||[]).filter(c=>!c.hasEvidence||!c.hasCitation);
+    const titleOk=!!(state.paperTitle&&state.paperTitle.trim()&&state.paperTitle!=='Untitled paper');
+    const authorOk=!!(state.authorName&&state.authorName.trim());
+    const abstractSec=sorted.find(s=>s.key==='abstract');
+    const absWords=abstractSec?wordCount(abstractSec.content):0;
+    const absOk=!abstractSec||(absWords>=100&&absWords<=350);
+    const underTarget=sorted.filter(s=>s.wordTarget&&wordCount(s.content)<s.wordTarget);
+    const checks=[
+      {ok:titleOk,label:'Paper title set',fix:'Open Title page fields or rename from the logo'},
+      {ok:authorOk,label:'Author name set',fix:'Home → Change name, or Title page fields'},
+      {ok:notDone.length===0,label:'All sections marked Done',fix:notDone.length? (notDone.length+' still draft/revise'):'—'},
+      {ok:emptySecs.length===0,label:'No near-empty sections',fix:emptySecs.length?emptySecs.map(s=>s.title).join(', '):'—'},
+      {ok:cited.length>0,label:'At least one in-text citation',fix:'Use Cite or type @'},
+      {ok:orphan.length===0,label:'No orphan citation markers',fix:orphan.length?orphan.length+' broken markers':'—'},
+      {ok:unused.length===0||cited.length===0,label:'No unused sources in library',fix:unused.length?unused.length+' unused (optional cleanup)':'—'},
+      {ok:weakClaims.length===0,label:'Tracked claims have evidence + citation',fix:weakClaims.length?weakClaims.length+' weak claims':'—'},
+      {ok:absOk,label:'Abstract length reasonable (100–350 words)',fix:abstractSec?(absWords+' words'):'No abstract section'},
+      {ok:underTarget.length===0,label:'Section word targets met',fix:underTarget.length?underTarget.map(s=>s.title).join(', '):'—'},
+      {ok:!!(state.driveLastSync||diskName),label:'Recent backup path (Drive or disk)',fix:'Sync Drive or Save disk / Backup JSON'}
+    ];
+    const score=checks.filter(c=>c.ok).length;
+    return {checks,score,total:checks.length,cited,unused,orphan,notDone,emptySecs,weakClaims,absWords};
+  }
+  function openReadiness(){
+    const r=gatherReadiness();
+    const pct=Math.round(100*r.score/r.total);
+    openModal('<h3>Ready to submit?</h3>'+
+      '<p class="pq-help"><strong>'+r.score+' / '+r.total+'</strong> checks passed · '+pct+'%</p>'+
+      '<div class="pq-progress-bar" style="height:8px;margin-bottom:12px"><i style="width:'+pct+'%;display:block;height:100%;background:var(--ok);border-radius:999px"></i></div>'+
+      r.checks.map(c=>'<div class="pq-src-card" style="display:flex;gap:8px;align-items:flex-start">'+
+        '<span style="font-size:1.1rem;line-height:1">'+(c.ok?'✅':'⬜')+'</span>'+
+        '<div><strong style="font-size:.88rem">'+escapeHtml(c.label)+'</strong>'+
+        (c.fix&&!c.ok?'<div class="pq-help" style="margin:2px 0 0">'+escapeHtml(c.fix)+'</div>':'')+
+        '</div></div>').join('')+
+      '<div class="pq-modal-actions" style="justify-content:flex-start;flex-wrap:wrap">'+
+      '<button type="button" class="pq-btn" id="m-audit">Citation audit</button>'+
+      '<button type="button" class="pq-btn" id="m-claims">Claims</button>'+
+      '<button type="button" class="pq-btn" id="m-title">Title fields</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-audit').onclick=()=>{closeModal();openCitationAudit()};
+    $('#m-claims').onclick=()=>{closeModal();openClaims()};
+    $('#m-title').onclick=()=>{closeModal();openTitlePage()};
+  }
+
+  function openRecoveryCenter(){
+    const meta=readMeta();
+    const lastDisk=meta.lastDiskBackup||'—';
+    const lastJson=meta.lastJsonBackup||'—';
+    const drive=state.driveLastSync||'—';
+    const snaps=(state.paperSnapshots||[]).length;
+    const secSnaps=state.sections.reduce((n,s)=>n+((s.snapshots||[]).length),0);
+    openModal('<h3>Recovery &amp; backups</h3>'+
+      '<p class="pq-help">Drafts live in this browser (IndexedDB). Use backups before major edits or clearing site data.</p>'+
+      '<div class="pq-src-card"><strong>Last disk save</strong><div class="pq-help">'+escapeHtml(String(lastDisk))+'</div></div>'+
+      '<div class="pq-src-card"><strong>Last JSON download</strong><div class="pq-help">'+escapeHtml(String(lastJson))+'</div></div>'+
+      '<div class="pq-src-card"><strong>Last Drive sync</strong><div class="pq-help">'+escapeHtml(String(drive))+(state.driveFileId?' · file linked':'')+'</div></div>'+
+      '<div class="pq-src-card"><strong>Snapshots</strong><div class="pq-help">'+snaps+' paper · '+secSnaps+' section</div></div>'+
+      '<div class="pq-modal-actions" style="justify-content:flex-start;flex-wrap:wrap">'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-json">Download JSON now</button>'+
+      '<button type="button" class="pq-btn" id="m-disk">Save to disk</button>'+
+      '<button type="button" class="pq-btn" id="m-psnap">Snapshot paper</button>'+
+      '<button type="button" class="pq-btn" id="m-drive">Sync Drive</button>'+
+      '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    $('#m-cancel').onclick=closeModal;
+    $('#m-json').onclick=()=>{
+      saveCurrent();
+      const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});
+      if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');
+      const x=readMeta();x.lastJsonBackup=new Date().toISOString();writeMeta(x);
+      toast('JSON downloaded');
+    };
+    $('#m-disk').onclick=()=>{closeModal();saveToDisk(false)};
+    $('#m-psnap').onclick=()=>{closeModal();takePaperSnapshot()};
+    $('#m-drive').onclick=()=>{closeModal();driveSavePaper()};
+  }
+
+  function maybeBackupReminder(){
+    try{
+      const meta=readMeta();
+      const last=meta.lastBackupNudge?Date.parse(meta.lastBackupNudge):0;
+      if(Date.now()-last<36e5*12)return; // 12h
+      const hasDrive=!!state.driveLastSync;
+      const hasDisk=!!meta.lastDiskBackup;
+      const words=totalWords();
+      if(words<800)return;
+      if(hasDrive||hasDisk)return;
+      meta.lastBackupNudge=new Date().toISOString();
+      writeMeta(meta);
+      toast('Tip: download JSON or Sync Drive — drafts stay on this device only');
+    }catch(e){}
+  }
+
+  async function startFocusSession(){
+    closeTools();
+    const cur=(state.goals&&state.goals.sessionTarget)||500;
+    const v=await styledPrompt('Focus session','Word goal for this focus session (timer optional — start separately if needed).',String(cur),'Start focus','Cancel');
+    if(v===null)return;
+    if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
+    state.goals.sessionTarget=Math.max(0,parseInt(v,10)||500);
+    state.goals.sessionBase=totalWords();
+    sessionBase=state.goals.sessionBase;
+    state.focusSessionStarted=new Date().toISOString();
+    scheduleSave();updateSessionLine();
+    enterFocusMode();
+    toast('Focus session · goal '+state.goals.sessionTarget+' words');
+  }
+
+  function openOutlinePro(){
+    saveCurrent();
+    const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    openModal('<h3>Outline</h3><p class="pq-help">Jump, set status, or open a section. Drag sections in the sidebar to reorder.</p>'+
+      sorted.map((s,i)=>{
+        const w=wordCount(s.content);
+        const tgt=s.wordTarget||0;
+        const bar=tgt?Math.min(100,Math.round(100*w/tgt)):0;
+        const first=stripHtml(s.content).trim().slice(0,90);
+        return '<div class="pq-src-card" data-oid="'+s.id+'">'+
+          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'+
+          '<strong>§'+(i+1)+' · '+escapeHtml(s.title)+'</strong>'+
+          '<span class="pq-status '+(s.status||'draft')+'">'+(s.status||'draft')+'</span></div>'+
+          '<div class="pq-help" style="margin:4px 0">'+w.toLocaleString()+(tgt?' / '+tgt:'')+' words</div>'+
+          (tgt?'<div class="pq-progress-bar" style="height:5px;margin-bottom:6px"><i style="width:'+bar+'%;display:block;height:100%;background:var(--ok)"></i></div>':'')+
+          (first?'<div class="pq-help" style="font-style:italic">'+escapeHtml(first)+(stripHtml(s.content).length>90?'…':'')+'</div>':'')+
+          '<div class="pq-src-actions">'+
+          '<button type="button" class="pq-btn pq-btn-primary m-go" data-id="'+s.id+'">Open</button>'+
+          '<button type="button" class="pq-btn m-st" data-id="'+s.id+'" data-st="draft">Draft</button>'+
+          '<button type="button" class="pq-btn m-st" data-id="'+s.id+'" data-st="revise">Revise</button>'+
+          '<button type="button" class="pq-btn m-st" data-id="'+s.id+'" data-st="done">Done</button>'+
+          '</div></div>';
+      }).join('')+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    $('#m-cancel').onclick=closeModal;
+    $$('#pq-modal .m-go').forEach(b=>b.onclick=()=>{closeModal();switchSection(b.dataset.id)});
+    $$('#pq-modal .m-st').forEach(b=>b.onclick=()=>{
+      const sec=state.sections.find(s=>s.id===b.dataset.id);if(!sec)return;
+      sec.status=b.dataset.st;sec.mod=Date.now();scheduleSave();renderSections();openOutlinePro();
+    });
+  }
+  // Prefer enhanced outline
+  const _openOutlineOrig=typeof openOutline==='function'?openOutline:null;
+  openOutline=openOutlinePro;
+
+  function scafComposeBox(box){
+    if(!box)return'';
+    const parts=[];
+    if(box.passage&&box.passage.trim())parts.push(box.passage.trim());
+    (box.underpinnings||[]).forEach(u=>{if(u.text&&u.text.trim())parts.push(u.text.trim())});
+    (box.engagement||[]).forEach(e=>{if(e.text&&e.text.trim())parts.push(e.text.trim())});
+    if(!parts.length)return'';
+    // Join into a coherent paragraph-ish block with blank lines between units
+    return parts.join(' ');
+  }
+
+  /* LanguageTool: paper dictionary + section-only flag */
+  if(state&&state.paperDict==null){/* set on normalize */}
+  const _ltDictOrig=ltDict;
+  ltDict=function(){
+    const global=readMeta().userDict||[];
+    const paper=state.paperDict||[];
+    return Array.from(new Set([].concat(global,paper).map(x=>String(x||'').toLowerCase()).filter(Boolean)));
+  };
+
 
   /* ========== New studio features ========== */
   function closeTools(){$('#pq-tools-menu').classList.remove('open')}
@@ -3904,10 +4444,25 @@
     return out;
   }
   function openImportSources(){
-    openModal('<h3>Import sources</h3><p class="pq-help">Paste BibTeX or RIS (from Zotero, Mendeley, etc.).</p>'+
+    openModal('<h3>Import sources</h3><p class="pq-help">Paste BibTeX or RIS (Zotero, Mendeley, etc.), or drop a <code>.bib</code> / <code>.ris</code> file.</p>'+
+      '<div id="m-imp-drop" style="border:1px dashed var(--border);border-radius:10px;padding:14px;text-align:center;margin-bottom:8px;background:var(--bg);font-size:.82rem;color:var(--muted)">Drop .bib / .ris here or <label style="color:var(--accent);cursor:pointer;text-decoration:underline"><input type="file" id="m-imp-file" accept=".bib,.ris,.txt,text/plain" style="display:none">choose file</label></div>'+
       '<textarea class="pq-inp" id="m-imp" style="width:100%;min-height:160px;font-family:ui-monospace,monospace;font-size:.78rem" placeholder="@article{...} or TY  - JOUR"></textarea>'+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-go">Import</button></div>');
     $('#m-cancel').onclick=closeModal;
+    const fillFile=(file)=>{
+      if(!file)return;
+      const reader=new FileReader();
+      reader.onload=()=>{const ta=$('#m-imp');if(ta)ta.value=String(reader.result||'');toast('Loaded '+file.name)};
+      reader.readAsText(file);
+    };
+    const fileInp=$('#m-imp-file');
+    if(fileInp)fileInp.onchange=()=>fillFile(fileInp.files&&fileInp.files[0]);
+    const drop=$('#m-imp-drop');
+    if(drop){
+      drop.ondragover=e=>{e.preventDefault();drop.style.borderColor='var(--accent)'};
+      drop.ondragleave=()=>{drop.style.borderColor='var(--border)'};
+      drop.ondrop=e=>{e.preventDefault();drop.style.borderColor='var(--border)';const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];fillFile(f)};
+    }
     $('#m-go').onclick=async()=>{
       const text=$('#m-imp').value.trim();if(!text)return;
       let parsed=[];
@@ -4128,24 +4683,159 @@
   }
 
   /* Title page fields */
+
+  /* ---- Formal title page (style- and template-aware) ---- */
+  function getTemplateKind(){
+    const k=state.templateKey||'blank';
+    const t=TEMPLATES[k];
+    return (t&&t.kind)||'article';
+  }
+  function isDissertationKind(kind){
+    return kind==='phd'||kind==='masters'||kind==='dissertation';
+  }
+  function titlePageMeta(){
+    return {
+      title:(state.paperTitle||'Untitled paper').trim(),
+      author:(state.authorName||'').trim(),
+      institution:(state.institution||'').trim(),
+      department:(state.department||'').trim(),
+      faculty:(state.faculty||'').trim(),
+      degree:(state.degree||'').trim(),
+      supervisor:(state.supervisor||'').trim(),
+      course:(state.course||'').trim(),
+      city:(state.city||'').trim(),
+      year:(state.submissionYear||'').trim()||String(new Date().getFullYear()),
+      runningHead:(state.runningHead||'').trim(),
+      kind:getTemplateKind(),
+      style:state.style||'mla9'
+    };
+  }
+  function buildTitlePageModel(){
+    const m=titlePageMeta();
+    const kind=m.kind;
+    const style=m.style;
+    const diss=isDissertationKind(kind);
+    let degreeLine=m.degree;
+    if(!degreeLine){
+      if(kind==='phd') degreeLine='Doctor of Philosophy';
+      else if(kind==='masters') degreeLine='Master of Science';
+      else if(kind==='dissertation') degreeLine='Thesis';
+    }
+    const lines=[]; // {text, cls}
+    // Style-specific formal layouts
+    if(style==='apa7'){
+      if(m.runningHead) lines.push({text:m.runningHead.toUpperCase(), cls:'tp-muted'});
+      lines.push({text:m.title, cls:'tp-title'});
+      lines.push({text:m.author||'[Author]', cls:'tp-line'});
+      if(m.department||m.institution) lines.push({text:[m.department,m.institution].filter(Boolean).join(', '), cls:'tp-line'});
+      if(m.course) lines.push({text:m.course, cls:'tp-line'});
+      if(m.supervisor) lines.push({text:'Instructor: '+m.supervisor, cls:'tp-muted'});
+      lines.push({text:m.year, cls:'tp-line'});
+      return {variant:'tp-apa', lines, diss:false};
+    }
+    if(style==='mla9'){
+      lines.push({text:m.author||'[Author]', cls:'tp-line'});
+      if(m.supervisor) lines.push({text:m.supervisor, cls:'tp-line'});
+      if(m.course) lines.push({text:m.course, cls:'tp-line'});
+      lines.push({text:m.year, cls:'tp-line'});
+      lines.push({text:m.title, cls:'tp-title'});
+      return {variant:'tp-mla', lines, diss:false};
+    }
+    if(style==='ieee'||style==='vancouver'){
+      lines.push({text:m.title, cls:'tp-title'});
+      lines.push({text:m.author||'[Author]', cls:'tp-line'});
+      if(m.department||m.institution) lines.push({text:[m.department,m.institution].filter(Boolean).join(' — '), cls:'tp-muted'});
+      if(m.city) lines.push({text:m.city, cls:'tp-muted'});
+      lines.push({text:m.year, cls:'tp-line'});
+      return {variant:'tp-ieee', lines, diss:false};
+    }
+    // Chicago / Harvard / default — formal centered
+    if(diss){
+      if(m.institution) lines.push({text:m.institution, cls:'tp-univ'});
+      lines.push({text:m.title, cls:'tp-title'});
+      lines.push({text:'A dissertation submitted in partial fulfilment of the requirements for the degree of', cls:'tp-muted'});
+      lines.push({text:degreeLine, cls:'tp-degree tp-line'});
+      if(m.faculty||m.department) lines.push({text:[m.faculty,m.department].filter(Boolean).join(' · '), cls:'tp-muted'});
+      lines.push({text:'by', cls:'tp-muted'});
+      lines.push({text:m.author||'[Candidate name]', cls:'tp-line'});
+      if(m.supervisor) lines.push({text:'Supervisor: '+m.supervisor, cls:'tp-muted'});
+      if(m.city) lines.push({text:m.city, cls:'tp-muted'});
+      lines.push({text:m.year, cls:'tp-footer'});
+      return {variant:'tp-diss', lines, diss:true};
+    }
+    // Article / proposal default
+    lines.push({text:m.title, cls:'tp-title'});
+    lines.push({text:m.author||'[Author]', cls:'tp-line'});
+    if(m.institution) lines.push({text:m.institution, cls:'tp-line'});
+    if(m.department) lines.push({text:m.department, cls:'tp-muted'});
+    if(m.course) lines.push({text:m.course, cls:'tp-muted'});
+    if(m.supervisor) lines.push({text:m.supervisor, cls:'tp-muted'});
+    lines.push({text:m.year, cls:'tp-line'});
+    return {variant:'tp-chicago', lines, diss:false};
+  }
+  function renderTitlePageHtml(){
+    const model=buildTitlePageModel();
+    const body=model.lines.map(l=>{
+      const tag=l.cls&&l.cls.indexOf('tp-title')>=0?'div':'p';
+      return '<'+tag+' class="'+escapeHtml(l.cls||'tp-line')+'">'+escapeHtml(l.text)+'</'+tag+'>';
+    }).join('');
+    return '<div class="pq-title-page '+model.variant+'">'+body+'</div>'+
+      '<p class="pq-help">Formal title page · style <strong>'+escapeHtml((state.style||'').toUpperCase())+'</strong>'+
+      (state.templateKey?' · template <strong>'+escapeHtml((TEMPLATES[state.templateKey]&&TEMPLATES[state.templateKey].name)||state.templateKey)+'</strong>':'')+
+      ' · edit via <strong>Tools → Title page fields</strong></p>';
+  }
+  function updateTitlePagePreview(){
+    const wrap=$('#pq-title-page-wrap');
+    const sec=getActiveSection();
+    const isTitle=sec&&(sec.key==='title'||/^title$/i.test(sec.key));
+    ROOT.classList.toggle('pq-title-sec', !!isTitle);
+    if(!wrap)return;
+    if(isTitle){
+      wrap.style.display='block';
+      wrap.innerHTML=renderTitlePageHtml();
+    }else{
+      wrap.style.display='none';
+      wrap.innerHTML='';
+    }
+  }
+  function titlePagePlainLines(){
+    return buildTitlePageModel().lines.map(l=>l.text);
+  }
+
   function openTitlePage(){
-    openModal('<h3>Title page &amp; running head</h3>'+
+    const kind=getTemplateKind();
+    const diss=isDissertationKind(kind);
+    openModal('<h3>Title page fields</h3>'+
+      '<p class="pq-help">Layout follows <strong>'+escapeHtml((state.style||'').toUpperCase())+'</strong>'+(diss?' · dissertation form':' · article / paper form')+'.</p>'+
       '<label class="pq-lbl">Paper title</label><input class="pq-inp" id="m-title" style="width:100%" value="'+escapeHtml(state.paperTitle||'')+'">'+
-      '<label class="pq-lbl">Author</label><input class="pq-inp" id="m-author" style="width:100%" value="'+escapeHtml(state.authorName||'')+'">'+
-      '<label class="pq-lbl">Institution</label><input class="pq-inp" id="m-inst" style="width:100%" value="'+escapeHtml(state.institution||'')+'">'+
-      '<label class="pq-lbl">Course / journal</label><input class="pq-inp" id="m-course" style="width:100%" value="'+escapeHtml(state.course||'')+'">'+
+      '<label class="pq-lbl">Author / candidate</label><input class="pq-inp" id="m-author" style="width:100%" value="'+escapeHtml(state.authorName||'')+'">'+
+      '<label class="pq-lbl">Institution / university</label><input class="pq-inp" id="m-inst" style="width:100%" value="'+escapeHtml(state.institution||'')+'">'+
+      '<label class="pq-lbl">Faculty</label><input class="pq-inp" id="m-faculty" style="width:100%" value="'+escapeHtml(state.faculty||'')+'" placeholder="e.g. Faculty of Arts">'+
+      '<label class="pq-lbl">Department / school</label><input class="pq-inp" id="m-dept" style="width:100%" value="'+escapeHtml(state.department||'')+'">'+
+      '<label class="pq-lbl">Degree</label><input class="pq-inp" id="m-degree" style="width:100%" value="'+escapeHtml(state.degree||'')+'" placeholder="'+(kind==='phd'?'Doctor of Philosophy':kind==='masters'?'Master of Science / Master of Arts':'Degree or programme')+'">'+
+      '<label class="pq-lbl">Supervisor / instructor</label><input class="pq-inp" id="m-super" style="width:100%" value="'+escapeHtml(state.supervisor||'')+'">'+
+      '<label class="pq-lbl">Course / journal / programme</label><input class="pq-inp" id="m-course" style="width:100%" value="'+escapeHtml(state.course||'')+'">'+
+      '<label class="pq-lbl">City</label><input class="pq-inp" id="m-city" style="width:100%" value="'+escapeHtml(state.city||'')+'">'+
+      '<label class="pq-lbl">Year</label><input class="pq-inp" id="m-year" style="width:100%" value="'+escapeHtml(state.submissionYear||String(new Date().getFullYear()))+'">'+
       '<label class="pq-lbl">Running head (APA)</label><input class="pq-inp" id="m-run" style="width:100%" value="'+escapeHtml(state.runningHead||'')+'" placeholder="SHORT TITLE">'+
       '<label style="display:block;margin:10px 0"><input type="checkbox" id="m-annbib"'+(state.annBib?' checked':'')+'> Show source annotations in bibliography</label>'+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button><button type="button" class="pq-btn pq-btn-primary" id="m-save">Save</button></div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
     $('#m-cancel').onclick=closeModal;
     $('#m-save').onclick=()=>{
       state.paperTitle=$('#m-title').value.trim()||'Untitled paper';
       state.authorName=$('#m-author').value.trim();
       state.institution=$('#m-inst').value.trim();
+      state.faculty=$('#m-faculty').value.trim();
+      state.department=$('#m-dept').value.trim();
+      state.degree=$('#m-degree').value.trim();
+      state.supervisor=$('#m-super').value.trim();
       state.course=$('#m-course').value.trim();
+      state.city=$('#m-city').value.trim();
+      state.submissionYear=$('#m-year').value.trim();
       state.runningHead=$('#m-run').value.trim();
       state.annBib=$('#m-annbib').checked;
-      scheduleSave();rebuildWorksCited();closeModal();toast('Title fields saved');
+      scheduleSave();rebuildWorksCited();updateTitlePagePreview();closeModal();toast('Title fields saved');
     };
   }
 
@@ -4192,7 +4882,7 @@
   /* Command palette */
   function openPalette(){
     const cmds=[
-      ['Citation audit','audit'],['Readability','read'],['Find & replace','fr'],['Outline','outline'],
+      ['Citation audit','audit'],['Ready to submit','ready'],['Recovery & backups','recovery'],['Readability','read'],['Find & replace','fr'],['Outline','outline'],
       ['Quote bank','quotes'],['Shared library','lib'],['Import sources','imp'],['Export sources','expsrc'],
       ['LanguageTool','lt'],['Templates','tmpl'],['Focus timer','pomo'],['Toggle tutorial','tut'],
       ['Snapshot paper','psnap'],['Export Markdown','md'],['Export DOCX','docx'],['Search paper','search'],
@@ -4213,7 +4903,7 @@
     $('#m-cancel').onclick=closeModal;
   }
   function runCmd(c){
-    const map={audit:openCitationAudit,read:openReadability,fr:openFindReplace,outline:openOutline,quotes:openQuoteBank,
+    const map={audit:openCitationAudit,ready:openReadiness,recovery:openRecoveryCenter,read:openReadability,fr:openFindReplace,outline:openOutline,quotes:openQuoteBank,
       lib:openLibrary,imp:openImportSources,expsrc:openExportSources,lt:runLanguageTool,tmpl:openTemplates,pomo:openPomodoro,
       tut:toggleTutorial,psnap:takePaperSnapshot,md:exportMarkdown,docx:exportDocx,search:openSearch,
       vocab:openVocab,signpost:openSignposting,underpin:openUnderpin,sentlab:openSentenceLab};
@@ -4249,7 +4939,8 @@
   $('#pq-style').onchange=()=>{
     state.style=$('#pq-style').value;
     reRenderAllCitations();
-    toast('Style updated — citations & bibliography refreshed');
+    try{updateTitlePagePreview()}catch(e){}
+    toast('Style updated — citations, bibliography & title page refreshed');
   };
   $('#pq-add-source').onclick=()=>editSource(null);
   $('#pq-doi-fetch').onclick=()=>openDOIModal();
@@ -4430,6 +5121,12 @@
   $('#cap-tools').onclick=()=>$('#pq-tools-menu').classList.toggle('open');
   $('#tool-lt').onclick=()=>{closeTools();if(state.ltOn){clearLT();toast('LanguageTool off')}else runLanguageTool()};
   $('#tool-audit').onclick=()=>{closeTools();openCitationAudit()};
+  const toolReady=$('#tool-readiness');
+  if(toolReady)toolReady.onclick=()=>{closeTools();openReadiness()};
+  const toolFocusSess=$('#tool-focus-session');
+  if(toolFocusSess)toolFocusSess.onclick=()=>startFocusSession();
+  const toolRec=$('#tool-recovery');
+  if(toolRec)toolRec.onclick=()=>{closeTools();openRecoveryCenter()};
   $('#tool-readability').onclick=()=>{closeTools();openReadability()};
   $('#tool-findreplace').onclick=()=>{closeTools();openFindReplace()};
   $('#tool-outline').onclick=()=>{closeTools();openOutline()};
@@ -4481,7 +5178,7 @@
   $('#tool-palette').onclick=()=>{closeTools();openPalette()};
   $('#tool-autocap').onclick=()=>{state.autoCap=!state.autoCap;scheduleSave();$('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off');toast('Auto-cap '+(state.autoCap?'on':'off'))};
   $('#tool-theme').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';ROOT.setAttribute('data-theme',state.theme==='dark'?'dark':'');scheduleSave()};
-  $('#tool-json').onclick=()=>{saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');toast('JSON downloaded')};
+  $('#tool-json').onclick=()=>{saveCurrent();const blob=new Blob([JSON.stringify({app:'PaperQuill',state},null,2)],{type:'application/json'});if(typeof saveAs==='function')saveAs(blob,'paperquill-backup.json');try{const x=readMeta();x.lastJsonBackup=new Date().toISOString();writeMeta(x)}catch(e){}toast('JSON downloaded')};
   $('#tool-tutorial').onclick=()=>{closeTools();toggleTutorial()};
   $('#tool-templates').onclick=()=>{closeTools();openTemplates()};
 
@@ -4928,6 +5625,29 @@
     try{
       const token = await driveEnsureToken();
       saveCurrent();
+      // Conflict check: remote modified after our last sync?
+      if(state.driveFileId && state.driveLastSync){
+        try{
+          const metaRes = await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(state.driveFileId)+'?fields=id,name,modifiedTime', {
+            headers: {Authorization: 'Bearer '+token}
+          });
+          if(metaRes.ok){
+            const meta = await metaRes.json();
+            const remote = meta.modifiedTime ? Date.parse(meta.modifiedTime) : 0;
+            const localSync = Date.parse(state.driveLastSync) || 0;
+            // Allow 5s skew; if remote is newer than last sync, warn
+            if(remote > localSync + 5000){
+              const go = await styledConfirm(
+                'Drive file changed',
+                'The Drive copy was modified after your last sync ('+formatDriveSyncTime(state.driveLastSync)+'). Overwriting will replace the remote file with this device\'s version.\n\nOverwrite Drive with this version?',
+                'Overwrite Drive',
+                'Cancel'
+              );
+              if(!go){ toast('Sync cancelled'); return; }
+            }
+          }
+        }catch(e){ /* proceed with upload */ }
+      }
       const payload = {
         app: 'PaperQuill',
         version: 1,
@@ -5053,25 +5773,8 @@
     }
   }
 
-  async function driveSetWorkerUrl(){
-    closeTools();
-    const cur = PQ_DRIVE.workerUrl;
-    const v = await styledPrompt('Worker URL','Cloudflare Worker base URL (no trailing slash).',cur);
-    if(v===null)return;
-    const url = v.trim().replace(/\/$/,'');
-    try{localStorage.setItem('pq-worker-url', url)}catch(e){}
-    PQ_DRIVE.workerUrl = url;
-    try{
-      const r = await fetch(url+'/health');
-      const j = await r.json();
-      if(j&&j.ok) toast('Worker OK · '+url);
-      else toast('Worker responded but not ok');
-    }catch(e){
-      toast('Saved — but health check failed. Check URL / deploy.');
-    }
-  }
 
-  // Drive UI wiring (panel + dashboard). Tools keeps only Worker URL.
+  // Drive UI wiring (panel + dashboard).
   const panelDriveSync=$('#pq-drive-sync');
   if(panelDriveSync) panelDriveSync.onclick=()=>driveSavePaper();
   const dashDriveConn=$('#pq-dash-drive-connect');
@@ -5082,8 +5785,6 @@
   if(dashDriveSync) dashDriveSync.onclick=()=>driveSavePaper();
   const dashDriveDisc=$('#pq-dash-drive-disconnect');
   if(dashDriveDisc) dashDriveDisc.onclick=()=>driveDisconnect();
-  const toolDriveWorker=$('#tool-drive-worker');
-  if(toolDriveWorker) toolDriveWorker.onclick=()=>driveSetWorkerUrl();
 
   (async()=>{
     driveLoadCachedToken();
