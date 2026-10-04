@@ -56,11 +56,83 @@
     .pq-item .pq-del{opacity:.55;border:none;background:none;color:var(--danger);cursor:pointer;margin-left:auto;font-size:1rem;line-height:1;padding:2px 6px;border-radius:4px}
     .pq-item:hover .pq-del,.pq-item .pq-del:active{opacity:1;background:color-mix(in srgb,var(--danger) 12%,transparent)}
     .pq-item .pq-drag{color:var(--muted);font-size:.7rem;margin-right:2px}
-    .pq-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+    .pq-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--paper);transition:max-width .2s}
     .pq-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg);align-items:center}
     .pq-editor-wrap{flex:1;overflow-y:auto;padding:24px 6% 80px;position:relative}
     .pq-section-title{width:100%;max-width:42em;margin:0 auto 12px;border:none;background:transparent;font-family:"Source Serif 4",Georgia,serif;font-size:1.4rem;font-weight:600;color:var(--ink);padding:0 0 8px;border-bottom:1px solid var(--border);outline:none}
     .pq-editor{min-height:280px;outline:none;font-family:"Source Serif 4",Georgia,serif;font-size:16px;line-height:1.75;color:var(--ink);max-width:42em;margin:0 auto}
+    /* Scaffold panel — draft lines + underpinnings (right) */
+    .pq-scaffold{
+      width:0;max-width:0;overflow:hidden;flex-shrink:0;background:var(--panel);
+      border-left:0 solid var(--border);display:flex;flex-direction:column;
+      transition:width .22s ease,max-width .22s ease,border .22s;
+    }
+    #pq-root.pq-scaffold-open .pq-scaffold{
+      width:min(420px,46vw);max-width:46vw;border-left-width:1px;
+    }
+    #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-scaffold{
+      width:50%;max-width:50%;
+    }
+    #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-main{
+      max-width:50%;
+    }
+    #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-editor,
+    #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-section-title,
+    #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-works,
+    #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-guide{
+      max-width:100%;
+    }
+    #pq-root.pq-scaffold-open .pq-editor-wrap{padding-left:4%;padding-right:4%}
+    .pq-scaf-inner{width:min(420px,46vw);min-width:280px;height:100%;display:flex;flex-direction:column;padding:8px;overflow:hidden}
+    #pq-root.pq-scaffold-wide .pq-scaf-inner{width:100%;max-width:none}
+    .pq-scaf-head{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-shrink:0}
+    .pq-scaf-head strong{flex:1;font-size:.9rem}
+    .pq-scaf-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;flex-shrink:0}
+    .pq-scaf-actions .pq-btn{font-size:.72rem;padding:5px 8px}
+    .pq-scaf-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+    .pq-scaf-box{
+      border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px;
+      background:var(--paper);font-size:.82rem;line-height:1.45;cursor:grab;user-select:none
+    }
+    .pq-scaf-box:active{cursor:grabbing}
+    .pq-scaf-box.dragging{opacity:.45}
+    .pq-scaf-box.drag-over{border-top:3px solid var(--accent)}
+    .pq-scaf-box.used{opacity:.55;background:color-mix(in srgb,var(--muted) 12%,var(--paper));filter:grayscale(.35)}
+    .pq-scaf-box-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .pq-scaf-num{
+      width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--paper);
+      font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0
+    }
+    .pq-scaf-box.used .pq-scaf-num{background:var(--muted)}
+    .pq-scaf-box-head .drag{color:var(--muted);font-size:.75rem}
+    .pq-scaf-box-head .grow{flex:1}
+    .pq-scaf-bubble{
+      border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:6px;
+      background:var(--bg);position:relative
+    }
+    .pq-scaf-bubble .tag{
+      display:inline-block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+      padding:2px 7px;border-radius:999px;margin-bottom:5px;border:1px solid var(--border)
+    }
+    .pq-scaf-bubble.passage .tag{background:color-mix(in srgb,var(--cite) 18%,transparent);color:var(--cite);border-color:var(--cite)}
+    .pq-scaf-bubble.under .tag{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok);border-color:var(--ok)}
+    .pq-scaf-bubble.engage .tag{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn);border-color:var(--warn)}
+    .pq-scaf-bubble .body{white-space:pre-wrap;word-break:break-word;user-select:text;cursor:text}
+    .pq-scaf-bubble .b-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+    .pq-scaf-bubble .b-row .pq-btn{font-size:.68rem;padding:3px 7px}
+    .pq-scaf-box .row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .pq-scaf-box .row .pq-btn{font-size:.7rem;padding:4px 8px}
+    .pq-scaf-empty{font-size:.8rem;color:var(--muted);padding:12px 4px;line-height:1.5}
+    #pq-root.pq-focus .pq-scaffold{display:none!important}
+    @media(max-width:700px){
+      #pq-root.pq-scaffold-open .pq-scaffold{
+        position:absolute;right:0;top:0;bottom:0;z-index:55;width:min(100%,360px);max-width:92vw;
+        box-shadow:-4px 0 24px rgba(0,0,0,.12);
+      }
+      #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-scaffold{width:min(100%,92vw);max-width:92vw}
+      #pq-root.pq-scaffold-open.pq-scaffold-wide .pq-main{max-width:100%}
+      .pq-scaf-inner{width:100%;min-width:0}
+    }
     .pq-editor:empty:before{content:attr(data-placeholder);color:var(--muted);opacity:.55;font-style:italic}
     .pq-cite{color:var(--cite);border-bottom:1px dotted color-mix(in srgb,var(--cite) 50%,transparent);cursor:pointer}
     .pq-hl{background:color-mix(in srgb, #e8c547 45%, transparent);border-radius:2px;cursor:pointer}
@@ -96,12 +168,22 @@
     .pq-bib-entry{font-family:"Source Serif 4",Georgia,serif;font-size:.95rem;line-height:1.6;margin:0 0 12px;padding-left:2em;text-indent:-2em}
     .pq-works.ieee .pq-bib-entry,.pq-works.vancouver .pq-bib-entry{padding-left:0;text-indent:0}
     .pq-wc{font-size:.75rem;color:var(--muted)}
-    .pq-modal-bg{display:none;position:fixed;inset:0;background:rgba(20,24,28,.45);z-index:1000;align-items:center;justify-content:center;padding:16px}
+    .pq-modal-bg{display:none;position:fixed;inset:0;background:rgba(20,24,28,.45);z-index:1000;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));-webkit-overflow-scrolling:touch}
     .pq-modal-bg.open{display:flex}
-    .pq-modal{background:var(--paper);color:var(--ink);border-radius:12px;border:1px solid var(--border);width:min(560px,96vw);max-height:88vh;overflow:auto;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
-    .pq-modal h3{margin:0 0 10px;font-family:"Source Serif 4",Georgia,serif}
+    .pq-modal{background:var(--paper);color:var(--ink);border-radius:12px;border:1px solid var(--border);width:min(560px,96vw);max-height:min(88vh,calc(100dvh - 24px));overflow:auto;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.18);-webkit-overflow-scrolling:touch}
+    .pq-modal h3{margin:0 0 10px;font-family:"Source Serif 4",Georgia,serif;font-size:1.15rem;line-height:1.3}
     .pq-lbl{display:block;font-size:.78rem;color:var(--muted);margin:8px 0 4px}
     .pq-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+    .pq-modal-actions .pq-btn{min-height:40px;padding:8px 14px}
+    .pq-modal .pq-inp,.pq-modal .pq-sel,.pq-modal textarea.pq-inp{width:100%;max-width:100%;font-size:16px;/* avoid iOS zoom */}
+    .pq-modal textarea.pq-inp{min-height:72px;resize:vertical}
+    .pq-dialog-msg{font-size:.9rem;line-height:1.55;color:var(--ink);margin:0 0 12px}
+    @media(max-width:520px){
+      .pq-modal{width:100%;max-width:100%;border-radius:12px 12px 10px 10px;padding:16px 14px;max-height:min(92vh,calc(100dvh - 16px))}
+      .pq-modal-actions{flex-direction:column-reverse;align-items:stretch}
+      .pq-modal-actions .pq-btn{width:100%;text-align:center}
+      #pq-modal.pq-slab-wide{width:100%}
+    }
     .pq-toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--paper);padding:8px 16px;border-radius:8px;font-size:.85rem;z-index:2000;opacity:0;transition:opacity .2s;pointer-events:none}
     .pq-toast.show{opacity:1}
     .pq-src-card{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--paper);font-size:.82rem}
@@ -114,10 +196,10 @@
     .pq-dict h4{margin:8px 12px 4px;font-size:.9rem}
     .pq-dict p{margin:0 12px 8px;font-size:.78rem;color:var(--muted)}
     .pq-help{font-size:.8rem;color:var(--muted);line-height:1.45;margin:0 0 10px}
-    .pq-dash{display:none;position:fixed;inset:0;z-index:900;background:var(--bg);overflow:auto;padding:24px 16px 100px}
+    .pq-dash{display:none;position:fixed;inset:0;z-index:960;background:var(--bg);overflow:auto;padding:24px 16px 100px;-webkit-overflow-scrolling:touch}
     .pq-dash.open{display:block}
-    .pq-dash-inner{max-width:720px;margin:0 auto}
-    .pq-dash h2{font-family:"Source Serif 4",Georgia,serif;margin:0 0 8px}
+    .pq-dash-inner{max-width:720px;margin:0 auto;width:100%}
+    .pq-dash h2{font-family:"Source Serif 4",Georgia,serif;margin:0 0 8px;font-size:1.5rem}
     .pq-proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
     .pq-proj-card{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--paper);cursor:pointer;text-align:left}
     .pq-proj-card:hover{border-color:var(--accent)}
@@ -128,19 +210,54 @@
     .pq-status.draft{opacity:.8}.pq-status.revise{border-color:var(--warn);color:var(--warn)}.pq-status.done{border-color:var(--ok);color:var(--ok)}
     .pq-dash-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
     .pq-capsule{
-      position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:800;
-      display:flex;flex-wrap:nowrap;gap:4px;padding:6px 8px;border-radius:999px;background:var(--panel);
-      border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.12);justify-content:center;
-      max-width:min(96vw,420px);white-space:nowrap
+      position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:800;
+      display:flex;flex-wrap:nowrap;gap:4px;padding:8px 10px;border-radius:999px;background:var(--panel);
+      border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.14);justify-content:center;
+      max-width:min(96vw,360px);white-space:nowrap
     }
-    .pq-capsule .pq-btn{border-radius:999px;font-size:.75rem;flex:0 0 auto;padding:5px 10px;white-space:nowrap}
-    .pq-tools-menu{display:none;position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:850;background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:8px;min-width:220px;max-width:92vw;max-height:min(70vh,calc(100dvh - 100px));overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.15);-webkit-overflow-scrolling:touch}
+    .pq-capsule .pq-btn{
+      border-radius:999px;font-size:.88rem;font-weight:600;flex:0 0 auto;padding:10px 12px;
+      white-space:nowrap;min-height:44px;min-width:44px;
+      display:inline-flex;align-items:center;justify-content:center;gap:0
+    }
+    .pq-capsule .pq-btn svg{width:22px;height:22px;display:block;flex-shrink:0}
+    .pq-capsule .pq-btn .cap-label{display:none}
+    .pq-capsule .pq-btn.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+    .pq-capsule .pq-btn.on svg{stroke:#fff}
+    .pq-tools-menu{display:none;position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:850;background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:8px 8px 10px;min-width:260px;max-width:min(92vw,320px);max-height:min(70vh,calc(100dvh - 120px));overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.15);-webkit-overflow-scrolling:touch}
     .pq-tools-menu.open{display:block}
-    .pq-tools-menu button{display:block;width:100%;text-align:left;margin-bottom:4px}
-    #pq-root.pq-focus .pq-top,#pq-root.pq-focus .pq-toolbar,#pq-root.pq-focus .pq-sidebar,#pq-root.pq-focus .pq-capsule,#pq-root.pq-focus .pq-works{display:none}
-    #pq-root.pq-focus .pq-editor-wrap{padding-top:48px}
-    .pq-focus-exit{display:none;position:fixed;top:12px;right:12px;z-index:900}
-    #pq-root.pq-focus .pq-focus-exit{display:block}
+    .pq-tools-menu button{display:block;width:100%;text-align:left;margin-bottom:3px}
+    .pq-tools-cat{font-size:.65rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:10px 8px 4px;margin:0}
+    .pq-tools-cat:first-child{padding-top:4px}
+    .pq-table-wrap{position:relative;margin:16px 0;clear:both}
+    .pq-table-wrap table{border-collapse:collapse;width:100%;table-layout:auto;font-size:.95em;line-height:1.45}
+    .pq-table-wrap th,.pq-table-wrap td{
+      border:1px solid var(--border);padding:10px 12px;min-width:80px;min-height:2.2em;
+      vertical-align:top;word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap;
+      background:var(--paper);color:var(--ink)
+    }
+    .pq-table-wrap th{background:var(--bg);font-weight:600;text-align:left}
+    .pq-table-wrap td:empty:before,.pq-table-wrap th:empty:before{content:'\00a0';
+    .pq-table-del{
+      position:absolute;top:-10px;right:-6px;z-index:5;
+      width:28px;height:28px;border-radius:50%;border:1px solid var(--danger);
+      background:var(--paper);color:var(--danger);cursor:pointer;font-size:.85rem;line-height:1;
+      display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.1)
+    }
+    .pq-table-del:hover{background:var(--danger);color:#fff}
+    #pq-root.pq-focus .pq-top,#pq-root.pq-focus .pq-toolbar,#pq-root.pq-focus .pq-sidebar,#pq-root.pq-focus .pq-capsule,#pq-root.pq-focus .pq-works{display:none!important}
+    #pq-root.pq-focus .pq-editor-wrap{padding-top:56px;padding-bottom:24px}
+    #pq-root.pq-focus .pq-main{background:var(--paper)}
+    #pq-root .pq-focus-exit{
+      display:none!important;visibility:hidden;pointer-events:none;
+      position:fixed;top:12px;right:12px;z-index:950;
+      border-radius:999px;padding:8px 14px;min-height:40px;font-weight:600;
+      box-shadow:0 4px 16px rgba(0,0,0,.12)
+    }
+    #pq-root.pq-focus .pq-focus-exit{
+      display:block!important;visibility:visible;pointer-events:auto
+    }
+    #pq-root.pq-focus .pq-editor{scroll-margin-top:64px}
     .pq-guide{
       max-width:42em;margin:0 auto 16px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
       background:color-mix(in srgb,var(--accent) 8%,var(--paper));font-size:.82rem;line-height:1.55;display:none;
@@ -157,11 +274,17 @@
     .pq-progress-wrap{display:flex;align-items:center;gap:8px;min-width:120px;max-width:180px}
     .pq-progress-bar{flex:1;height:6px;border-radius:999px;background:var(--border);overflow:hidden}
     .pq-progress-bar>i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .3s}
-    .pq-dash-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:12px 0}
-    .pq-dash-tabs button{font:inherit;font-size:.8rem;padding:6px 12px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;cursor:pointer}
-    .pq-dash-tabs button.active{background:var(--accent);color:var(--paper);border-color:var(--accent)}
-    .pq-dash-pane{display:none}
-    .pq-dash-pane.active{display:block}
+    .pq-dash-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 14px;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+    .pq-dash-tabs button{
+      font:inherit;font-size:.82rem;font-weight:500;padding:8px 14px;min-height:40px;
+      border:1px solid transparent;background:transparent;color:var(--muted);
+      border-radius:999px;cursor:pointer;flex:1 1 auto;text-align:center
+    }
+    .pq-dash-tabs button:hover{background:var(--hover);color:var(--ink)}
+    .pq-dash-tabs button.active{background:var(--accent);color:var(--paper);border-color:var(--accent);font-weight:600}
+    .pq-dash-pane{display:none!important}
+    .pq-dash-pane.active{display:block!important}
+    .pq-dash-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
     .pq-ach{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--paper)}
     .pq-ach.locked{opacity:.55}
     .pq-ach .ico{font-size:1.4rem;line-height:1}
@@ -170,12 +293,43 @@
       #pq-root{--sidebar:min(280px,85vw)}
       #pq-root:not(.pq-side-collapsed) .pq-sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.12);max-width:85vw}
       .pq-main{width:100%}
-      .pq-capsule{flex-wrap:nowrap;gap:3px;padding:5px 6px;max-width:96vw}
-      .pq-capsule .pq-btn{font-size:.7rem;padding:5px 8px}
+      .pq-capsule{flex-wrap:nowrap;gap:4px;padding:8px 8px;max-width:96vw;bottom:14px}
+      .pq-capsule .pq-btn{padding:10px;min-height:44px;min-width:44px}
+      .pq-tools-menu{bottom:72px}
     }
     @media(max-width:380px){
-      .pq-capsule .pq-btn{font-size:.65rem;padding:4px 6px}
+      .pq-capsule{gap:3px;padding:6px 6px}
+      .pq-capsule .pq-btn{padding:8px;min-height:42px;min-width:42px}
+      .pq-capsule .pq-btn svg{width:20px;height:20px}
     }
+    .pq-rel-tabs,.pq-slab-tabs,.pq-sign-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 12px}
+    .pq-rel-tabs button,.pq-slab-tabs button,.pq-sign-tabs button{font:inherit;font-size:.72rem;padding:5px 10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;cursor:pointer}
+    .pq-rel-tabs button.active,.pq-slab-tabs button.active,.pq-sign-tabs button.active{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+    .pq-rel-cat,.pq-sign-cat{margin-bottom:14px}
+    .pq-rel-cat h4,.pq-sign-cat h4{margin:0 0 4px;font-size:.88rem;color:var(--accent)}
+    .pq-rel-cat .pq-help,.pq-sign-cat .pq-help{margin:0 0 8px}
+    .pq-rel-chips,.pq-sign-chips{display:flex;flex-wrap:wrap;gap:5px}
+    .pq-rel-chips button,.pq-sign-chips button{font:inherit;font-size:.78rem;padding:5px 10px;border:1px solid var(--border);background:var(--paper);color:var(--ink);border-radius:999px;cursor:pointer;text-align:left}
+    .pq-rel-chips button:hover,.pq-sign-chips button:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--paper))}
+    .pq-sign-ex{font-family:"Source Serif 4",Georgia,serif;font-size:.8rem;line-height:1.5;margin:4px 0 0;padding:6px 8px;border-left:2px solid var(--border);color:var(--muted);display:none}
+    .pq-sign-cat.open .pq-sign-ex{display:block}
+    .pq-slab-thought{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--paper)}
+    .pq-slab-thought label{font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px}
+    .pq-slab-thought input{width:100%}
+    .pq-slab-conn{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 10px;align-items:center}
+    .pq-slab-conn select{font:inherit;font-size:.78rem;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--paper);color:var(--ink);max-width:100%}
+    .pq-slab-arrow{color:var(--muted);font-size:.75rem;margin:0 2px}
+    .pq-slab-result{border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px;background:color-mix(in srgb,var(--accent) 6%,var(--paper));line-height:1.65;font-family:"Source Serif 4",Georgia,serif;font-size:.95rem}
+    .pq-slab-arch{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;background:var(--paper)}
+    .pq-slab-arch:hover,.pq-slab-arch.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--paper))}
+    .pq-slab-arch h4{margin:0 0 4px;font-size:.88rem}
+    .pq-slab-arch p{margin:0;font-size:.76rem;color:var(--muted);line-height:1.45}
+    .pq-slab-tech{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--paper)}
+    .pq-slab-tech h4{margin:0 0 4px;font-size:.85rem}
+    .pq-slab-tech .ex{font-family:"Source Serif 4",Georgia,serif;font-size:.82rem;line-height:1.55;margin:6px 0;padding:8px;border-left:3px solid var(--accent);background:var(--bg)}
+    .pq-slab-pane{display:none}.pq-slab-pane.active{display:block}
+    #pq-modal.pq-slab-wide{width:min(740px,96vw)}
+    .pq-sign-tip{font-size:.78rem;line-height:1.5;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--accent) 8%,var(--paper));border:1px solid var(--border);margin-bottom:12px}
   </style>
 </head>
 <body>
@@ -206,6 +360,8 @@
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-disk-save" title="Save JSON to disk">Save disk</button>
     <button type="button" class="pq-btn" id="pq-disk-open">Open disk</button>
+    <button type="button" class="pq-btn" id="pq-drive-sync" title="Sync current paper to Google Drive">Sync Drive</button>
+    <span class="pq-wc" id="pq-drive-sync-info" title="Last Google Drive sync"></span>
     <button type="button" class="pq-btn pq-btn-primary" id="pq-export">Export</button>
     <span class="pq-wc" id="pq-wc">0 words</span>
     <div class="pq-progress-wrap" title="Daily writing goal" id="pq-daily-wrap">
@@ -242,46 +398,83 @@
         <div class="pq-works" id="pq-works"><h2 id="pq-works-heading">Works Cited</h2><div id="pq-works-body"></div></div>
       </div>
     </div>
+    <aside class="pq-scaffold" id="pq-scaffold" aria-label="Scaffold panel">
+      <div class="pq-scaf-inner">
+        <div class="pq-scaf-head">
+          <strong>Scaffold</strong>
+          <button type="button" class="pq-btn" id="scaf-wide" title="Half / half split">½</button>
+          <button type="button" class="pq-btn" id="scaf-close" title="Collapse panel">✕</button>
+        </div>
+        <p class="pq-help" style="margin:0 0 8px;font-size:.72rem;line-height:1.4">Each box holds one textual passage with its underpinnings and engagement notes. Drag boxes to reorder.</p>
+        <div class="pq-scaf-actions" id="scaf-actions">
+          <button type="button" class="pq-btn pq-btn-primary" id="scaf-new-box">+ Discussion box</button>
+          <button type="button" class="pq-btn" id="scaf-box-from-sel">+ Box from selection</button>
+        </div>
+        <div class="pq-scaf-list" id="scaf-list"></div>
+      </div>
+    </aside>
   </div>
   <div class="pq-capsule" id="pq-capsule">
-    <button type="button" class="pq-btn" id="cap-home">Home</button>
-    <button type="button" class="pq-btn" id="cap-sections">Sections</button>
-    <button type="button" class="pq-btn" id="cap-focus">Focus</button>
-    <button type="button" class="pq-btn" id="cap-tools">Tools</button>
+    <button type="button" class="pq-btn" id="cap-home" title="Home" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+    </button>
+    <button type="button" class="pq-btn" id="cap-sections" title="Sections" aria-label="Sections">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    </button>
+    <button type="button" class="pq-btn" id="cap-scaffold" title="Scaffold" aria-label="Scaffold">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="10" rx="1"/><path d="M14 17h7M14 21h7"/></svg>
+    </button>
+    <button type="button" class="pq-btn" id="cap-focus" title="Focus mode" aria-label="Focus mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+    </button>
+    <button type="button" class="pq-btn" id="cap-tools" title="Tools" aria-label="Tools">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    </button>
   </div>
   <div class="pq-tools-menu" id="pq-tools-menu">
+    <div class="pq-tools-cat">Writing &amp; language</div>
     <button type="button" class="pq-btn" id="tool-lt">LanguageTool check</button>
-    <button type="button" class="pq-btn" id="tool-tutorial">Tutorial guidance</button>
-    <button type="button" class="pq-btn" id="tool-templates">Templates</button>
-    <button type="button" class="pq-btn" id="tool-audit">Citation audit</button>
-    <button type="button" class="pq-btn" id="tool-readability">Readability</button>
     <button type="button" class="pq-btn" id="tool-findreplace">Find &amp; replace</button>
-    <button type="button" class="pq-btn" id="tool-outline">Outline view</button>
-    <button type="button" class="pq-btn" id="tool-vocab">Argument vocabulary</button>
+    <button type="button" class="pq-btn" id="tool-readability">Readability</button>
+    <button type="button" class="pq-btn" id="tool-pasteclean">Clean paste mode</button>
+    <button type="button" class="pq-btn" id="tool-autocap">Auto-capitalize: on</button>
+    <div class="pq-tools-cat">Academic craft</div>
+    <button type="button" class="pq-btn" id="tool-vocab">Relational vocabulary</button>
+    <button type="button" class="pq-btn" id="tool-signpost">Academic signposting</button>
+    <button type="button" class="pq-btn" id="tool-underpin">Academic underpinning</button>
+    <button type="button" class="pq-btn" id="tool-sentlab">Sentence construction lab</button>
     <button type="button" class="pq-btn" id="tool-claims">Claim → evidence</button>
-    <button type="button" class="pq-btn" id="tool-quote">Save selection as quote</button>
-    <button type="button" class="pq-btn" id="tool-quotes">Quote bank</button>
-    <button type="button" class="pq-btn" id="tool-footnote">Insert footnote</button>
-    <button type="button" class="pq-btn" id="tool-table">Insert table</button>
-    <button type="button" class="pq-btn" id="tool-xref">Cross-reference section</button>
+    <button type="button" class="pq-btn" id="tool-tutorial">Tutorial guidance</button>
+    <div class="pq-tools-cat">Citations &amp; sources</div>
+    <button type="button" class="pq-btn" id="tool-audit">Citation audit</button>
     <button type="button" class="pq-btn" id="tool-library">Shared source library</button>
     <button type="button" class="pq-btn" id="tool-import">Import sources (BibTeX/RIS)</button>
     <button type="button" class="pq-btn" id="tool-exportsrc">Export sources</button>
     <button type="button" class="pq-btn" id="tool-dups">Find duplicate sources</button>
-    <button type="button" class="pq-btn" id="tool-pasteclean">Clean paste mode</button>
+    <button type="button" class="pq-btn" id="tool-quote">Save selection as quote</button>
+    <button type="button" class="pq-btn" id="tool-quotes">Quote bank</button>
+    <div class="pq-tools-cat">Structure &amp; insert</div>
+    <button type="button" class="pq-btn" id="tool-templates">Templates</button>
+    <button type="button" class="pq-btn" id="tool-outline">Outline view</button>
+    <button type="button" class="pq-btn" id="tool-table">Insert table</button>
+    <button type="button" class="pq-btn" id="tool-footnote">Insert footnote</button>
+    <button type="button" class="pq-btn" id="tool-xref">Cross-reference section</button>
+    <button type="button" class="pq-btn" id="tool-titlepage">Title page fields</button>
     <button type="button" class="pq-btn" id="tool-sectarget">Section word target</button>
-    <button type="button" class="pq-btn" id="tool-papersnap">Snapshot whole paper</button>
-    <button type="button" class="pq-btn" id="tool-papersnaps">Paper snapshots</button>
+    <div class="pq-tools-cat">Focus &amp; progress</div>
     <button type="button" class="pq-btn" id="tool-pomodoro">Focus timer</button>
     <button type="button" class="pq-btn" id="tool-wordlog">Word log / streak</button>
-    <button type="button" class="pq-btn" id="tool-titlepage">Title page fields</button>
-    <button type="button" class="pq-btn" id="tool-palette">Command palette</button>
-    <button type="button" class="pq-btn" id="tool-autocap">Auto-capitalize: on</button>
-    <button type="button" class="pq-btn" id="tool-theme">Toggle theme</button>
-    <button type="button" class="pq-btn" id="tool-search">Search paper</button>
-    <button type="button" class="pq-btn" id="tool-notes">Research notes</button>
     <button type="button" class="pq-btn" id="tool-snap">Snapshot section</button>
     <button type="button" class="pq-btn" id="tool-snaps">View snapshots</button>
+    <button type="button" class="pq-btn" id="tool-papersnap">Snapshot whole paper</button>
+    <button type="button" class="pq-btn" id="tool-papersnaps">Paper snapshots</button>
+    <div class="pq-tools-cat">Google Drive</div>
+    <button type="button" class="pq-btn" id="tool-drive-worker">Set Worker URL</button>
+    <div class="pq-tools-cat">System</div>
+    <button type="button" class="pq-btn" id="tool-search">Search paper</button>
+    <button type="button" class="pq-btn" id="tool-notes">Research notes</button>
+    <button type="button" class="pq-btn" id="tool-palette">Command palette</button>
+    <button type="button" class="pq-btn" id="tool-theme">Toggle theme</button>
     <button type="button" class="pq-btn" id="tool-shortcuts">Keyboard shortcuts</button>
     <button type="button" class="pq-btn" id="tool-json">Backup JSON</button>
   </div>
@@ -336,6 +529,17 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <input class="pq-inp" id="pq-daily-target" type="number" min="0" value="500" style="width:100px" title="Daily target">
           <button type="button" class="pq-btn" id="pq-daily-set">Set daily goal</button>
+        </div>
+      </div>
+      <div class="pq-dash-card" id="pq-dash-drive-card">
+        <strong>Google Drive</strong>
+        <p class="pq-help" id="pq-dash-drive-status">Not connected</p>
+        <p class="pq-help" id="pq-dash-drive-sync">Last sync: —</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-drive-connect">Connect</button>
+          <button type="button" class="pq-btn" id="pq-dash-drive-open">Open file</button>
+          <button type="button" class="pq-btn" id="pq-dash-drive-sync">Sync current</button>
+          <button type="button" class="pq-btn" id="pq-dash-drive-disconnect">Disconnect</button>
         </div>
       </div>
     </div>
@@ -707,7 +911,8 @@
       sections,activeSectionId:sections[0].id,sources:[],
       paperTitle:title||'Untitled paper',authorName:'',institution:'',course:'',runningHead:'',
       notes:'',annotations:[],quotes:[],claims:[],paperSnapshots:[],footnotes:[],
-      goals:{sessionTarget:500,sessionBase:0}
+      goals:{sessionTarget:500,sessionBase:0},
+      scaffold:{open:false,wide:false,boxes:[]}
     };
   }
 
@@ -774,6 +979,31 @@
     if(!state.footnotes)state.footnotes=[];
     if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
     if(state.annBib==null)state.annBib=false;
+    if(!state.scaffold)state.scaffold={open:false,wide:false,boxes:[]};
+    if(!state.scaffold.boxes){
+      // migrate old tab-based scaffold if present
+      const legacy=[];
+      (state.scaffold.lines||[]).forEach(l=>{
+        legacy.push({id:l.id||uid(),passage:l.text||'',underpinnings:[],engagement:[],used:!!l.used});
+      });
+      (state.scaffold.underpinnings||[]).forEach(u=>{
+        const box=legacy.find(b=>b.id===u.lineId)||legacy[0];
+        if(box)box.underpinnings.push({id:u.id||uid(),text:u.text||''});
+        else legacy.push({id:uid(),passage:'',underpinnings:[{id:u.id||uid(),text:u.text||''}],engagement:[],used:false});
+      });
+      (state.scaffold.engagement||[]).forEach(e=>{
+        if(legacy[0])legacy[0].engagement.push({id:e.id||uid(),text:e.text||''});
+        else legacy.push({id:uid(),passage:'',underpinnings:[],engagement:[{id:e.id||uid(),text:e.text||''}],used:false});
+      });
+      state.scaffold.boxes=legacy;
+      delete state.scaffold.lines;delete state.scaffold.underpinnings;delete state.scaffold.engagement;delete state.scaffold.tab;
+    }
+    state.scaffold.boxes.forEach(b=>{
+      if(!b.underpinnings)b.underpinnings=[];
+      if(!b.engagement)b.engagement=[];
+      if(b.used==null)b.used=false;
+      if(b.passage==null)b.passage=b.text||'';
+    });
     if(!state.sections.find(s=>s.id===state.activeSectionId))state.activeSectionId=state.sections[0].id;
   }
   async function load(){
@@ -824,7 +1054,9 @@
   }
   async function createProject(){
     await persist();
-    const title=prompt('Paper title:','Untitled paper')||'Untitled paper';
+    const titleIn=await styledPrompt('New paper','Enter a title for the paper.','Untitled paper','Create','Cancel');
+    if(titleIn===null)return;
+    const title=titleIn.trim()||'Untitled paper';
     currentProjectId=uid();
     state=emptyState(title);
     if(readMeta().researcher)state.authorName=readMeta().researcher;
@@ -837,7 +1069,7 @@
     toast('New paper created');
   }
   async function deleteProject(id){
-    if(!confirm('Delete this paper from this browser?'))return;
+    if(!(await styledConfirm('Delete paper','Delete this paper from this browser? This cannot be undone.','Delete','Cancel')))return;
     await idbDelete(id);
     if(currentProjectId===id){
       const all=await idbAll();
@@ -1697,11 +1929,11 @@
         toast('Section order updated');
       });
     });
-    list.querySelectorAll('.pq-del').forEach(btn=>{btn.onclick=e=>{
+    list.querySelectorAll('.pq-del').forEach(btn=>{btn.onclick=async e=>{
       e.stopPropagation();
       if(state.sections.length<=1){toast('Keep at least one section');return}
       const sec=state.sections.find(s=>s.id===btn.dataset.id);
-      if(!confirm('Delete section “'+(sec?sec.title:'')+'”?'))return;
+      if(!(await styledConfirm('Delete section','Delete section “'+(sec?sec.title:'')+'”?')))return;
       state.sections=state.sections.filter(s=>s.id!==btn.dataset.id);
       state.sections.forEach((s,i)=>{s.order=i});
       if(state.activeSectionId===btn.dataset.id){state.activeSectionId=state.sections[0].id;loadSection()}
@@ -1732,6 +1964,7 @@
     }
     rebuildWorksCited();updateWc();updateSessionLine();
     wireAnnotationClicks();layoutCm();
+    migrateAndWireTables();
     if(state.ltOn){ltItems=[];clearLTMarks();recheckSoon(500)}
     renderGuide();
   }
@@ -1742,10 +1975,279 @@
     renderSections();renderSources();loadSection();updateWc();updateDiskStatus();
     $('#tool-autocap').textContent='Auto-capitalize: '+(state.autoCap?'on':'off');
     updateTutorialBtn();
+    applyScaffoldChrome();renderScaffold();
+    if(typeof updateDriveUI==='function') updateDriveUI();
   }
 
-  function openModal(h){$('#pq-modal').innerHTML=h;$('#pq-modal-bg').classList.add('open')}
-  function closeModal(){$('#pq-modal-bg').classList.remove('open')}
+  /* ========== Scaffold panel (discussion boxes) ========== */
+  function ensureScaffold(){
+    if(!state.scaffold)state.scaffold={open:false,wide:false,boxes:[]};
+    if(!state.scaffold.boxes)state.scaffold.boxes=[];
+    return state.scaffold;
+  }
+  function applyScaffoldChrome(){
+    const sc=ensureScaffold();
+    ROOT.classList.toggle('pq-scaffold-open',!!sc.open);
+    ROOT.classList.toggle('pq-scaffold-wide',!!sc.wide);
+    const cap=$('#cap-scaffold');
+    if(cap)cap.classList.toggle('on',!!sc.open);
+    const wideBtn=$('#scaf-wide');
+    if(wideBtn)wideBtn.textContent=sc.wide?'◀':'½';
+  }
+  function toggleScaffold(force){
+    const sc=ensureScaffold();
+    sc.open=force==null?!sc.open:!!force;
+    if(!sc.open)sc.wide=false;
+    applyScaffoldChrome();
+    renderScaffold();
+    scheduleSave();
+    if(sc.open)toast(sc.wide?'Scaffold · half / half':'Scaffold open');
+  }
+  function setScaffoldWide(on){
+    const sc=ensureScaffold();
+    if(!sc.open)sc.open=true;
+    sc.wide=!!on;
+    applyScaffoldChrome();
+    scheduleSave();
+  }
+  function getEditorSelectionText(){
+    const sel=window.getSelection();
+    if(!sel||sel.isCollapsed)return '';
+    try{if(!editor.contains(sel.anchorNode))return ''}catch(e){return ''}
+    return (sel.toString()||'').trim();
+  }
+  function scafInsertText(text){
+    if(!text)return;
+    editor.focus();
+    try{document.execCommand('insertText',false,text+(/\s$/.test(text)?'':' '))}catch(e){editor.innerHTML+=text+' '}
+    saveCurrent();scheduleSave();
+  }
+  function newScafBox(passage){
+    return {id:uid(),passage:passage||'',underpinnings:[],engagement:[],used:false,at:new Date().toISOString()};
+  }
+  let scafDragId=null;
+  function renumberScaffoldBoxes(){
+    /* numbers are derived from array order in render */
+  }
+  function renderScaffold(){
+    const sc=ensureScaffold();
+    const list=$('#scaf-list');
+    if(!list)return;
+    const boxes=sc.boxes;
+    if(!boxes.length){
+      list.innerHTML='<p class="pq-scaf-empty">No discussion boxes yet. Create a box for each textual passage you want to develop — then add underpinnings and engagement notes inside it. Drag boxes to reorder; numbers update automatically.</p>';
+      return;
+    }
+    list.innerHTML=boxes.map((box,idx)=>{
+      const underHtml=(box.underpinnings||[]).map(u=>
+        '<div class="pq-scaf-bubble under" data-uid="'+u.id+'">'+
+        '<span class="tag">Underpinning</span>'+
+        '<div class="body">'+escapeHtml(u.text)+'</div>'+
+        '<div class="b-row">'+
+        '<button type="button" class="pq-btn scaf-ins-u" data-box="'+box.id+'" data-uid="'+u.id+'">Insert</button>'+
+        '<button type="button" class="pq-btn scaf-del-u" data-box="'+box.id+'" data-uid="'+u.id+'">Delete</button>'+
+        '</div></div>'
+      ).join('');
+      const engHtml=(box.engagement||[]).map(e=>
+        '<div class="pq-scaf-bubble engage" data-eid="'+e.id+'">'+
+        '<span class="tag">Engagement</span>'+
+        '<div class="body">'+escapeHtml(e.text)+'</div>'+
+        '<div class="b-row">'+
+        '<button type="button" class="pq-btn scaf-ins-e" data-box="'+box.id+'" data-eid="'+e.id+'">Insert</button>'+
+        '<button type="button" class="pq-btn scaf-del-e" data-box="'+box.id+'" data-eid="'+e.id+'">Delete</button>'+
+        '</div></div>'
+      ).join('');
+      return '<div class="pq-scaf-box'+(box.used?' used':'')+'" data-id="'+box.id+'" draggable="true">'+
+        '<div class="pq-scaf-box-head">'+
+        '<span class="pq-scaf-num">'+(idx+1)+'</span>'+
+        '<span class="drag" title="Drag to reorder">⠿</span>'+
+        '<span class="grow"></span>'+
+        '</div>'+
+        '<div class="pq-scaf-bubble passage">'+
+        '<span class="tag">Textual passage</span>'+
+        '<div class="body">'+(box.passage?escapeHtml(box.passage):'<em style="color:var(--muted)">No passage yet</em>')+'</div>'+
+        '<div class="b-row">'+
+        '<button type="button" class="pq-btn scaf-edit-p" data-box="'+box.id+'">Edit passage</button>'+
+        '<button type="button" class="pq-btn scaf-ins-p" data-box="'+box.id+'">Insert</button>'+
+        '</div></div>'+
+        underHtml+engHtml+
+        '<div class="row">'+
+        '<button type="button" class="pq-btn pq-btn-primary scaf-add-u" data-box="'+box.id+'">+ Underpinning</button>'+
+        '<button type="button" class="pq-btn scaf-add-e" data-box="'+box.id+'">+ Engagement</button>'+
+        '<button type="button" class="pq-btn scaf-ins-all" data-box="'+box.id+'">Insert all</button>'+
+        '<button type="button" class="pq-btn scaf-used" data-box="'+box.id+'">'+(box.used?'Mark open':'Mark used')+'</button>'+
+        '<button type="button" class="pq-btn scaf-del-box" data-box="'+box.id+'">Delete box</button>'+
+        '</div></div>';
+    }).join('');
+
+    // drag reorder
+    list.querySelectorAll('.pq-scaf-box').forEach(el=>{
+      el.addEventListener('dragstart',e=>{
+        scafDragId=el.dataset.id;
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('text/plain',scafDragId);
+      });
+      el.addEventListener('dragend',()=>{
+        el.classList.remove('dragging');
+        list.querySelectorAll('.pq-scaf-box').forEach(x=>x.classList.remove('drag-over'));
+        scafDragId=null;
+      });
+      el.addEventListener('dragover',e=>{
+        e.preventDefault();
+        list.querySelectorAll('.pq-scaf-box').forEach(x=>x.classList.remove('drag-over'));
+        if(el.dataset.id!==scafDragId)el.classList.add('drag-over');
+      });
+      el.addEventListener('drop',e=>{
+        e.preventDefault();
+        const fromId=scafDragId||e.dataTransfer.getData('text/plain');
+        const toId=el.dataset.id;
+        if(!fromId||fromId===toId)return;
+        const fromIdx=sc.boxes.findIndex(b=>b.id===fromId);
+        const toIdx=sc.boxes.findIndex(b=>b.id===toId);
+        if(fromIdx<0||toIdx<0)return;
+        const [item]=sc.boxes.splice(fromIdx,1);
+        sc.boxes.splice(toIdx,0,item);
+        scheduleSave();renderScaffold();
+      });
+    });
+
+    list.querySelectorAll('.scaf-edit-p').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const t=await styledPromptArea('Textual passage','Primary text, observation, or formal feature to develop.',box.passage||'');
+      if(t===null)return;
+      box.passage=t.trim();scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-ins-p').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box||!box.passage)return;
+      scafInsertText(box.passage);
+    });
+    list.querySelectorAll('.scaf-add-u').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const t=await styledPromptArea('Underpinning','Theoretical construct, warrant, or framework for this passage.','');
+      if(t===null||!t.trim())return;
+      box.underpinnings.push({id:uid(),text:t.trim()});
+      scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-add-e').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const t=await styledPromptArea('Academic engagement','How this passage sits with critics — agree, critique, extend, complicate.','');
+      if(t===null||!t.trim())return;
+      box.engagement.push({id:uid(),text:t.trim()});
+      scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-ins-u').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const u=(box.underpinnings||[]).find(x=>x.id===b.dataset.uid);if(!u)return;
+      scafInsertText(u.text);
+    });
+    list.querySelectorAll('.scaf-ins-e').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const item=(box.engagement||[]).find(x=>x.id===b.dataset.eid);if(!item)return;
+      scafInsertText(item.text);
+    });
+    list.querySelectorAll('.scaf-del-u').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      if(!(await styledConfirm('Delete underpinning','Remove this underpinning?')))return;
+      box.underpinnings=box.underpinnings.filter(x=>x.id!==b.dataset.uid);
+      scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-del-e').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      if(!(await styledConfirm('Delete engagement','Remove this engagement note?')))return;
+      box.engagement=box.engagement.filter(x=>x.id!==b.dataset.eid);
+      scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-ins-all').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      const parts=[];
+      if(box.passage)parts.push(box.passage.trim());
+      (box.underpinnings||[]).forEach(u=>{if(u.text)parts.push(u.text.trim())});
+      (box.engagement||[]).forEach(item=>{if(item.text)parts.push(item.text.trim())});
+      if(!parts.length)return toast('Box is empty');
+      scafInsertText(parts.join('\n\n'));
+      box.used=true;scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-used').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
+      box.used=!box.used;scheduleSave();renderScaffold();
+    });
+    list.querySelectorAll('.scaf-del-box').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      if(!(await styledConfirm('Delete box','Delete this discussion box and all its notes?')))return;
+      sc.boxes=sc.boxes.filter(x=>x.id!==b.dataset.box);
+      scheduleSave();renderScaffold();
+    });
+  }
+
+  function openModal(h){$('#pq-modal').innerHTML=h;$('#pq-modal').classList.remove('pq-slab-wide');$('#pq-modal-bg').classList.add('open')}
+  function closeModal(){$('#pq-modal-bg').classList.remove('open');const m=$('#pq-modal');if(m)m.classList.remove('pq-slab-wide')}
+  /** Styled confirm — replaces window.confirm. Returns Promise&lt;boolean&gt;. */
+  function styledConfirm(title,message,okLabel,cancelLabel){
+    return new Promise(resolve=>{
+      openModal(
+        '<h3>'+escapeHtml(title||'Confirm')+'</h3>'+
+        '<p class="pq-dialog-msg">'+escapeHtml(message||'')+'</p>'+
+        '<div class="pq-modal-actions">'+
+        '<button type="button" class="pq-btn" id="m-cancel">'+(escapeHtml(cancelLabel||'Cancel'))+'</button>'+
+        '<button type="button" class="pq-btn pq-btn-primary" id="m-ok">'+(escapeHtml(okLabel||'OK'))+'</button></div>'
+      );
+      const done=v=>{closeModal();resolve(v)};
+      $('#m-cancel').onclick=()=>done(false);
+      $('#m-ok').onclick=()=>done(true);
+      $('#m-ok').focus();
+    });
+  }
+  /** Styled prompt — replaces window.prompt. Returns Promise&lt;string|null&gt; (null = cancelled). */
+  function styledPrompt(title,message,defaultValue,okLabel,cancelLabel){
+    return new Promise(resolve=>{
+      openModal(
+        '<h3>'+escapeHtml(title||'Input')+'</h3>'+
+        (message?'<p class="pq-dialog-msg">'+escapeHtml(message)+'</p>':'')+
+        '<label class="pq-lbl">Value</label>'+
+        '<input class="pq-inp" id="m-prompt-val" style="width:100%" value="'+escapeHtml(defaultValue!=null?String(defaultValue):'')+'">'+
+        '<div class="pq-modal-actions">'+
+        '<button type="button" class="pq-btn" id="m-cancel">'+(escapeHtml(cancelLabel||'Cancel'))+'</button>'+
+        '<button type="button" class="pq-btn pq-btn-primary" id="m-ok">'+(escapeHtml(okLabel||'OK'))+'</button></div>'
+      );
+      const inp=$('#m-prompt-val');
+      const done=v=>{closeModal();resolve(v)};
+      $('#m-cancel').onclick=()=>done(null);
+      $('#m-ok').onclick=()=>done(inp.value);
+      inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(inp.value)}if(e.key==='Escape')done(null)};
+      setTimeout(()=>{inp.focus();inp.select&&inp.select()},30);
+    });
+  }
+  /** Multi-line passage prompt for scaffold. Returns Promise&lt;string|null&gt;. */
+  function styledPromptArea(title,message,defaultValue,okLabel,cancelLabel){
+    return new Promise(resolve=>{
+      openModal(
+        '<h3>'+escapeHtml(title||'Passage')+'</h3>'+
+        (message?'<p class="pq-dialog-msg">'+escapeHtml(message)+'</p>':'')+
+        '<label class="pq-lbl">Passage</label>'+
+        '<textarea class="pq-inp" id="m-prompt-area" style="width:100%;min-height:160px;font-family:inherit;line-height:1.5" placeholder="Paste or write a full passage…">'+(defaultValue!=null?String(defaultValue).replace(/</g,'&lt;'):'')+'</textarea>'+
+        '<div class="pq-modal-actions">'+
+        '<button type="button" class="pq-btn" id="m-cancel">'+(escapeHtml(cancelLabel||'Cancel'))+'</button>'+
+        '<button type="button" class="pq-btn pq-btn-primary" id="m-ok">'+(escapeHtml(okLabel||'Save'))+'</button></div>'
+      );
+      const inp=$('#m-prompt-area');
+      const done=v=>{closeModal();resolve(v)};
+      $('#m-cancel').onclick=()=>done(null);
+      $('#m-ok').onclick=()=>done(inp.value);
+      inp.onkeydown=e=>{if(e.key==='Escape')done(null)};
+      setTimeout(()=>{inp.focus()},30);
+    });
+  }
   function editSource(id){
     const src=id?state.sources.find(s=>s.id===id):{id:uid(),type:'book',authors:'',title:'',year:'',container:'',publisher:'',pages:'',volume:'',issue:'',url:'',doi:''};
     openModal('<h3>'+(id?'Edit':'Add')+' source</h3>'+
@@ -1769,12 +2271,13 @@
       scheduleSave();closeModal();renderSources();reRenderAllCitations();
     };
   }
-  function insertCitation(sourceId){
+  async function insertCitation(sourceId){
     const src=state.sources.find(s=>s.id===sourceId);if(!src)return;
-    const page=prompt('Page (optional):','')||'';
+    const pageIn=await styledPrompt('Page number','Optional page or locator for this citation.','','Cite','Cancel');
+    if(pageIn===null)return;
+    const page=pageIn.trim();
     const disamb=buildDisambiguation();
     const order=citedSourceIds();
-    // if already cited, index exists; else it will be added at end on next rebuild
     let idx=order.indexOf(src.id);
     if(idx<0)idx=order.length;
     const text=formatInText(src,state.style,page,disamb,idx);
@@ -1785,10 +2288,10 @@
   }
 
   /* Templates */
-  function applyTemplate(key){
+  async function applyTemplate(key){
     const tmpl=TEMPLATES[key];
     if(!tmpl)return;
-    if(!confirm('Replace current section structure with “'+tmpl.name+'”? Existing section content that matches keys will be kept where possible.'))return;
+    if(!(await styledConfirm('Apply template','Replace current section structure with “'+tmpl.name+'”? Matching section content is kept where possible.','Apply','Cancel')))return;
     saveCurrent();
     const oldByKey={};
     state.sections.forEach(s=>{oldByKey[s.key]=s});
@@ -1999,9 +2502,9 @@
     cmPop.querySelectorAll('[data-res]').forEach(b=>b.onclick=()=>{
       const a=group.find(x=>x.id===b.dataset.res);a.resolved=!a.resolved;scheduleSave();renderAnnPanel();closeCmPop();layoutCm();
     });
-    cmPop.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    cmPop.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
       const a=group.find(x=>x.id===b.dataset.del);
-      if(!confirm('Delete this comment?'))return;
+      if(!(await styledConfirm('Delete comment','Delete this comment?')))return;
       closeCmPop();
       state.annotations=state.annotations.filter(x=>x.id!==a.id);
       $$('[data-ann-id="'+a.id+'"]',editor).forEach(el=>{while(el.firstChild)el.parentNode.insertBefore(el.firstChild,el);el.remove()});
@@ -2353,24 +2856,329 @@
     $$('#pq-modal [data-id]').forEach(b=>b.onclick=()=>{closeModal();switchSection(b.dataset.id)});
   }
 
-  /* Argument vocabulary */
-  const VOCAB=[
-    'However,','In contrast,','Conversely,','Nevertheless,','That said,','Building on this,',
-    'This suggests that','This implies that','A possible explanation is','In tension with',
-    'Consistent with','Contrary to','Underpinned by','Premised on','Drawing on',
-    'This study addresses','Little is known about','Taken together,'
+  /* Academic relational vocabulary */
+  const REL_VOCAB=[
+    {id:'foundation',name:'Foundation / Intellectual Basis',q:'What an idea rests upon',phrases:['underpinned by','grounded in','rooted in','premised on','based on','founded on','resting on','informed by','drawing on','predicated on','anchored in','built upon','underpinned by the assumption that','grounded in the claim that','theoretically underpinned by','conceptually grounded in','framed by','situated within','in the tradition of','drawing upon the work of','building upon']},
+    {id:'origin',name:'Origin / Source',q:'Where something comes from',phrases:['stemming from','arising from','originating in','deriving from','emerging from','growing out of','flowing from','issuing from','proceeding from','traceable to','having its origins in','taking its point of departure from','evolving from','emanating from','a product of','the outgrowth of','the legacy of','extending earlier work on','revisiting debates that began with']},
+    {id:'consequence',name:'Logical Consequence',q:'What follows from something',phrases:['therefore','thus','hence','consequently','as a result','it follows that','this entails','this implies','this suggests','leading to the conclusion that','with the result that','from which it follows that','which implies that','which entails that','accordingly','in consequence','the upshot is that','one implication is that']},
+    {id:'condition',name:'Conditionality / Dependence',q:'What something depends on',phrases:['contingent upon','dependent on','conditional on','insofar as','to the extent that','provided that','subject to','in cases where','only insofar as','to the degree that','hinging on','turning on','under conditions in which','given that','assuming that','on the condition that','in the event that']},
+    {id:'causal',name:'Causal / Determining Influence',q:'What shapes or drives something',phrases:['driven by','shaped by','determined by','influenced by','accounted for by','produced by','generated by','brought about by','occasioned by','prompted by','fuelled by','precipitated by','engendered by','attributable to','owing to','as a function of','in response to']},
+    {id:'formation',name:'Formation / Constitution',q:'How something is made up',phrases:['constituted by','composed of','made up of','consisting of','formed through','structured around','organised around','comprising','assembled from','configured as','forged through','crystallised in','embodied in','taking shape through','coalescing around','articulated as','given form by']},
+    {id:'mediation',name:'Mediation / Intermediary Relation',q:'How something is transmitted or realised',phrases:['mediated by','realised through','transmitted via','channelled through','enacted through','operationalised through','effected by means of','filtered through','refracted through','negotiated via','instantiated in','given expression through','actualised by means of','translated into practice via','implemented through']},
+    {id:'essential',name:'Essential / Inherent Relation',q:'What is inseparable or fundamental',phrases:['inherent in','integral to','constitutive of','inseparable from','essential to','at the heart of','fundamental to','intrinsic to','central to','bound up with','inextricably linked to','definitive of','characteristic of','a defining feature of','indispensable to','part and parcel of','at the core of','structurally necessary for','conceptually prior to']},
+    {id:'correspondence',name:'Correspondence / Conceptual Compatibility',q:'How ideas align or map onto one another',phrases:['consistent with','compatible with','aligned with','corresponding to','in keeping with','commensurate with','analogous to','parallel to','congruent with','in line with','resonating with','echoing','mirroring','mapping onto','in accordance with','coherent with','of a piece with','structurally homologous to','conceptually continuous with','isomorphic with','in dialogue with']}
   ];
+  function insertAtCursor(text){
+    editor.focus();
+    try{document.execCommand('insertText',false,text+(/\s$/.test(text)?'':' '))}catch(e){editor.innerHTML+=text+' '}
+    saveCurrent();scheduleSave();
+  }
   function openVocab(){
-    openModal('<h3>Argument vocabulary</h3><p class="pq-help">Click to insert at the cursor.</p>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:6px">'+VOCAB.map((v,i)=>'<button type="button" class="pq-btn" data-v="'+i+'">'+escapeHtml(v)+'</button>').join('')+'</div>'+
+    openModal('<h3>Academic relational vocabulary</h3><p class="pq-help">Nine families of phrases that signal how ideas relate. Click any phrase to insert it at the cursor.</p>'+
+      '<div class="pq-rel-tabs" id="rel-tabs"><button type="button" class="active" data-cat="all">All</button>'+
+      REL_VOCAB.map(c=>'<button type="button" data-cat="'+c.id+'">'+escapeHtml(c.name.split(' / ')[0])+'</button>').join('')+'</div>'+
+      '<div id="rel-body" style="max-height:55vh;overflow:auto"></div>'+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    const render=cat=>{
+      const list=cat==='all'?REL_VOCAB:REL_VOCAB.filter(c=>c.id===cat);
+      $('#rel-body').innerHTML=list.map(c=>'<div class="pq-rel-cat"><h4>'+escapeHtml(c.name)+'</h4><p class="pq-help">'+escapeHtml(c.q)+' · '+c.phrases.length+' phrases</p><div class="pq-rel-chips">'+
+        c.phrases.map(p=>'<button type="button" data-p="'+escapeHtml(p)+'">'+escapeHtml(p)+'</button>').join('')+'</div></div>').join('');
+      $$('#rel-body [data-p]').forEach(b=>b.onclick=()=>{insertAtCursor(b.dataset.p);toast('Inserted')});
+    };
+    render('all');
+    $$('#rel-tabs button').forEach(btn=>btn.onclick=()=>{$$('#rel-tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');render(btn.dataset.cat)});
     $('#m-cancel').onclick=closeModal;
-    $$('#pq-modal [data-v]').forEach(b=>b.onclick=()=>{
-      const v=VOCAB[+b.dataset.v];
-      closeModal();editor.focus();
-      try{document.execCommand('insertText',false,v+' ')}catch(e){editor.innerHTML+=v+' '}
-      saveCurrent();scheduleSave();
+  }
+
+  /* Academic signposting */
+  const SIGNPOSTS=[
+    {id:'opening',name:'Opening & Aim',tip:'Tell the reader what the text or section will do and how it is organised.',items:[
+      {p:'This essay examines…',ex:'This essay examines the role of silence in the construction of narrative authority.'},
+      {p:'This paper argues that…',ex:'This paper argues that form itself performs ethical work.'},
+      {p:'The aim of this chapter is to…',ex:'The aim of this chapter is to reassess the archive of letters.'},
+      {p:'The discussion falls into three parts…',ex:'The discussion falls into three parts: time, focalisation, and the ethics of withholding.'},
+      {p:'First… then… finally…',ex:'First the realist frame is established; then it is dismantled; finally the epilogue reopens the question.'},
+      {p:'Section 1 addresses…',ex:'Section 1 addresses the treatment of time in the opening chapters.'},
+      {p:'The focus is limited to…',ex:'The focus is limited to the 1925 text; later revisions are noted only where they alter the argument.'},
+      {p:'This analysis concentrates on…',ex:'This analysis concentrates on free indirect discourse in the middle section.'},
+      {p:'It is beyond the scope of this paper to…',ex:'It is beyond the scope of this paper to settle debates about authorial intention.'},
+      {p:'Drawing on…',ex:'Drawing on theories of trauma narration, the analysis shows how form itself becomes symptomatic.'},
+      {p:'Using the framework of…',ex:'Using the framework of narrative ethics, the chapter reframes the ending.'},
+      {p:'Through close reading of…',ex:'Through close reading of chapter four, the motif of interrupted speech becomes clear.'}
+    ]},
+    {id:'sequence',name:'Sequencing & Ordering',tip:'Mark stages in a sequence of points, steps, or sections.',items:[
+      {p:'First, / Firstly, / To begin with,',ex:'First, the novel establishes a realist frame that later chapters systematically dismantle.'},
+      {p:'Second, / Secondly, / Next, / Then,',ex:'Second, the same chapter introduces a motif of interrupted speech.'},
+      {p:'Third, / Thirdly, / Furthermore,',ex:'Third, the ending refuses the resolution that the opening had seemed to promise.'},
+      {p:'Finally, / Lastly, / To conclude this section,',ex:'Finally, the epilogue reopens the very questions the narrative had appeared to settle.'},
+      {p:'Subsequently, / Thereafter, / Afterwards,',ex:'Subsequently, the same formal strategy reappears in intensified form.'},
+      {p:'At this point, / At this stage,',ex:'At this point in the argument it becomes possible to revisit the earlier claim about focalisation.'},
+      {p:'Turning now to… / Moving on to…',ex:'Turning now to the question of intertextuality…'}
+    ]},
+    {id:'adding',name:'Adding & Developing',tip:'Signal further information, a related point, or elaboration.',items:[
+      {p:'In addition, / Additionally, / Moreover, / Furthermore,',ex:'Moreover, the same pattern of withholding appears in the handling of secondary characters.'},
+      {p:'Also, / As well,',ex:'The novel interrogates class; it also stages a sustained critique of gendered domestic space.'},
+      {p:'Not only… but also…',ex:'Not only does the text refuse closure, but it actively undermines the reader’s desire for it.'},
+      {p:'A further / An additional…',ex:'A further difficulty arises when the historical context is taken into account.'},
+      {p:'Equally, / Likewise, / Similarly,',ex:'Equally important is the novel’s treatment of peripheral voices.'},
+      {p:'Indeed, / In fact,',ex:'The claim is not new; indeed, it restates a long-standing critical position with new formal evidence.'},
+      {p:'What is more,',ex:'What is more, the same device structures the companion volume.'}
+    ]},
+    {id:'contrast',name:'Contrasting, Qualifying & Conceding',tip:'Mark a turn against the previous direction, a limitation, or a concession.',items:[
+      {p:'However, / Nevertheless, / Nonetheless, / Still,',ex:'The surface narrative appears stable; however, the subtext is densely ironic.'},
+      {p:'On the other hand, / By contrast, / In contrast, / Conversely,',ex:'By contrast, the earlier novel maintains a single, reliable focaliser throughout.'},
+      {p:'Although / Though / Even though / While / Whereas',ex:'Although the plot is linear, the affective structure is recursive.'},
+      {p:'Despite / In spite of / Notwithstanding',ex:'Despite its apparent realism, the novel is highly stylised.'},
+      {p:'Instead, / Rather, / On the contrary,',ex:'The text does not resolve the conflict; instead, it intensifies it.'},
+      {p:'Yet, / But',ex:'The evidence is incomplete, yet a coherent pattern still emerges.'},
+      {p:'Admittedly, / Granted, / It is true that…',ex:'Admittedly, the manuscript evidence is fragmentary; the formal argument, however, does not depend on it.'},
+      {p:'At the same time, / That said, / Having said that,',ex:'The reading is persuasive. That said, alternative accounts remain viable.'}
+    ]},
+    {id:'cause',name:'Cause, Result & Purpose',tip:'Signal reasons, outcomes, and aims.',items:[
+      {p:'Because / Since / As / Given that',ex:'The ending feels abrupt because the preceding chapters have prepared a different resolution.'},
+      {p:'Therefore, / Thus, / Hence, / Consequently, / As a result, / Accordingly,',ex:'The chronology is unstable; therefore the reader must reconstruct causality.'},
+      {p:'So that / In order to / So as to',ex:'Details are withheld so that suspense is prolonged.'},
+      {p:'For this reason, / For that reason, / This is why',ex:'For this reason, the novel has been read as a critique of linear history.'},
+      {p:'If / Unless / Provided that / Otherwise',ex:'If the final image is taken as ironic, the entire preceding narrative is revalued.'},
+      {p:'Owing to / Due to / As a consequence of',ex:'Owing to the fragmentary archive, any claim about authorial intention must remain provisional.'}
+    ]},
+    {id:'example',name:'Exemplifying & Illustrating',tip:'Introduce examples and concrete illustrations.',items:[
+      {p:'For example, / For instance,',ex:'Several devices produce distance — for example, free indirect discourse and delayed revelation.'},
+      {p:'To illustrate, / By way of illustration,',ex:'To illustrate, consider the opening paragraph of chapter four.'},
+      {p:'Such as / Including / Notably',ex:'The text deploys a range of modernist techniques, such as stream of consciousness and radical fragmentation.'},
+      {p:'A case in point / One example is',ex:'A case in point is the treatment of the letter that is never opened.'},
+      {p:'As can be seen in… / As is evident from…',ex:'As can be seen in the final stanza, the syntactic compression reaches an extreme.'}
+    ]},
+    {id:'emphasis',name:'Emphasising & Prioritising',tip:'Mark what matters most — reserve strong markers for pivotal points.',items:[
+      {p:'Importantly, / Significantly, / Crucially, / Above all,',ex:'Crucially, the shift in focalisation coincides with the first major omission of information.'},
+      {p:'In particular, / Especially, / Notably, / Primarily,',ex:'The diction is precise; in particular, the verbs of perception are carefully graded.'},
+      {p:'It is worth noting that… / It should be emphasised that…',ex:'It is worth noting that the same device appears, inverted, in the companion volume.'},
+      {p:'The most important / The central / The key…',ex:'The central claim of this section is that form itself performs the work of ethical questioning.'},
+      {p:'Indeed, / In fact,',ex:'The pattern is not incidental; indeed, it structures the entire middle third of the novel.'}
+    ]},
+    {id:'refer',name:'Referring Back & Forward',tip:'Create explicit links across larger distances in the text.',items:[
+      {p:'As noted above, / As discussed earlier, / As we have seen,',ex:'As noted above, the same motif of interrupted speech reappears here in intensified form.'},
+      {p:'Earlier in this chapter, / In the previous section,',ex:'In the previous section the realist frame was established; here it is dismantled.'},
+      {p:'As will be seen, / As the next section shows, / In what follows,',ex:'As will be seen in the next section, this formal choice has direct consequences for the ethics of reading.'},
+      {p:'Below, / Later in this chapter,',ex:'Later in this chapter the same pattern reappears under a different name.'},
+      {p:'See Section… / (discussed further below)',ex:'The historical context (discussed further below) complicates any purely formal reading.'},
+      {p:'Returning to… / To return to… / This brings us back to…',ex:'Returning to the question of unreliable narration, it is now possible to refine the initial claim.'}
+    ]},
+    {id:'summary',name:'Summarising, Concluding & Closing',tip:'Close a stretch of argument without introducing new evidence.',items:[
+      {p:'In summary, / To summarise, / In short, / In brief,',ex:'In short, the novel refuses the consolations of traditional plot.'},
+      {p:'Overall, / On balance, / Taken together,',ex:'Overall, the formal evidence supports a reading of deliberate ethical indeterminacy.'},
+      {p:'To conclude, / In conclusion, / Finally,',ex:'To conclude, the text’s most radical gesture is its transfer of interpretive responsibility to the reader.'},
+      {p:'Thus far, / Up to this point,',ex:'Thus far the argument has focused on internal formal features; the next section turns to reception.'},
+      {p:'The foregoing / The preceding discussion…',ex:'The foregoing analysis suggests that any account of the novel’s politics must begin with its handling of time.'},
+      {p:'This concludes the examination of…',ex:'This concludes the examination of focalisation; the final section considers intertextual echoes.'}
+    ]},
+    {id:'meta',name:'Meta-discourse',tip:'Language that refers to the act of writing or reading. Prefer impersonal forms where discipline norms discourage “I”.',items:[
+      {p:'I now turn to… / The next step is to…',ex:'The next step is to consider the counter-argument advanced by recent historicist critics.'},
+      {p:'It is necessary to consider…',ex:'It is necessary at this stage to consider the counter-argument.'},
+      {p:'This should not be taken to mean…',ex:'This should not be taken to mean that the novel lacks politics.'},
+      {p:'The point is not that… but that…',ex:'The point is not that the novel lacks politics, but that its politics are formal rather than propositional.'},
+      {p:'It seems reasonable to suggest… / One possible reading is…',ex:'One possible reading is that the silence itself constitutes the novel’s most forceful ethical statement.'},
+      {p:'This may be understood as…',ex:'This may be understood as a deliberate transfer of responsibility to the reader.'},
+      {p:'This is a complex issue… / The following analysis is necessarily provisional…',ex:'The following analysis is necessarily provisional, given the incomplete state of the archive.'},
+      {p:'As the reader will have noticed… / It will be apparent that…',ex:'It will be apparent that the same formal strategy operates at every level of the text.'}
+    ]}
+  ];
+  function openSignposting(){
+    openModal(
+      '<h3>Academic signposting</h3>'+
+      '<div class="pq-sign-tip"><strong>What it does:</strong> Signposts tell the reader where they are in the argument, where they are going, and how the current idea relates to what came before. Signpost enough to orient — not so much that the text becomes mechanical. Match the connector to the real logical relation.</div>'+
+      '<div class="pq-sign-tabs" id="sign-tabs"><button type="button" class="active" data-cat="all">All</button>'+
+      SIGNPOSTS.map(c=>'<button type="button" data-cat="'+c.id+'">'+escapeHtml(c.name.split(' &')[0].split(',')[0])+'</button>').join('')+'</div>'+
+      '<div id="sign-body" style="max-height:52vh;overflow:auto"></div>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>'
+    );
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    const render=cat=>{
+      const list=cat==='all'?SIGNPOSTS:SIGNPOSTS.filter(c=>c.id===cat);
+      $('#sign-body').innerHTML=list.map(c=>
+        '<div class="pq-sign-cat"><h4>'+escapeHtml(c.name)+'</h4><p class="pq-help">'+escapeHtml(c.tip)+'</p>'+
+        '<div class="pq-sign-chips">'+c.items.map((it,i)=>
+          '<button type="button" data-p="'+escapeHtml(it.p)+'" data-ex="'+escapeHtml(it.ex)+'" title="'+escapeHtml(it.ex)+'">'+escapeHtml(it.p)+'</button>'
+        ).join('')+'</div></div>'
+      ).join('');
+      $$('#sign-body [data-p]').forEach(b=>{
+        b.onclick=()=>{insertAtCursor(b.dataset.p);toast('Signpost inserted')};
+        b.oncontextmenu=e=>{e.preventDefault();insertAtCursor(b.dataset.ex);toast('Example sentence inserted')};
+      });
+    };
+    render('all');
+    $$('#sign-tabs button').forEach(btn=>btn.onclick=()=>{$$('#sign-tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');render(btn.dataset.cat)});
+    $('#m-cancel').onclick=closeModal;
+  }
+
+  /* Academic underpinning */
+  const UNDERPIN={
+    types:[
+      {name:'Textual evidence',use:'Quotations, close reading, formal analysis',tip:'Primary contact with the text — quote only what you analyse.'},
+      {name:'Critical / secondary sources',use:'Agree, disagree, extend, complicate critics',tip:'Enter the existing scholarly conversation; do not treat critics as decoration.'},
+      {name:'Theoretical framework',use:'Trauma theory, narratology, postcolonial theory, feminism…',tip:'Illuminate the text; if removing the theory leaves the argument unchanged, it is not doing work.'},
+      {name:'Historical / contextual evidence',use:'Publication history, contemporary debates, social conditions',tip:'Situate the text in time and culture where it strengthens the claim.'},
+      {name:'Logical warrant',use:'Why the evidence supports the interpretation',tip:'State the principle that links data to claim — often the missing piece.'},
+      {name:'Comparative evidence',use:'Other works by the same author, or related texts',tip:'Illumination by contrast or similarity.'}
+    ],
+    toulmin:[
+      {role:'Claim',fn:'The proposition you want accepted',ex:'The novel constructs trauma as formally unrepresentable.'},
+      {role:'Evidence',fn:'Textual or critical material that supports it',ex:'Key events are never narrated directly; they appear only as gaps, repetitions and somatic symptoms.'},
+      {role:'Warrant',fn:'Principle that makes the evidence relevant',ex:'In trauma theory, the inability to integrate an event into narrative is itself a primary marker of traumatic experience (Caruth).'},
+      {role:'Backing',fn:'Support for the warrant (optional)',ex:'Caruth’s account has been widely applied to modernist fiction because of this formal emphasis.'},
+      {role:'Qualifier',fn:'Limits the force of the claim',ex:'At least within the terms of the 1925 text…'},
+      {role:'Rebuttal',fn:'Anticipates counter-arguments',ex:'Although some readers treat the gaps as simple plot devices, their systematic nature suggests otherwise.'}
+    ],
+    criticalMoves:[
+      {move:'Agree / build on',phrases:['As X has shown…','Building on X’s account…','X’s analysis of… provides a useful starting point','Following X…']},
+      {move:'Disagree / critique',phrases:['X’s reading overlooks…','Contrary to X…','While X argues…, the textual evidence suggests…','X understates…']},
+      {move:'Extend / refine',phrases:['X’s insight can be extended to…','What X observes in… becomes even more pronounced in…','Developing X’s point…']},
+      {move:'Complicate',phrases:['X’s binary of… is complicated by…','The opposition X draws between… is less stable than it first appears','X’s account needs qualification…']},
+      {move:'Synthesise',phrases:['Taken together, the accounts of X and Y suggest…','While X emphasises… and Y stresses…, both share…','Bringing X and Y into relation…']}
+    ],
+    reporting:[
+      {tone:'Neutral',verbs:['states','notes','observes','remarks','writes','comments','describes','outlines']},
+      {tone:'Positive / supporting',verbs:['demonstrates','shows','establishes','reveals','illuminates','argues persuasively','makes clear']},
+      {tone:'Critical / distancing',verbs:['claims','asserts','contends','assumes','overlooks','fails to consider','takes for granted']}
+    ],
+    templates:[
+      {title:'Claim + evidence + warrant',body:'[Claim]. [Evidence — quotation or formal observation]. [Warrant — why this evidence supports the claim, often via theory or critical principle].'},
+      {title:'Critical engagement',body:'[Critic]’s reading treats [X] as [Y] ([Citation]). While this account correctly identifies [strength], it understates [limitation]. The present analysis therefore retains [what you keep] while relocating [what you change].'},
+      {title:'Theory applied',body:'[Theorist]’s account of [concept] as [key idea] helps explain why [textual feature] functions as [interpretation]. [Specific application to the text].'},
+      {title:'Balanced paragraph',body:'Recent criticism has tended to read [X] as [Y] ([Critics]). While this emphasis is justified, it risks underplaying [Z]. The present reading therefore accepts [consensus] while arguing that [your distinctive claim].'},
+      {title:'Integrated quotation',body:'[Your analytical lead-in] — “[short quotation]” ([page]) — [analysis of diction/form that shows how the quote advances the claim].'},
+      {title:'Fully underpinned unit (model)',body:'The novel constructs trauma as formally unrepresentable. Key events are never narrated directly; they surface only as narrative gaps, compulsive repetitions and disturbances in the texture of the prose. Within the framework developed by Caruth, such formal disruptions are not merely stylistic but symptomatic: the event remains unavailable to ordinary narrative integration. While alternative readings may treat these gaps as conventional suspense devices, their frequency and placement align more closely with the structures of traumatic deferral than with plot mechanics.'}
+    ],
+    checklist:[
+      'Bare assertion — claim with no evidence or warrant → supply support and explain the link',
+      'Dropped quotation — quote left to “speak for itself” → integrate and analyse',
+      'Irrelevant evidence — does not support the claim → re-select or revise the claim',
+      'Over-generalisation from thin evidence → narrow the claim or add substantiation',
+      'Appeal to authority alone — “Critic X says so” → show why the view is persuasive for this text',
+      'Circular support — evidence that restates the claim → introduce independent grounds',
+      'Missing warrant — evidence without relevance explained → state the linking principle',
+      'Theoretical name-dropping — theory mentioned but not applied → demonstrate concepts on specific features'
+    ]
+  };
+  function openUnderpin(){
+    openModal(
+      '<h3>Academic underpinning</h3>'+
+      '<div class="pq-sign-tip"><strong>Core test:</strong> For every major claim, ask “On what grounds?” If the answer is only “because I think so”, the claim is not yet underpinned. Underpinning turns assertion into a contribution to a scholarly conversation.</div>'+
+      '<div class="pq-sign-tabs" id="up-tabs">'+
+      '<button type="button" class="active" data-pane="builder">Claim builder</button>'+
+      '<button type="button" data-pane="types">Types of support</button>'+
+      '<button type="button" data-pane="toulmin">Claim–Evidence–Warrant</button>'+
+      '<button type="button" data-pane="critics">Critical moves</button>'+
+      '<button type="button" data-pane="report">Reporting verbs</button>'+
+      '<button type="button" data-pane="templates">Templates</button>'+
+      '<button type="button" data-pane="check">Weak underpinning</button>'+
+      '</div>'+
+      '<div id="up-body" style="max-height:52vh;overflow:auto"></div>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>'
+    );
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    const panes={
+      builder:()=>{
+        return '<p class="pq-help">Fill the slots, then insert a drafted underpinned unit. Leave a field blank to skip it.</p>'+
+          '<label class="pq-lbl">Claim</label><textarea class="pq-inp" id="up-claim" style="width:100%;min-height:52px" placeholder="The novel constructs trauma as formally unrepresentable."></textarea>'+
+          '<label class="pq-lbl">Evidence (textual / critical)</label><textarea class="pq-inp" id="up-ev" style="width:100%;min-height:52px" placeholder="Key events appear only as gaps, repetitions and somatic symptoms…"></textarea>'+
+          '<label class="pq-lbl">Warrant (why the evidence supports the claim)</label><textarea class="pq-inp" id="up-war" style="width:100%;min-height:52px" placeholder="In trauma theory, inability to integrate an event into narrative is a primary marker of trauma (Caruth)."></textarea>'+
+          '<label class="pq-lbl">Qualifier (optional)</label><input class="pq-inp" id="up-qual" style="width:100%" placeholder="At least within the terms of the 1925 text…">'+
+          '<label class="pq-lbl">Rebuttal (optional)</label><textarea class="pq-inp" id="up-reb" style="width:100%;min-height:44px" placeholder="Although some readers treat the gaps as plot devices…"></textarea>'+
+          '<div class="pq-modal-actions" style="justify-content:flex-start;margin-top:10px">'+
+          '<button type="button" class="pq-btn pq-btn-primary" id="up-build">Build &amp; insert</button>'+
+          '<button type="button" class="pq-btn" id="up-preview">Preview only</button></div>'+
+          '<div class="pq-slab-result" id="up-out" style="display:none;margin-top:10px"></div>';
+      },
+      types:()=>'<p class="pq-help">Strong academic writing usually combines several kinds of support.</p>'+
+        UNDERPIN.types.map(t=>'<div class="pq-sign-cat"><h4>'+escapeHtml(t.name)+'</h4><p class="pq-help">'+escapeHtml(t.use)+'</p><p class="pq-help" style="font-style:italic">'+escapeHtml(t.tip)+'</p></div>').join(''),
+      toulmin:()=>'<p class="pq-help">A robust unit of argument (adapted from Toulmin). Click a role to insert a label at the cursor.</p>'+
+        UNDERPIN.toulmin.map(t=>'<div class="pq-src-card" style="cursor:pointer" data-ins="'+escapeHtml(t.role)+': "><strong>'+escapeHtml(t.role)+'</strong><div class="pq-help">'+escapeHtml(t.fn)+'</div><div class="pq-help" style="font-style:italic;margin-top:4px">'+escapeHtml(t.ex)+'</div></div>').join(''),
+      critics:()=>UNDERPIN.criticalMoves.map(m=>'<div class="pq-sign-cat"><h4>'+escapeHtml(m.move)+'</h4><div class="pq-sign-chips">'+
+        m.phrases.map(p=>'<button type="button" data-p="'+escapeHtml(p)+'">'+escapeHtml(p)+'</button>').join('')+'</div></div>').join(''),
+      report:()=>'<p class="pq-help">Vary the reporting verb according to the relationship you want with the source.</p>'+
+        UNDERPIN.reporting.map(r=>'<div class="pq-sign-cat"><h4>'+escapeHtml(r.tone)+'</h4><div class="pq-sign-chips">'+
+          r.verbs.map(v=>'<button type="button" data-p="'+escapeHtml(v)+'">'+escapeHtml(v)+'</button>').join('')+'</div></div>').join(''),
+      templates:()=>'<p class="pq-help">Click a template to insert a scaffold you can fill in.</p>'+
+        UNDERPIN.templates.map(t=>'<div class="pq-src-card"><strong>'+escapeHtml(t.title)+'</strong><div class="pq-help" style="margin:6px 0;line-height:1.5">'+escapeHtml(t.body)+'</div>'+
+          '<button type="button" class="pq-btn pq-btn-primary up-tpl" data-body="'+escapeHtml(t.body)+'">Insert template</button></div>').join(''),
+      check:()=>'<p class="pq-help">Common forms of weak underpinning — and how to fix them.</p><ul class="pq-help" style="padding-left:18px;line-height:1.75">'+
+        UNDERPIN.checklist.map(c=>'<li>'+escapeHtml(c)+'</li>').join('')+'</ul>'
+    };
+    const show=pane=>{
+      $('#up-body').innerHTML=panes[pane]?panes[pane]():'';
+      if(pane==='builder'){
+        const build=()=>{
+          const claim=($('#up-claim').value||'').trim();
+          const ev=($('#up-ev').value||'').trim();
+          const war=($('#up-war').value||'').trim();
+          const qual=($('#up-qual').value||'').trim();
+          const reb=($('#up-reb').value||'').trim();
+          if(!claim){toast('Add a claim');return null}
+          let s=claim.replace(/[.!?]?$/,'.');
+          if(ev)s+=' '+ev.replace(/[.!?]?$/,'.');
+          if(war)s+=' '+war.replace(/[.!?]?$/,'.');
+          if(qual)s+=' '+qual.replace(/[.!?]?$/,'');
+          if(reb)s+=' '+reb.replace(/[.!?]?$/,'.');
+          if(!/[.!?]$/.test(s))s+='.';
+          return s.replace(/\.\s*\./g,'. ').replace(/\s+/g,' ').trim();
+        };
+        $('#up-preview').onclick=()=>{const s=build();if(!s)return;const el=$('#up-out');el.style.display='block';el.textContent=s};
+        $('#up-build').onclick=()=>{const s=build();if(!s)return;closeModal();insertAtCursor(s);toast('Underpinned unit inserted')};
+      }
+      $$('#up-body [data-p]').forEach(b=>b.onclick=()=>{insertAtCursor(b.dataset.p);toast('Inserted')});
+      $$('#up-body [data-ins]').forEach(b=>b.onclick=()=>{insertAtCursor(b.dataset.ins);toast('Inserted')});
+      $$('#up-body .up-tpl').forEach(b=>b.onclick=()=>{closeModal();insertAtCursor(b.dataset.body);toast('Template inserted')});
+    };
+    show('builder');
+    $$('#up-tabs button').forEach(btn=>btn.onclick=()=>{
+      $$('#up-tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');show(btn.dataset.pane);
     });
+    $('#m-cancel').onclick=closeModal;
+  }
+
+  /* Sentence construction lab (compact) */
+  function decap(s){s=(s||'').trim();return s?s.charAt(0).toLowerCase()+s.slice(1):s}
+  function capFirst(s){s=(s||'').trim();return s?s.charAt(0).toUpperCase()+s.slice(1):s}
+  function gerundify(s){
+    s=decap((s||'').trim()).replace(/[.!?]+$/,'');
+    const map={encouraged:'encouraging',expanded:'expanding',became:'becoming',changed:'changing',emerged:'emerging',developed:'developing',produced:'producing',transformed:'transforming',generated:'generating',altered:'altering',created:'creating',challenged:'challenging',accelerated:'accelerating',concentrated:'concentrating'};
+    return s.replace(/\b(expanded|encouraged|became|changed|emerged|developed|produced|transformed|generated|altered|created|challenged|accelerated|concentrated)\b/i,w=>map[w.toLowerCase()]||w);
+  }
+  function nounPhrase(s){return decap((s||'').trim()).replace(/[.!?]+$/,'').replace(/\bexpanded rapidly\b/i,'rapid expansion').replace(/\bencouraged urban migration\b/i,'encouragement of urban migration').replace(/\bbecame concentrated\b/i,'concentration of population').replace(/\b(changed|emerged|developed|transformed|generated|produced)\b/i,m=>({changed:'change in',emerged:'emergence of',developed:'development of',transformed:'transformation of',generated:'generation of',produced:'production of'})[m.toLowerCase()]||m)}
+  const SLAB_CONNECTORS=[
+    {id:'consequence',label:'consequence → , -ing',join:(a,b)=>a.replace(/[.!?]?$/,',')+' '+gerundify(b)},
+    {id:'explains_noun',label:'explains noun → that',join:(a,b)=>a.replace(/[.!?]?$/,'')+' that '+decap(b)},
+    {id:'equal',label:'equal → and / ;',join:(a,b)=>a.replace(/[.!?]?$/,'')+'; '+decap(b)},
+    {id:'explains_a',label:'explains A → :',join:(a,b)=>a.replace(/[.!?]?$/,'')+': '+decap(b)},
+    {id:'cause',label:'cause → because',join:(a,b)=>a.replace(/[.!?]?$/,'')+' because '+decap(b)},
+    {id:'contrast',label:'contrast → while',join:(a,b)=>a.replace(/[.!?]?$/,'')+', while '+decap(b)},
+    {id:'semicolon',label:'semicolon → ;',join:(a,b)=>a.replace(/[.!?]?$/,'')+'; '+capFirst(b)},
+    {id:'leading_to',label:'leading to',join:(a,b)=>a.replace(/[.!?]?$/,',')+' leading to '+nounPhrase(b)},
+    {id:'resulting_in',label:'resulting in',join:(a,b)=>a.replace(/[.!?]?$/,',')+' resulting in '+nounPhrase(b)},
+    {id:'process_that',label:'a process that…',join:(a,b)=>a.replace(/[.!?]?$/,',')+' a process that '+decap(b)},
+    {id:'thereby',label:'thereby + -ing',join:(a,b)=>a.replace(/[.!?]?$/,',')+' thereby '+gerundify(b)},
+    {id:'comma_ing',label:'comma + -ing',join:(a,b)=>a.replace(/[.!?]?$/,',')+' '+gerundify(b)}
+  ];
+  const DEFAULT_THOUGHTS=['Modern cities expanded rapidly','industrialisation encouraged urban migration','population became concentrated','traditional communities changed','new class relations emerged','political movements developed'];
+  function openSentenceLab(){
+    const labels=['A','B','C','D','E','F'];const defaults=['consequence','explains_noun','equal','explains_a','cause'];
+    openModal('<h3>Sentence construction lab</h3><p class="pq-help">Six thoughts + connectors. Content stays fixed; connective tissue changes the feel.</p>'+
+      labels.map((L,i)=>'<div class="pq-slab-thought"><label>Thought '+L+'</label><input class="pq-inp slab-t" value="'+escapeHtml(DEFAULT_THOUGHTS[i]||'')+'"></div>'+(i<5?'<div class="pq-slab-conn"><span class="pq-slab-arrow">→</span><select class="slab-c">'+SLAB_CONNECTORS.map(c=>'<option value="'+c.id+'"'+(c.id===defaults[i]?' selected':'')+'>'+escapeHtml(c.label)+'</option>').join('')+'</select></div>':'')).join('')+
+      '<div class="pq-modal-actions" style="justify-content:flex-start"><button type="button" class="pq-btn pq-btn-primary" id="slab-build">Build</button><button type="button" class="pq-btn" id="slab-insert">Insert</button><button type="button" class="pq-btn" id="m-cancel">Close</button></div>'+
+      '<div class="pq-slab-result" id="slab-result" style="display:none"></div>');
+    const modal=$('#pq-modal');if(modal)modal.classList.add('pq-slab-wide');
+    $('#m-cancel').onclick=closeModal;
+    $('#slab-build').onclick=()=>{
+      const t=$$('.slab-t').map(i=>i.value.trim()).filter(Boolean);const conns=$$('.slab-c').map(s=>s.value);
+      if(t.length<2)return toast('Enter at least two thoughts');
+      let out=capFirst(t[0].replace(/[.!?]+$/,''));
+      for(let i=0;i<t.length-1;i++){const c=SLAB_CONNECTORS.find(x=>x.id===conns[i])||SLAB_CONNECTORS[0];out=c.join(out,t[i+1].replace(/[.!?]+$/,'')).replace(/[.!?]+$/,'')}
+      if(!/[.!?]$/.test(out))out+='.';
+      const el=$('#slab-result');el.style.display='block';el.textContent=out;el.dataset.sent=out;
+    };
+    $('#slab-insert').onclick=()=>{const s=$('#slab-result')&&$('#slab-result').dataset.sent;if(!s)return toast('Build first');closeModal();insertAtCursor(s);toast('Inserted')};
   }
 
   /* Claims checklist */
@@ -2443,8 +3251,8 @@
   }
 
   /* Footnote */
-  function insertFootnote(){
-    const body=prompt('Footnote text:','');
+  async function insertFootnote(){
+    const body=await styledPrompt('Footnote','Enter the footnote text.','','Insert','Cancel');
     if(body==null||!body.trim())return;
     state.footnotes=state.footnotes||[];
     const n=state.footnotes.length+1;
@@ -2456,22 +3264,87 @@
   }
 
   /* Table */
-  function insertTable(){
-    const cols=Math.min(8,Math.max(2,parseInt(prompt('Columns:','3'),10)||3));
-    const rows=Math.min(20,Math.max(2,parseInt(prompt('Rows (incl. header):','3'),10)||3));
-    let html='<table style="border-collapse:collapse;width:100%;margin:12px 0"><thead><tr>';
-    for(let c=0;c<cols;c++)html+='<th style="border:1px solid var(--border);padding:6px 8px;background:var(--bg)">Header '+(c+1)+'</th>';
+  async function insertTable(){
+    const colsIn=await styledPrompt('Table columns','Number of columns (2–8).','3','Next','Cancel');
+    if(colsIn===null)return;
+    const rowsIn=await styledPrompt('Table rows','Number of rows including header (2–20).','3','Insert','Cancel');
+    if(rowsIn===null)return;
+    const cols=Math.min(8,Math.max(2,parseInt(colsIn,10)||3));
+    const rows=Math.min(20,Math.max(2,parseInt(rowsIn,10)||3));
+    let html='<div class="pq-table-wrap" contenteditable="false">'+
+      '<button type="button" class="pq-table-del" title="Delete table" contenteditable="false">×</button>'+
+      '<table contenteditable="true"><thead><tr>';
+    for(let c=0;c<cols;c++)html+='<th><br></th>';
     html+='</tr></thead><tbody>';
     for(let r=1;r<rows;r++){
       html+='<tr>';
-      for(let c=0;c<cols;c++)html+='<td style="border:1px solid var(--border);padding:6px 8px"> </td>';
+      for(let c=0;c<cols;c++)html+='<td><br></td>';
       html+='</tr>';
     }
-    html+='</tbody></table><p></p>';
+    html+='</tbody></table></div><p><br></p>';
     editor.focus();
     try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
-    saveCurrent();scheduleSave();toast('Table inserted');
+    wireTableControls();
+    saveCurrent();scheduleSave();toast('Table inserted — click × to delete');
   }
+  function migrateAndWireTables(){
+    // Wrap bare tables (legacy inserts) so they get delete controls
+    $$('table',editor).forEach(tbl=>{
+      if(tbl.closest('.pq-table-wrap'))return;
+      const wrap=document.createElement('div');
+      wrap.className='pq-table-wrap';
+      wrap.contentEditable='false';
+      const btn=document.createElement('button');
+      btn.type='button';btn.className='pq-table-del';btn.title='Delete table';btn.textContent='×';
+      btn.contentEditable='false';
+      tbl.parentNode.insertBefore(wrap,tbl);
+      wrap.appendChild(btn);wrap.appendChild(tbl);
+      tbl.contentEditable='true';
+      tbl.removeAttribute('style');
+      tbl.querySelectorAll('th,td').forEach(cell=>{
+        cell.removeAttribute('style');
+        if(!cell.innerHTML.trim())cell.innerHTML='<br>';
+      });
+    });
+    wireTableControls();
+  }
+  function wireTableControls(){
+    $$('.pq-table-wrap',editor).forEach(wrap=>{
+      wrap.contentEditable='false';
+      const tbl=wrap.querySelector('table');
+      if(tbl)tbl.contentEditable='true';
+      let btn=wrap.querySelector('.pq-table-del');
+      if(!btn){
+        btn=document.createElement('button');
+        btn.type='button';btn.className='pq-table-del';btn.title='Delete table';btn.textContent='×';
+        btn.contentEditable='false';
+        wrap.insertBefore(btn,wrap.firstChild);
+      }
+      if(!btn._wired){
+        btn._wired=true;
+        btn.onmousedown=e=>{e.preventDefault();e.stopPropagation()};
+        btn.onclick=async e=>{
+          e.preventDefault();e.stopPropagation();
+          if(!(await styledConfirm('Delete table','Delete this table?')))return;
+          wrap.remove();
+          saveCurrent();scheduleSave();toast('Table deleted');
+        };
+      }
+      wrap.querySelectorAll('th,td').forEach(cell=>{
+        if(!cell.innerHTML.trim())cell.innerHTML='<br>';
+      });
+    });
+  }
+  // Event delegation for tables pasted/inserted after load
+  editor.addEventListener('click',async e=>{
+    const del=e.target.closest&&e.target.closest('.pq-table-del');
+    if(!del)return;
+    e.preventDefault();e.stopPropagation();
+    const wrap=del.closest('.pq-table-wrap');
+    if(!wrap)return;
+    if(!(await styledConfirm('Delete table','Delete this table?')))return;
+    wrap.remove();saveCurrent();scheduleSave();toast('Table deleted');
+  });
 
   /* Cross-reference */
   function insertXref(){
@@ -2667,18 +3540,20 @@
   }
 
   /* Section word target */
-  function setSectionTarget(){
+  async function setSectionTarget(){
     const sec=getActiveSection();
-    const v=prompt('Word target for “'+sec.title+'” (0 = none):',String(sec.wordTarget||0));
+    const v=await styledPrompt('Section word target','Word target for “'+sec.title+'” (0 = none).',String(sec.wordTarget||0));
     if(v==null)return;
     sec.wordTarget=Math.max(0,parseInt(v,10)||0);
     scheduleSave();updateWc();toast(sec.wordTarget?'Target: '+sec.wordTarget+' words':'Target cleared');
   }
 
   /* Paper snapshots */
-  function takePaperSnapshot(){
+  async function takePaperSnapshot(){
     saveCurrent();
-    const name=prompt('Paper snapshot name:','Before major revision')||('Snapshot '+new Date().toLocaleString());
+    const nameIn=await styledPrompt('Paper snapshot','Name this snapshot.','Before major revision');
+    if(nameIn===null)return;
+    const name=nameIn.trim()||('Snapshot '+new Date().toLocaleString());
     state.paperSnapshots=state.paperSnapshots||[];
     state.paperSnapshots.unshift({
       id:uid(),name,at:new Date().toISOString(),
@@ -2697,9 +3572,9 @@
         '<button type="button" class="pq-btn pq-btn-primary m-rest" data-id="'+s.id+'">Restore</button></div>').join('')+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
     $('#m-cancel').onclick=closeModal;
-    $$('.m-rest').forEach(b=>b.onclick=()=>{
+    $$('.m-rest').forEach(b=>b.onclick=async()=>{
       const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
-      if(!confirm('Restore this full-paper snapshot? Current content will be replaced.'))return;
+      if(!(await styledConfirm('Restore snapshot','Restore this full-paper snapshot? Current content will be replaced.','Restore','Cancel')))return;
       state.sections=JSON.parse(JSON.stringify(snap.sections));
       state.sources=JSON.parse(JSON.stringify(snap.sources||state.sources));
       if(snap.paperTitle)state.paperTitle=snap.paperTitle;
@@ -2818,7 +3693,8 @@
       ['Citation audit','audit'],['Readability','read'],['Find & replace','fr'],['Outline','outline'],
       ['Quote bank','quotes'],['Shared library','lib'],['Import sources','imp'],['Export sources','expsrc'],
       ['LanguageTool','lt'],['Templates','tmpl'],['Focus timer','pomo'],['Toggle tutorial','tut'],
-      ['Snapshot paper','psnap'],['Export Markdown','md'],['Export DOCX','docx'],['Search paper','search']
+      ['Snapshot paper','psnap'],['Export Markdown','md'],['Export DOCX','docx'],['Search paper','search'],
+      ['Relational vocabulary','vocab'],['Academic signposting','signpost'],['Academic underpinning','underpin'],['Sentence construction lab','sentlab']
     ];
     openModal('<h3>Command palette</h3><input class="pq-inp" id="m-pal" style="width:100%" placeholder="Type to filter…" autofocus>'+
       '<div id="m-pal-list" style="margin-top:8px;max-height:50vh;overflow:auto"></div>'+
@@ -2837,7 +3713,8 @@
   function runCmd(c){
     const map={audit:openCitationAudit,read:openReadability,fr:openFindReplace,outline:openOutline,quotes:openQuoteBank,
       lib:openLibrary,imp:openImportSources,expsrc:openExportSources,lt:runLanguageTool,tmpl:openTemplates,pomo:openPomodoro,
-      tut:toggleTutorial,psnap:takePaperSnapshot,md:exportMarkdown,docx:exportDocx,search:openSearch};
+      tut:toggleTutorial,psnap:takePaperSnapshot,md:exportMarkdown,docx:exportDocx,search:openSearch,
+      vocab:openVocab,signpost:openSignposting,underpin:openUnderpin,sentlab:openSentenceLab};
     if(map[c])map[c]();
   }
 
@@ -2894,10 +3771,11 @@
   $('#pq-disk-open').onclick=()=>openFromDisk();
   $('#pq-export').onclick=()=>openExportMenu();
   $('#pq-refresh-bib').onclick=()=>{rebuildWorksCited();toast('Bibliography refreshed')};
-  $('#pq-add-section').onclick=()=>{
-    const t=prompt('Section title','New Section');if(!t)return;
+  $('#pq-add-section').onclick=async()=>{
+    const t=await styledPrompt('New section','Section title','New Section');
+    if(t===null||!t.trim())return;
     saveCurrent();
-    const sec={id:uid(),key:'custom',title:t,content:'',order:state.sections.length,status:'draft',snapshots:[],mod:Date.now()};
+    const sec={id:uid(),key:'custom',title:t.trim(),content:'',order:state.sections.length,status:'draft',snapshots:[],mod:Date.now()};
     state.sections.push(sec);state.activeSectionId=sec.id;
     scheduleSave();renderSections();loadSection();
   };
@@ -2913,7 +3791,9 @@
   }});
 
   $('#cap-home').onclick=async()=>{
+    exitFocusMode();
     $('#pq-dash').classList.add('open');
+    switchDashTab('papers');
     const m=readMeta();
     const name=m.researcher||state.authorName||'';
     $('#pq-researcher').value=name;
@@ -2921,30 +3801,98 @@
     $('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;
     const dt=$('#pq-daily-target');if(dt)dt.value=getDailyTarget();
     updateSessionLine();
+    updateDriveUI();
     await renderProjectGrid();
     await renderProgressPane();
     await renderAchievements();
   };
-  $$('#pq-dash-tabs button').forEach(btn=>{
-    btn.onclick=async()=>{
-      $$('#pq-dash-tabs button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      $$('.pq-dash-pane').forEach(p=>p.classList.remove('active'));
-      const pane=$('#pane-'+btn.dataset.pane);
-      if(pane)pane.classList.add('active');
-      if(btn.dataset.pane==='progress')await renderProgressPane();
-      if(btn.dataset.pane==='achievements')await renderAchievements();
-    };
-  });
+  function switchDashTab(paneId){
+    const tabs=$('#pq-dash-tabs');
+    if(!tabs)return;
+    $$('#pq-dash-tabs button').forEach(b=>{
+      b.classList.toggle('active',b.dataset.pane===paneId);
+    });
+    $$('.pq-dash-pane').forEach(p=>{
+      p.classList.toggle('active',p.id==='pane-'+paneId);
+    });
+    if(paneId==='progress')renderProgressPane();
+    if(paneId==='achievements')renderAchievements();
+  }
+  const dashTabs=$('#pq-dash-tabs');
+  if(dashTabs){
+    dashTabs.addEventListener('click',e=>{
+      const btn=e.target.closest('button[data-pane]');
+      if(!btn||!dashTabs.contains(btn))return;
+      e.preventDefault();
+      switchDashTab(btn.dataset.pane);
+    });
+  }
   const dailySet=$('#pq-daily-set');
   if(dailySet)dailySet.onclick=()=>{
     const v=parseInt($('#pq-daily-target').value,10)||500;
     const m=readMeta();m.dailyTarget=v;writeMeta(m);
     updateDailyBar();toast('Daily goal: '+v+' words');
   };
+  function enterFocusMode(){
+    $('#pq-dash')&&$('#pq-dash').classList.remove('open');
+    ROOT.classList.add('pq-focus');
+    const wrap=$('.pq-editor-wrap');
+    if(wrap){
+      wrap.scrollTop=0;
+      // after chrome hides, scroll active caret/editor into view
+      requestAnimationFrame(()=>{
+        editor.focus();
+        try{
+          const sel=window.getSelection();
+          if(sel&&sel.rangeCount){
+            const r=sel.getRangeAt(0);
+            const node=r.startContainer.nodeType===1?r.startContainer:r.startContainer.parentElement;
+            if(node&&node.scrollIntoView)node.scrollIntoView({block:'center',behavior:'smooth'});
+          }else{
+            editor.scrollIntoView({block:'start',behavior:'smooth'});
+          }
+        }catch(err){
+          editor.scrollIntoView({block:'start',behavior:'smooth'});
+        }
+      });
+    }else{
+      editor.focus();
+    }
+    toast('Focus mode — Exit focus at top right');
+  }
+  function exitFocusMode(){
+    ROOT.classList.remove('pq-focus');
+  }
   $('#cap-sections').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
-  $('#cap-focus').onclick=()=>ROOT.classList.add('pq-focus');
-  $('#pq-focus-exit').onclick=()=>ROOT.classList.remove('pq-focus');
+  const capScaf=$('#cap-scaffold');
+  if(capScaf)capScaf.onclick=()=>toggleScaffold();
+  const scafClose=$('#scaf-close');
+  if(scafClose)scafClose.onclick=()=>toggleScaffold(false);
+  const scafWide=$('#scaf-wide');
+  if(scafWide)scafWide.onclick=()=>{
+    const sc=ensureScaffold();
+    setScaffoldWide(!sc.wide);
+  };
+  const scafNew=$('#scaf-new-box');
+  if(scafNew)scafNew.onclick=async()=>{
+    const sc=ensureScaffold();
+    if(!sc.open)toggleScaffold(true);
+    const t=await styledPromptArea('Textual passage','Add the primary passage or formal observation for this discussion box.','');
+    if(t===null)return;
+    sc.boxes.push(newScafBox(t.trim()));
+    scheduleSave();renderScaffold();
+  };
+  const scafFromSel=$('#scaf-box-from-sel');
+  if(scafFromSel)scafFromSel.onclick=()=>{
+    const t=getEditorSelectionText();
+    if(!t)return toast('Select a passage in the editor first');
+    const sc=ensureScaffold();
+    if(!sc.open)toggleScaffold(true);
+    sc.boxes.push(newScafBox(t));
+    scheduleSave();renderScaffold();toast('Box created from selection');
+  };
+  $('#cap-focus').onclick=()=>enterFocusMode();
+  $('#pq-focus-exit').onclick=()=>exitFocusMode();
   $('#cap-tools').onclick=()=>$('#pq-tools-menu').classList.toggle('open');
   $('#tool-lt').onclick=()=>{closeTools();if(state.ltOn){clearLT();toast('LanguageTool off')}else runLanguageTool()};
   $('#tool-audit').onclick=()=>{closeTools();openCitationAudit()};
@@ -2952,6 +3900,9 @@
   $('#tool-findreplace').onclick=()=>{closeTools();openFindReplace()};
   $('#tool-outline').onclick=()=>{closeTools();openOutline()};
   $('#tool-vocab').onclick=()=>{closeTools();openVocab()};
+  $('#tool-signpost').onclick=()=>{closeTools();openSignposting()};
+  $('#tool-underpin').onclick=()=>{closeTools();openUnderpin()};
+  $('#tool-sentlab').onclick=()=>{closeTools();openSentenceLab()};
   $('#tool-claims').onclick=()=>{closeTools();openClaims()};
   $('#tool-quote').onclick=()=>{closeTools();saveQuoteFromSelection()};
   $('#tool-quotes').onclick=()=>{closeTools();openQuoteBank()};
@@ -2976,7 +3927,11 @@
   $('#tool-tutorial').onclick=()=>{closeTools();toggleTutorial()};
   $('#tool-templates').onclick=()=>{closeTools();openTemplates()};
 
-  $('.pq-logo').onclick=()=>{const t=prompt('Paper title',state.paperTitle||'');if(t!=null){state.paperTitle=t.trim()||'Untitled paper';scheduleSave();toast('Title updated')}};
+  $('.pq-logo').onclick=async()=>{
+    const t=await styledPrompt('Paper title','Rename this paper',state.paperTitle||'');
+    if(t===null)return;
+    state.paperTitle=t.trim()||'Untitled paper';scheduleSave();toast('Title updated');
+  };
 
   const secStatus=$('#pq-sec-status');
   if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Date.now();scheduleSave();renderSections()};
@@ -3022,9 +3977,11 @@
     $('#m-cancel').onclick=closeModal;
     $('#m-save').onclick=()=>{state.notes=$('#m-notes').value;scheduleSave();closeModal();toast('Notes saved')};
   }
-  function takeSnapshot(){
+  async function takeSnapshot(){
     const sec=getActiveSection();if(!sec)return;
-    const name=prompt('Snapshot name:','Before edit')||('Snapshot '+new Date().toLocaleString());
+    const nameIn=await styledPrompt('Section snapshot','Name this snapshot.','Before edit');
+    if(nameIn===null)return;
+    const name=nameIn.trim()||('Snapshot '+new Date().toLocaleString());
     if(!sec.snapshots)sec.snapshots=[];
     sec.snapshots.unshift({id:uid(),name,content:sec.content||'',title:sec.title,at:new Date().toISOString()});
     if(sec.snapshots.length>20)sec.snapshots=sec.snapshots.slice(0,20);
@@ -3038,9 +3995,9 @@
       snaps.map(s=>'<div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px"><strong>'+escapeHtml(s.name)+'</strong><p class="pq-help">'+escapeHtml(String(s.at).slice(0,19))+'</p><button type="button" class="pq-btn pq-btn-primary pq-rest" data-id="'+s.id+'">Restore</button></div>').join('')+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
     $('#m-cancel').onclick=closeModal;
-    $$('.pq-rest').forEach(b=>b.onclick=()=>{
+    $$('.pq-rest').forEach(b=>b.onclick=async()=>{
       const snap=snaps.find(x=>x.id===b.dataset.id);if(!snap)return;
-      if(!confirm('Replace current section text with this snapshot?'))return;
+      if(!(await styledConfirm('Restore snapshot','Replace current section text with this snapshot?','Restore','Cancel')))return;
       sec.content=snap.content;if(snap.title)sec.title=snap.title;sec.mod=Date.now();loadSection();scheduleSave();closeModal();toast('Restored');
     });
   }
@@ -3069,7 +4026,7 @@
     if(mod&&e.key==='k'){e.preventDefault();openSearch()}
     if(mod&&e.shiftKey&&(e.key==='P'||e.key==='p')){e.preventDefault();openPalette()}
     if(mod&&e.shiftKey&&(e.key==='L'||e.key==='l')){e.preventDefault();runLanguageTool()}
-    if(mod&&e.shiftKey&&(e.key==='F'||e.key==='f')){e.preventDefault();ROOT.classList.toggle('pq-focus')}
+    if(mod&&e.shiftKey&&(e.key==='F'||e.key==='f')){e.preventDefault();ROOT.classList.contains('pq-focus')?exitFocusMode():enterFocusMode()}
   });
 
   editor.addEventListener('input',e=>{applyAutoCap(e);saveCurrent();scheduleSave();updateWc();rebuildWorksCited()});
@@ -3102,7 +4059,356 @@
 
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
+  /* ========== Google Drive (OAuth via Cloudflare Worker) ========== */
+  const PQ_DRIVE = {
+    clientId: '620970730079-n0278i879j8q3onhdt1f8rrbgu1950t9.apps.googleusercontent.com',
+    // Change with Tools → Set Worker URL if needed (saved in localStorage)
+    workerUrl: (function(){
+      try{return (localStorage.getItem('pq-worker-url')||'https://paperquill-api.authormasoncarter.com').replace(/\/$/,'')}catch(e){return 'https://paperquill-api.authormasoncarter.com'}
+    })(),
+    redirectUri: 'https://paperquill.authormasoncarter.com/',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    sessionKey: 'pq-drive-session',
+    tokenKey: 'pq-drive-token',
+  };
+  let driveAccessToken = null;
+  let driveTokenExpiresAt = 0;
+
+  function driveReadSession(){
+    try{return localStorage.getItem(PQ_DRIVE.sessionKey)||''}catch(e){return ''}
+  }
+  function driveWriteSession(id){
+    try{if(id)localStorage.setItem(PQ_DRIVE.sessionKey,id);else localStorage.removeItem(PQ_DRIVE.sessionKey)}catch(e){}
+  }
+  function driveCacheToken(token, expiresIn){
+    driveAccessToken = token||null;
+    driveTokenExpiresAt = token ? (Date.now() + Math.max(60, (expiresIn||3600) - 120) * 1000) : 0;
+    try{
+      if(token) localStorage.setItem(PQ_DRIVE.tokenKey, JSON.stringify({token, exp: driveTokenExpiresAt}));
+      else localStorage.removeItem(PQ_DRIVE.tokenKey);
+    }catch(e){}
+  }
+  function driveLoadCachedToken(){
+    try{
+      const raw = localStorage.getItem(PQ_DRIVE.tokenKey);
+      if(!raw)return;
+      const o = JSON.parse(raw);
+      if(o&&o.token&&o.exp&&Date.now()<o.exp){
+        driveAccessToken = o.token;
+        driveTokenExpiresAt = o.exp;
+      }
+    }catch(e){}
+  }
+
+  async function driveWorker(path, body){
+    const res = await fetch(PQ_DRIVE.workerUrl + path, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body||{}),
+    });
+    let data = {};
+    try{data = await res.json()}catch(e){}
+    if(!res.ok){
+      const err = new Error((data&&data.error)||('Worker '+res.status));
+      err.detail = data;
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  async function driveEnsureToken(){
+    if(driveAccessToken && Date.now() < driveTokenExpiresAt) return driveAccessToken;
+    const sid = driveReadSession();
+    if(!sid) throw new Error('not_connected');
+    const data = await driveWorker('/auth/refresh', {session_id: sid});
+    driveCacheToken(data.access_token, data.expires_in);
+    return driveAccessToken;
+  }
+
+  function driveConnect(){
+    closeTools();
+    const params = new URLSearchParams({
+      client_id: PQ_DRIVE.clientId,
+      redirect_uri: PQ_DRIVE.redirectUri,
+      response_type: 'code',
+      scope: PQ_DRIVE.scope,
+      access_type: 'offline',
+      prompt: 'consent',
+      include_granted_scopes: 'true',
+    });
+    window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  }
+
+  async function driveHandleOAuthReturn(){
+    const u = new URL(window.location.href);
+    const code = u.searchParams.get('code');
+    const err = u.searchParams.get('error');
+    if(err){
+      history.replaceState({},'',PQ_DRIVE.redirectUri);
+      toast('Drive sign-in cancelled');
+      return false;
+    }
+    if(!code) return false;
+    history.replaceState({},'',PQ_DRIVE.redirectUri);
+    try{
+      toast('Connecting Drive…');
+      const data = await driveWorker('/auth/exchange', {
+        code: code,
+        redirect_uri: PQ_DRIVE.redirectUri,
+      });
+      if(data.session_id) driveWriteSession(data.session_id);
+      driveCacheToken(data.access_token, data.expires_in);
+      updateDriveUI();
+      toast('Drive connected'+(data.email?(' · '+data.email):''));
+      return true;
+    }catch(e){
+      console.error(e);
+      toast('Drive connect failed — check Worker URL & secrets');
+      return false;
+    }
+  }
+
+  async function driveDisconnect(){
+    closeTools();
+    const sid = driveReadSession();
+    try{if(sid) await driveWorker('/auth/logout', {session_id: sid})}catch(e){}
+    driveWriteSession('');
+    driveCacheToken(null, 0);
+    if(state){ state.driveFileId = ''; state.driveLastSync = ''; }
+    scheduleSave();
+    updateDriveUI();
+    toast('Drive disconnected');
+  }
+
+  function formatDriveSyncTime(iso){
+    if(!iso) return '—';
+    try{
+      const d=new Date(iso);
+      if(isNaN(d.getTime())) return '—';
+      const now=Date.now(), diff=now-d.getTime();
+      if(diff<60000) return 'just now';
+      if(diff<3600000) return Math.floor(diff/60000)+' min ago';
+      if(diff<86400000) return Math.floor(diff/3600000)+' h ago';
+      return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    }catch(e){return '—'}
+  }
+
+  function updateDriveUI(){
+    const connected=!!driveReadSession();
+    const last=formatDriveSyncTime(state&&state.driveLastSync);
+    const panelInfo=$('#pq-drive-sync-info');
+    const panelBtn=$('#pq-drive-sync');
+    if(panelInfo){
+      if(connected && state&&state.driveLastSync) panelInfo.textContent='Drive · '+last;
+      else if(connected) panelInfo.textContent='Drive · not synced';
+      else panelInfo.textContent='';
+    }
+    if(panelBtn){
+      panelBtn.title=connected?(state&&state.driveFileId?'Update paper on Google Drive':'Upload paper to Google Drive'):'Connect Drive from Home first';
+    }
+    const st=$('#pq-dash-drive-status');
+    const sy=$('#pq-dash-drive-sync');
+    const btnConn=$('#pq-dash-drive-connect');
+    const btnOpen=$('#pq-dash-drive-open');
+    const btnSync=$('#pq-dash-drive-sync');
+    const btnDisc=$('#pq-dash-drive-disconnect');
+    if(st) st.textContent=connected?'Connected'+(state&&state.driveFileId?' · file linked':''):'Not connected';
+    if(sy) sy.textContent='Last sync: '+last;
+    if(btnConn) btnConn.style.display=connected?'none':'';
+    if(btnOpen) btnOpen.style.display=connected?'':'none';
+    if(btnSync) btnSync.style.display=connected?'':'none';
+    if(btnDisc) btnDisc.style.display=connected?'':'none';
+  }
+
+  async function driveStatus(){
+    closeTools();
+    const sid = driveReadSession();
+    if(!sid){toast('Not connected');return}
+    try{
+      const token = await driveEnsureToken();
+      const me = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {Authorization: 'Bearer '+token}
+      });
+      const profile = await me.json();
+      openModal(
+        '<h3>Google Drive</h3>'+
+        '<p class="pq-dialog-msg">Connected as <strong>'+escapeHtml(profile.email||'unknown')+'</strong></p>'+
+        '<p class="pq-help">Worker: '+escapeHtml(PQ_DRIVE.workerUrl)+'</p>'+
+        '<p class="pq-help">This paper Drive file id: '+escapeHtml(state.driveFileId||'— not saved yet')+'</p>'+
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-ok">OK</button></div>'
+      );
+      $('#m-ok').onclick=closeModal;
+    }catch(e){
+      toast('Session expired — Connect Google Drive again');
+    }
+  }
+
+  async function driveSavePaper(){
+    closeTools();
+    try{
+      const token = await driveEnsureToken();
+      saveCurrent();
+      const payload = {
+        app: 'PaperQuill',
+        version: 1,
+        id: currentProjectId,
+        name: state.paperTitle || 'Untitled paper',
+        updatedAt: new Date().toISOString(),
+        wordCount: totalWords(),
+        state: state,
+      };
+      const bodyStr = JSON.stringify(payload, null, 2);
+      const fileName = 'PaperQuill – '+(state.paperTitle||'Untitled').replace(/[\\/:*?"<>|]/g,'').slice(0,80)+'.json';
+      const meta = {name: fileName, mimeType: 'application/json'};
+      if(state.driveFileId) meta.parents = undefined; // update existing
+
+      let res;
+      if(state.driveFileId){
+        // update content
+        res = await fetch('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(state.driveFileId)+'?uploadType=media', {
+          method: 'PATCH',
+          headers: {
+            Authorization: 'Bearer '+token,
+            'Content-Type': 'application/json',
+          },
+          body: bodyStr,
+        });
+      }else{
+        // multipart create
+        const boundary = 'paperquill_'+Date.now();
+        const multipart =
+          '--'+boundary+'\r\n'+
+          'Content-Type: application/json; charset=UTF-8\r\n\r\n'+
+          JSON.stringify(meta)+'\r\n'+
+          '--'+boundary+'\r\n'+
+          'Content-Type: application/json\r\n\r\n'+
+          bodyStr+'\r\n'+
+          '--'+boundary+'--';
+        res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer '+token,
+            'Content-Type': 'multipart/related; boundary='+boundary,
+          },
+          body: multipart,
+        });
+      }
+      const data = await res.json();
+      if(!res.ok){
+        console.error(data);
+        throw new Error((data.error&&data.error.message)||'Drive upload failed');
+      }
+      if(data.id) state.driveFileId = data.id;
+      state.driveLastSync = new Date().toISOString();
+      scheduleSave();
+      updateDriveUI();
+      toast('Synced to Drive · '+fileName);
+    }catch(e){
+      console.error(e);
+      if(String(e.message)==='not_connected') toast('Connect Google Drive first (Home → Google Drive)');
+      else toast('Drive sync failed: '+(e.message||'error'));
+    }
+  }
+
+  async function driveOpenList(){
+    closeTools();
+    try{
+      const token = await driveEnsureToken();
+      const q = encodeURIComponent("name contains 'PaperQuill' and trashed=false");
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=25&orderBy=modifiedTime desc&fields=files(id,name,modifiedTime)&q='+q, {
+        headers: {Authorization: 'Bearer '+token}
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error((data.error&&data.error.message)||'List failed');
+      const files = data.files||[];
+      if(!files.length){
+        openModal('<h3>Open from Drive</h3><p class="pq-help">No PaperQuill files found. Save a paper first.</p><div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+        $('#m-cancel').onclick=closeModal;
+        return;
+      }
+      openModal(
+        '<h3>Open from Drive</h3>'+
+        '<p class="pq-help">Select a PaperQuill JSON backup.</p>'+
+        files.map(f=>'<button type="button" class="pq-btn" style="display:block;width:100%;text-align:left;margin-bottom:6px" data-fid="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+'<br><span class="pq-help">'+(f.modifiedTime||'').slice(0,19)+'</span></button>').join('')+
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Cancel</button></div>'
+      );
+      $('#m-cancel').onclick=closeModal;
+      $$('#pq-modal [data-fid]').forEach(b=>b.onclick=async()=>{
+        closeModal();
+        await driveOpenFile(b.getAttribute('data-fid'));
+      });
+    }catch(e){
+      console.error(e);
+      if(String(e.message)==='not_connected') toast('Connect Google Drive first');
+      else toast('Drive open failed: '+(e.message||'error'));
+    }
+  }
+
+  async function driveOpenFile(fileId){
+    try{
+      const token = await driveEnsureToken();
+      toast('Loading from Drive…');
+      const res = await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?alt=media', {
+        headers: {Authorization: 'Bearer '+token}
+      });
+      if(!res.ok) throw new Error('Download failed');
+      const payload = await res.json();
+      if(!payload||!payload.state) throw new Error('Not a PaperQuill file');
+      await persist();
+      currentProjectId = payload.id || uid();
+      state = Object.assign(emptyState(), payload.state);
+      state.driveFileId = fileId;
+      normalizeState();
+      const meta = readMeta();
+      meta.projectId = currentProjectId;
+      writeMeta(meta);
+      fileHandle=null; diskName='';
+      await persist();
+      renderAll();
+      updateDriveUI();
+      toast('Opened from Drive · '+(state.paperTitle||'paper'));
+    }catch(e){
+      console.error(e);
+      toast('Open failed: '+(e.message||'error'));
+    }
+  }
+
+  async function driveSetWorkerUrl(){
+    closeTools();
+    const cur = PQ_DRIVE.workerUrl;
+    const v = await styledPrompt('Worker URL','Cloudflare Worker base URL (no trailing slash).',cur);
+    if(v===null)return;
+    const url = v.trim().replace(/\/$/,'');
+    try{localStorage.setItem('pq-worker-url', url)}catch(e){}
+    PQ_DRIVE.workerUrl = url;
+    try{
+      const r = await fetch(url+'/health');
+      const j = await r.json();
+      if(j&&j.ok) toast('Worker OK · '+url);
+      else toast('Worker responded but not ok');
+    }catch(e){
+      toast('Saved — but health check failed. Check URL / deploy.');
+    }
+  }
+
+  // Drive UI wiring (panel + dashboard). Tools keeps only Worker URL.
+  const panelDriveSync=$('#pq-drive-sync');
+  if(panelDriveSync) panelDriveSync.onclick=()=>driveSavePaper();
+  const dashDriveConn=$('#pq-dash-drive-connect');
+  if(dashDriveConn) dashDriveConn.onclick=()=>driveConnect();
+  const dashDriveOpen=$('#pq-dash-drive-open');
+  if(dashDriveOpen) dashDriveOpen.onclick=()=>driveOpenList();
+  const dashDriveSync=$('#pq-dash-drive-sync');
+  if(dashDriveSync) dashDriveSync.onclick=()=>driveSavePaper();
+  const dashDriveDisc=$('#pq-dash-drive-disconnect');
+  if(dashDriveDisc) dashDriveDisc.onclick=()=>driveDisconnect();
+  const toolDriveWorker=$('#tool-drive-worker');
+  if(toolDriveWorker) toolDriveWorker.onclick=()=>driveSetWorkerUrl();
+
   (async()=>{
+    driveLoadCachedToken();
+    const fromOAuth = await driveHandleOAuthReturn();
     await load();
     ROOT.classList.add('pq-side-collapsed');
     renderAll();updateSessionLine();
@@ -3115,6 +4421,11 @@
     $('#pq-dash-hello').textContent=pickGreeting(name);
     if(!m.researcher)$('#pq-dash').classList.add('open');
     updateDailyBar();
+    updateDriveUI();
+    // silent token refresh if session exists
+    if(!fromOAuth && driveReadSession()){
+      try{await driveEnsureToken();updateDriveUI()}catch(e){/* stay quiet until user uses Drive */}
+    }
   })();
 })();
 </script>
