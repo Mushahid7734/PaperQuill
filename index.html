@@ -89,23 +89,52 @@
     .pq-body{display:flex;flex:1;min-height:0;position:relative}
     .pq-sidebar{
       width:var(--sidebar);max-width:42vw;background:var(--panel);border-right:1px solid var(--border);
-      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .2s,margin .2s;
+      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .22s ease,margin .22s,box-shadow .22s;
     }
     #pq-root.pq-side-collapsed .pq-sidebar{width:0;max-width:0;border:none;margin:0;padding:0;overflow:hidden}
-    .pq-side-inner{width:var(--sidebar);max-width:42vw;padding:8px;display:flex;flex-direction:column;height:100%;overflow:hidden}
-    .pq-side-tabs{display:flex;gap:2px;margin-bottom:8px}
-    .pq-side-tabs button{flex:1;font-size:.72rem;padding:5px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:4px;cursor:pointer}
-    .pq-side-tabs button.active{background:var(--paper);color:var(--ink);font-weight:600}
-    .pq-list{flex:1;overflow-y:auto}
-    .pq-item{display:flex;align-items:center;gap:4px;padding:7px 8px;border-radius:6px;cursor:grab;font-size:.82rem;border:1px solid transparent;margin-bottom:2px;user-select:none}
+    .pq-side-inner{width:var(--sidebar);max-width:42vw;padding:10px 10px 12px;display:flex;flex-direction:column;height:100%;overflow:hidden}
+    .pq-side-tabs{display:flex;gap:4px;margin-bottom:10px;padding:3px;background:color-mix(in srgb,var(--ink) 4%,var(--bg));border-radius:10px;border:1px solid var(--border)}
+    .pq-side-tabs button{flex:1;font-size:.72rem;font-weight:500;padding:7px 6px;border:none;background:transparent;color:var(--muted);border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+    .pq-side-tabs button:hover{color:var(--ink)}
+    .pq-side-tabs button.active{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:0 1px 4px color-mix(in srgb,var(--ink) 8%,transparent)}
+    .pq-list{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;scrollbar-width:thin}
+    .pq-item{
+      display:flex;align-items:flex-start;gap:6px;padding:9px 10px;border-radius:10px;cursor:grab;
+      font-size:.8rem;line-height:1.35;border:1px solid transparent;margin-bottom:4px;user-select:none;
+      background:transparent;transition:background .12s,border-color .12s,box-shadow .12s
+    }
     .pq-item:active{cursor:grabbing}
-    .pq-item.dragging{opacity:.5;background:var(--hover)}
-    .pq-item.drag-over{border-top:2px solid var(--accent)}
-    .pq-item:hover{background:var(--hover)}
-    .pq-item.active{background:var(--paper);border-color:var(--border);font-weight:600}
-    .pq-item .pq-del{opacity:.55;border:none;background:none;color:var(--danger);cursor:pointer;margin-left:auto;font-size:1rem;line-height:1;padding:2px 6px;border-radius:4px}
-    .pq-item:hover .pq-del,.pq-item .pq-del:active{opacity:1;background:color-mix(in srgb,var(--danger) 12%,transparent)}
-    .pq-item .pq-drag{color:var(--muted);font-size:.7rem;margin-right:2px}
+    .pq-item.dragging{opacity:.45;background:var(--hover)}
+    .pq-item.drag-over{border-top:2px solid var(--accent);border-radius:4px 4px 10px 10px}
+    .pq-item:hover{background:var(--hover);border-color:color-mix(in srgb,var(--border) 80%,var(--accent))}
+    .pq-item.active{
+      background:var(--paper);border-color:color-mix(in srgb,var(--accent) 35%,var(--border));
+      font-weight:600;box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 10%,transparent)
+    }
+    .pq-item .pq-item-main{flex:1;min-width:0}
+    .pq-item .pq-item-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+    .pq-item .pq-item-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:3px}
+    .pq-item .pq-del{
+      opacity:0;border:none;background:none;color:var(--danger);cursor:pointer;margin-left:2px;
+      font-size:.95rem;line-height:1;padding:4px 6px;border-radius:6px;flex-shrink:0;transition:opacity .12s
+    }
+    .pq-item:hover .pq-del,.pq-item.active .pq-del,.pq-item .pq-del:focus{opacity:.75}
+    .pq-item .pq-del:hover,.pq-item .pq-del:active{opacity:1;background:color-mix(in srgb,var(--danger) 12%,transparent)}
+    .pq-item .pq-drag{color:var(--muted);font-size:.65rem;margin-top:3px;opacity:.55;flex-shrink:0;cursor:grab}
+    .pq-item:hover .pq-drag{opacity:.9}
+    .pq-status{
+      font-size:.62rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+      padding:2px 7px;border-radius:999px;border:1px solid var(--border);color:var(--muted);line-height:1.2
+    }
+    .pq-status.draft{background:color-mix(in srgb,var(--muted) 8%,var(--paper))}
+    .pq-status.revise{border-color:var(--warn);color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--paper))}
+    .pq-status.done{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--paper))}
+    .pq-side-inner>#pq-add-section{margin-top:8px;width:100%;border-radius:9px;font-weight:600}
+    .pq-side-inner>.pq-help{margin:8px 2px 0;font-size:.68rem;line-height:1.4;color:var(--muted)}
+    @media(min-width:801px){
+      #pq-root{--sidebar:min(300px,28vw)}
+      .pq-side-inner{width:var(--sidebar)}
+    }
     .pq-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--paper);transition:max-width .2s}
     .pq-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg);align-items:center}
     .pq-editor-wrap{flex:1;overflow-y:auto;padding:24px 6% 80px;position:relative}
@@ -357,6 +386,30 @@
     #pq-root.pq-title-sec .pq-works{display:none}
     .pq-title-page-wrap{max-width:42em;margin:0 auto 16px}
     .pq-title-page-wrap .pq-help{margin:8px 0 0;text-align:center}
+    .pq-title-page.pq-tp-edit{
+      max-width:42em;margin:0 auto 16px;padding:36px 28px 40px;min-height:auto;
+      border:1px solid var(--border);border-radius:8px;background:var(--paper);
+      display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+      text-align:center;font-family:"Source Serif 4",Georgia,serif;line-height:1.55;
+      box-shadow:0 2px 16px color-mix(in srgb,var(--ink) 6%,transparent);gap:4px
+    }
+    .pq-title-page.pq-tp-edit.tp-mla{align-items:stretch;text-align:left}
+    .pq-tp-field{width:100%;border:none;background:transparent;font:inherit;color:var(--ink);
+      text-align:inherit;padding:6px 8px;border-radius:6px;outline:none;resize:none;
+      border-bottom:1px dashed transparent;transition:background .15s,border-color .15s}
+    .pq-tp-field:hover{background:color-mix(in srgb,var(--accent) 5%,transparent);border-bottom-color:var(--border)}
+    .pq-tp-field:focus{background:color-mix(in srgb,var(--accent) 8%,transparent);border-bottom-color:var(--accent)}
+    .pq-tp-field::placeholder{color:var(--muted);opacity:.55;font-style:italic}
+    .pq-tp-field.tp-title-in{font-size:1.45rem;font-weight:600;line-height:1.35;min-height:2.4em;margin:8px 0 12px}
+    .pq-tp-field.tp-author-in{font-size:1.05rem;font-weight:500}
+    .pq-tp-field.tp-opt{font-size:.95rem;color:var(--ink)}
+    .pq-tp-field.tp-muted-in{font-size:.9rem;color:var(--muted)}
+    .pq-tp-label{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--muted);margin:10px 0 0;text-align:inherit;font-family:"Source Sans 3",system-ui,sans-serif}
+    .pq-title-page.tp-mla .pq-tp-label{text-align:left}
+    .pq-tp-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px;font-family:"Source Sans 3",system-ui,sans-serif}
+    .pq-title-page.tp-mla .pq-tp-actions{justify-content:flex-start}
+
     .pq-guide{
       max-width:42em;margin:0 auto 16px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);
       background:color-mix(in srgb,var(--accent) 8%,var(--paper));font-size:.84rem;line-height:1.6;display:none;
@@ -572,7 +625,7 @@
   </style>
 </head>
 <body>
-<div id="pq-root" class="pq-side-collapsed">
+<div id="pq-root">
   <div class="pq-top">
     <span class="pq-logo" title="Rename paper">PaperQuill</span>
     <div class="pq-sep"></div>
@@ -2701,10 +2754,11 @@
       if(!state.activeSectionId)state.activeSectionId=state.sections[0].id;
     }
     const sorted=state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0));
-    list.innerHTML=sorted.map(s=>'<div class="pq-item'+(s.id===state.activeSectionId?' active':'')+'" data-id="'+s.id+'" draggable="true">'+
-      '<span class="pq-drag" title="Drag to reorder">⠿</span>'+
-      '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(s.title)+'<span class="pq-status '+(s.status||'draft')+'">'+(s.status||'draft')+'</span></span>'+
-      '<button type="button" class="pq-del" data-id="'+s.id+'" title="Delete section">×</button>'+
+    list.innerHTML=sorted.map((s,i)=>'<div class="pq-item'+(s.id===state.activeSectionId?' active':'')+'" data-id="'+s.id+'" draggable="true" title="'+escapeHtml(s.title)+'">'+
+      '<span class="pq-drag" title="Drag to reorder" aria-hidden="true">⠿</span>'+
+      '<span class="pq-item-main"><span class="pq-item-title">'+escapeHtml(s.title)+'</span>'+
+      '<span class="pq-item-meta"><span class="pq-status '+(s.status||'draft')+'">'+(s.status||'draft')+'</span></span></span>'+
+      '<button type="button" class="pq-del" data-id="'+s.id+'" title="Delete section" aria-label="Delete section">×</button>'+
       '</div>').join('');
     list.querySelectorAll('.pq-item').forEach(el=>{
       el.onclick=e=>{if(e.target.classList.contains('pq-del'))return;switchSection(el.dataset.id)};
@@ -4774,15 +4828,89 @@
     return {variant:'tp-chicago', lines, diss:false};
   }
   function renderTitlePageHtml(){
-    const model=buildTitlePageModel();
-    const body=model.lines.map(l=>{
-      const tag=l.cls&&l.cls.indexOf('tp-title')>=0?'div':'p';
-      return '<'+tag+' class="'+escapeHtml(l.cls||'tp-line')+'">'+escapeHtml(l.text)+'</'+tag+'>';
-    }).join('');
-    return '<div class="pq-title-page '+model.variant+'">'+body+'</div>'+
-      '<p class="pq-help">Formal title page · style <strong>'+escapeHtml((state.style||'').toUpperCase())+'</strong>'+
-      (state.templateKey?' · template <strong>'+escapeHtml((TEMPLATES[state.templateKey]&&TEMPLATES[state.templateKey].name)||state.templateKey)+'</strong>':'')+
-      ' · edit via <strong>Tools → Title page fields</strong></p>';
+    const m=titlePageMeta();
+    const kind=m.kind;
+    const style=m.style;
+    const diss=isDissertationKind(kind);
+    const variant=(style==='apa7')?'tp-apa':(style==='mla9')?'tp-mla':(style==='ieee'||style==='vancouver')?'tp-ieee':(diss?'tp-diss':'tp-chicago');
+    const degPh=kind==='phd'?'Doctor of Philosophy':kind==='masters'?'Master of Science / Master of Arts':'Degree (optional)';
+    // Order: Title → Author → Institution (optional) → other optional fields
+    let html='<div class="pq-title-page pq-tp-edit '+variant+'" id="pq-tp-editor">';
+    html+='<div class="pq-tp-label">Title</div>';
+    html+='<textarea class="pq-tp-field tp-title-in" id="tp-title" rows="2" placeholder="Paper or dissertation title">'+escapeHtml(m.title==='Untitled paper'?'':m.title)+'</textarea>';
+    html+='<div class="pq-tp-label">Author</div>';
+    html+='<input class="pq-tp-field tp-author-in" id="tp-author" type="text" placeholder="Author / candidate name" value="'+escapeHtml(m.author)+'">';
+    html+='<div class="pq-tp-label">Institution <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+    html+='<input class="pq-tp-field tp-opt" id="tp-inst" type="text" placeholder="University or institution" value="'+escapeHtml(m.institution)+'">';
+    html+='<div class="pq-tp-label">Department <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+    html+='<input class="pq-tp-field tp-muted-in" id="tp-dept" type="text" placeholder="Department or school" value="'+escapeHtml(m.department)+'">';
+    if(diss||m.faculty||m.degree){
+      html+='<div class="pq-tp-label">Faculty <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+      html+='<input class="pq-tp-field tp-muted-in" id="tp-faculty" type="text" placeholder="Faculty" value="'+escapeHtml(m.faculty)+'">';
+      html+='<div class="pq-tp-label">Degree <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+      html+='<input class="pq-tp-field tp-opt" id="tp-degree" type="text" placeholder="'+escapeHtml(degPh)+'" value="'+escapeHtml(m.degree)+'">';
+    }else{
+      html+='<input type="hidden" id="tp-faculty" value="'+escapeHtml(m.faculty)+'">';
+      html+='<input type="hidden" id="tp-degree" value="'+escapeHtml(m.degree)+'">';
+    }
+    html+='<div class="pq-tp-label">Supervisor / instructor <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+    html+='<input class="pq-tp-field tp-muted-in" id="tp-super" type="text" placeholder="Supervisor or instructor" value="'+escapeHtml(m.supervisor)+'">';
+    html+='<div class="pq-tp-label">Course / journal <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+    html+='<input class="pq-tp-field tp-muted-in" id="tp-course" type="text" placeholder="Course, programme, or journal" value="'+escapeHtml(m.course)+'">';
+    html+='<div class="pq-tp-label">City &amp; year <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:inherit">';
+    html+='<input class="pq-tp-field tp-muted-in" id="tp-city" type="text" placeholder="City" value="'+escapeHtml(m.city)+'" style="flex:1;min-width:120px">';
+    html+='<input class="pq-tp-field tp-opt" id="tp-year" type="text" placeholder="Year" value="'+escapeHtml(m.year)+'" style="width:6rem">';
+    html+='</div>';
+    if(style==='apa7'){
+      html+='<div class="pq-tp-label">Running head (APA)</div>';
+      html+='<input class="pq-tp-field tp-muted-in" id="tp-run" type="text" placeholder="SHORT TITLE" value="'+escapeHtml(m.runningHead)+'">';
+    }else{
+      html+='<input type="hidden" id="tp-run" value="'+escapeHtml(m.runningHead)+'">';
+    }
+    html+='<div class="pq-tp-actions">';
+    html+='<button type="button" class="pq-btn pq-btn-primary" id="tp-save">Save title page</button>';
+    html+='<button type="button" class="pq-btn" id="tp-more">All fields…</button>';
+    html+='</div></div>';
+    html+='<p class="pq-help">Editable title page · <strong>Title → Author → Institution</strong> (others optional) · layout follows <strong>'+escapeHtml((style||'').toUpperCase())+'</strong>';
+    if(state.templateKey) html+=' · '+escapeHtml((TEMPLATES[state.templateKey]&&TEMPLATES[state.templateKey].name)||state.templateKey);
+    html+='</p>';
+    return html;
+  }
+  function readTitlePageFieldsFromDom(){
+    const g=id=>(($('#'+id)&&$('#'+id).value)||'').trim();
+    return {
+      paperTitle:g('tp-title')||'Untitled paper',
+      authorName:g('tp-author'),
+      institution:g('tp-inst'),
+      department:g('tp-dept'),
+      faculty:g('tp-faculty'),
+      degree:g('tp-degree'),
+      supervisor:g('tp-super'),
+      course:g('tp-course'),
+      city:g('tp-city'),
+      submissionYear:g('tp-year'),
+      runningHead:g('tp-run')
+    };
+  }
+  function applyTitlePageFields(fields,silent){
+    if(!fields)return;
+    Object.keys(fields).forEach(k=>{state[k]=fields[k]});
+    scheduleSave();
+    if(!silent)toast('Title page saved');
+  }
+  function wireTitlePageEditor(){
+    const save=$('#tp-save');
+    if(save)save.onclick=()=>{applyTitlePageFields(readTitlePageFieldsFromDom());updateTitlePagePreview()};
+    const more=$('#tp-more');
+    if(more)more.onclick=()=>{applyTitlePageFields(readTitlePageFieldsFromDom(),true);openTitlePage()};
+    // Auto-save on blur
+    $$('#pq-tp-editor .pq-tp-field').forEach(el=>{
+      el.addEventListener('blur',()=>{applyTitlePageFields(readTitlePageFieldsFromDom(),true)});
+      el.addEventListener('keydown',e=>{
+        if(e.key==='Enter'&&el.tagName==='INPUT'){e.preventDefault();el.blur()}
+      });
+    });
   }
   function updateTitlePagePreview(){
     const wrap=$('#pq-title-page-wrap');
@@ -4793,6 +4921,7 @@
     if(isTitle){
       wrap.style.display='block';
       wrap.innerHTML=renderTitlePageHtml();
+      wireTitlePageEditor();
     }else{
       wrap.style.display='none';
       wrap.innerHTML='';
@@ -5089,6 +5218,15 @@
     }
   });
   $('#cap-sections').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
+  // Keep sections open on desktop when resizing up from mobile
+  try{
+    const mq=window.matchMedia('(max-width:800px)');
+    const onMq=e=>{
+      if(!e.matches){ /* desktop */ ROOT.classList.remove('pq-side-collapsed'); }
+    };
+    if(mq.addEventListener)mq.addEventListener('change',onMq);
+    else if(mq.addListener)mq.addListener(onMq);
+  }catch(e){}
   const capScaf=$('#cap-scaffold');
   if(capScaf)capScaf.onclick=()=>toggleScaffold();
   const scafClose=$('#scaf-close');
@@ -5790,7 +5928,12 @@
     driveLoadCachedToken();
     const fromOAuth = await driveHandleOAuthReturn();
     await load();
-    ROOT.classList.add('pq-side-collapsed');
+    // Desktop: sections panel open; mobile: collapsed until user opens it
+    if(window.matchMedia && window.matchMedia('(max-width:800px)').matches){
+      ROOT.classList.add('pq-side-collapsed');
+    }else{
+      ROOT.classList.remove('pq-side-collapsed');
+    }
     renderAll();updateSessionLine();
     const m=readMeta();
     await refreshDashboard();
