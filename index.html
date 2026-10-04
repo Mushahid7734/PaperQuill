@@ -123,7 +123,8 @@
     .pq-scaf-box .row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
     .pq-scaf-box .row .pq-btn{font-size:.7rem;padding:4px 8px}
     .pq-scaf-empty{font-size:.8rem;color:var(--muted);padding:12px 4px;line-height:1.5}
-    #pq-root.pq-focus .pq-scaffold{display:none!important}
+    /* Focus mode: scaffold still allowed */
+    #pq-root.pq-focus.pq-scaffold-open .pq-scaffold{display:flex!important}
     @media(max-width:700px){
       #pq-root.pq-scaffold-open .pq-scaffold{
         position:absolute;right:0;top:0;bottom:0;z-index:55;width:min(100%,360px);max-width:92vw;
@@ -245,19 +246,39 @@
       display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.1)
     }
     .pq-table-del:hover{background:var(--danger);color:#fff}
-    #pq-root.pq-focus .pq-top,#pq-root.pq-focus .pq-toolbar,#pq-root.pq-focus .pq-sidebar,#pq-root.pq-focus .pq-capsule,#pq-root.pq-focus .pq-works{display:none!important}
-    #pq-root.pq-focus .pq-editor-wrap{padding-top:56px;padding-bottom:24px}
-    #pq-root.pq-focus .pq-main{background:var(--paper)}
+    #pq-root.pq-focus .pq-top,
+    #pq-root.pq-focus .pq-toolbar,
+    #pq-root.pq-focus .pq-sidebar,
+    #pq-root.pq-focus .pq-capsule,
+    #pq-root.pq-focus .pq-works,
+    #pq-root.pq-focus .pq-guide,
+    #pq-root.pq-focus #pq-sec-title{display:none!important}
+    #pq-root.pq-focus .pq-editor-wrap{padding-top:72px;padding-bottom:48px}
+    #pq-root.pq-focus .pq-main{background:var(--paper);max-width:100%!important}
+    #pq-root.pq-focus .pq-editor{max-width:38em;margin:0 auto;scroll-margin-top:80px;min-height:60vh}
     #pq-root .pq-focus-exit{
       display:none!important;visibility:hidden;pointer-events:none;
-      position:fixed;top:12px;right:12px;z-index:950;
-      border-radius:999px;padding:8px 14px;min-height:40px;font-weight:600;
-      box-shadow:0 4px 16px rgba(0,0,0,.12)
+      position:fixed;top:14px;right:14px;z-index:960;
+      border-radius:999px;padding:10px 16px;min-height:44px;font-weight:600;
+      background:var(--paper);border:1px solid var(--border);
+      box-shadow:0 6px 20px rgba(0,0,0,.14)
     }
     #pq-root.pq-focus .pq-focus-exit{
-      display:block!important;visibility:visible;pointer-events:auto
+      display:inline-flex!important;visibility:visible;pointer-events:auto;align-items:center;gap:6px
     }
-    #pq-root.pq-focus .pq-editor{scroll-margin-top:64px}
+    .pq-focus-timer-bar{
+      display:none;position:fixed;top:0;left:0;right:0;z-index:955;
+      align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+      padding:8px 12px;background:var(--accent);color:var(--paper);
+      font-size:.85rem;font-weight:600;box-shadow:0 2px 12px rgba(0,0,0,.12)
+    }
+    .pq-focus-timer-bar.show{display:flex}
+    .pq-focus-timer-bar .pq-btn{
+      background:color-mix(in srgb,#fff 18%,transparent);border-color:color-mix(in srgb,#fff 35%,transparent);
+      color:#fff;font-size:.75rem;padding:4px 10px;min-height:32px
+    }
+    .pq-focus-timer-bar .pq-btn:hover{background:color-mix(in srgb,#fff 28%,transparent)}
+    #pq-root.pq-focus .pq-focus-timer-bar{padding-right:120px}
     .pq-guide{
       max-width:42em;margin:0 auto 16px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
       background:color-mix(in srgb,var(--accent) 8%,var(--paper));font-size:.82rem;line-height:1.55;display:none;
@@ -323,17 +344,18 @@
     .pq-ach-summary{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
     .pq-ach-count{font-size:.8rem;color:var(--muted)}
     .pq-free-card{
-      position:relative;overflow:hidden;border-radius:14px;padding:18px 18px 16px;margin-bottom:12px;
+      position:relative;overflow:hidden;border-radius:16px;padding:20px 18px 18px;margin:0 0 14px;
       border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));
       background:
-        linear-gradient(135deg,
-          color-mix(in srgb,var(--accent) 10%,var(--paper)) 0%,
-          var(--paper) 48%,
-          color-mix(in srgb,var(--ok) 8%,var(--paper)) 100%);
-      box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 8%,transparent)
+        radial-gradient(120% 80% at 100% 0%, color-mix(in srgb,var(--ok) 14%,transparent), transparent 55%),
+        linear-gradient(145deg,
+          color-mix(in srgb,var(--accent) 12%,var(--paper)) 0%,
+          var(--paper) 55%,
+          color-mix(in srgb,var(--ok) 6%,var(--paper)) 100%);
+      box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 10%,transparent)
     }
     .pq-free-card::before{
-      content:'';position:absolute;inset:0 auto 0 0;width:4px;border-radius:14px 0 0 14px;
+      content:'';position:absolute;inset:0 auto 0 0;width:4px;border-radius:16px 0 0 16px;
       background:linear-gradient(180deg,var(--accent),var(--ok))
     }
     .pq-free-kicker{
@@ -341,15 +363,77 @@
       text-transform:uppercase;color:var(--accent);margin:0 0 8px
     }
     .pq-free-card h3{
-      font-family:"Source Serif 4",Georgia,serif;font-size:1.2rem;font-weight:600;margin:0 0 8px;line-height:1.3;color:var(--ink)
+      font-family:"Source Serif 4",Georgia,serif;font-size:1.25rem;font-weight:600;margin:0 0 8px;line-height:1.3;color:var(--ink)
     }
-    .pq-free-card p{margin:0 0 10px;font-size:.86rem;line-height:1.55;color:var(--ink)}
-    .pq-free-card p:last-child{margin-bottom:0}
+    .pq-free-card p{margin:0 0 8px;font-size:.86rem;line-height:1.55;color:var(--ink)}
     .pq-free-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .pq-free-actions a.pq-btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
     .pq-legal-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .pq-legal-row a.pq-btn{text-decoration:none}
     .pq-legal-meta{font-size:.75rem;color:var(--muted);margin-top:10px;line-height:1.45}
+    /* Dashboard redesign */
+    .pq-dash-hero{text-align:center;margin:0 0 18px;padding:8px 4px 4px}
+    .pq-dash-hero h2{
+      font-family:"Source Serif 4",Georgia,serif;font-size:clamp(1.55rem,4vw,1.95rem);
+      font-weight:600;margin:0 0 6px;line-height:1.25;color:var(--ink)
+    }
+    .pq-dash-motto{font-size:.95rem;color:var(--muted);line-height:1.5;margin:0 0 12px;font-style:italic}
+    .pq-dash-hero-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+    .pq-dash-level-card{
+      display:flex;flex-wrap:wrap;gap:14px;align-items:stretch;margin-bottom:14px
+    }
+    .pq-dash-level-main{
+      flex:1 1 180px;background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:14px 16px;
+      display:flex;flex-direction:column;justify-content:center;gap:4px
+    }
+    .pq-dash-level-main .lv{font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+    .pq-dash-level-main .lv-name{font-family:"Source Serif 4",Georgia,serif;font-size:1.15rem;font-weight:600}
+    .pq-dash-level-main .lv-congrats{font-size:.8rem;color:var(--muted);line-height:1.4;margin-top:4px}
+    .pq-dash-recent-ach{
+      flex:2 1 240px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px
+    }
+    @media(max-width:520px){.pq-dash-recent-ach{grid-template-columns:1fr}}
+    .pq-mini-ach{
+      background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:10px;
+      display:flex;flex-direction:column;gap:4px;min-height:88px
+    }
+    .pq-mini-ach .ico{font-size:1.2rem}
+    .pq-mini-ach strong{font-size:.78rem;line-height:1.3}
+    .pq-mini-ach span{font-size:.68rem;color:var(--muted);line-height:1.35}
+    .pq-mini-ach.empty{opacity:.55;justify-content:center;align-items:center;text-align:center;color:var(--muted);font-size:.78rem}
+    .pq-dash-metrics{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px
+    }
+    .pq-metric{
+      background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:12px 14px
+    }
+    .pq-metric .lab{font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .pq-metric .val{font-size:1.2rem;font-weight:600;font-variant-numeric:tabular-nums}
+    .pq-metric .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+    .pq-metric .bar{height:6px;border-radius:999px;background:var(--border);margin-top:8px;overflow:hidden}
+    .pq-metric .bar>i{display:block;height:100%;background:var(--ok);border-radius:999px;width:0%;transition:width .35s}
+    .pq-working-paper{
+      background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px;
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between
+    }
+    .pq-working-paper .wp-label{font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+    .pq-working-paper .wp-title{font-family:"Source Serif 4",Georgia,serif;font-size:1.05rem;font-weight:600;margin-top:2px}
+    .pq-working-paper .wp-meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+    .pq-paper-row{
+      border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--paper)
+    }
+    .pq-paper-row h4{margin:0 0 4px;font-size:.95rem}
+    .pq-paper-row .meta{font-size:.75rem;color:var(--muted);margin-bottom:8px}
+    .pq-paper-row .acts{display:flex;flex-wrap:wrap;gap:6px}
+    .pq-paper-row .acts .pq-btn{font-size:.72rem;padding:5px 9px;min-height:34px}
+    .pq-paper-row.active{outline:2px solid var(--accent);outline-offset:1px}
+    .pq-progress-detail{margin-bottom:12px}
+    .pq-progress-detail .row{margin-bottom:12px}
+    .pq-progress-detail .row-head{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;margin-bottom:4px}
+    .pq-progress-detail .row-head strong{font-weight:600}
+    .pq-progress-detail .row-head span{color:var(--muted);font-size:.78rem}
+    .pq-storage-line{font-size:.82rem;line-height:1.55;color:var(--ink);margin:0 0 6px}
+    .pq-storage-line span{color:var(--muted)}
     @media(max-width:800px){
       #pq-root{--sidebar:min(280px,85vw)}
       #pq-root:not(.pq-side-collapsed) .pq-sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.12);max-width:85vw}
@@ -486,7 +570,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="10" rx="1"/><path d="M14 17h7M14 21h7"/></svg>
     </button>
     <button type="button" class="pq-btn" id="cap-focus" title="Focus mode" aria-label="Focus mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
     <button type="button" class="pq-btn" id="cap-tools" title="Tools" aria-label="Tools">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
@@ -524,6 +608,8 @@
     <button type="button" class="pq-btn" id="tool-sectarget">Section word target</button>
     <div class="pq-tools-cat">Focus &amp; progress</div>
     <button type="button" class="pq-btn" id="tool-pomodoro">Focus timer</button>
+    <button type="button" class="pq-btn" id="tool-session-goal">Session word goal</button>
+    <button type="button" class="pq-btn" id="tool-daily-goal">Daily word goal</button>
     <button type="button" class="pq-btn" id="tool-wordlog">Word log / streak</button>
     <button type="button" class="pq-btn" id="tool-snap">Snapshot section</button>
     <button type="button" class="pq-btn" id="tool-snaps">View snapshots</button>
@@ -539,7 +625,12 @@
     <button type="button" class="pq-btn" id="tool-shortcuts">Keyboard shortcuts</button>
     <button type="button" class="pq-btn" id="tool-json">Backup JSON</button>
   </div>
-  <button type="button" class="pq-btn pq-focus-exit" id="pq-focus-exit">Exit focus</button>
+  <div class="pq-focus-timer-bar" id="pq-focus-timer-bar" aria-live="polite">
+    <span id="pq-focus-timer-label">Focus · 25:00</span>
+    <button type="button" class="pq-btn" id="pq-focus-timer-reset">Reset</button>
+    <button type="button" class="pq-btn" id="pq-focus-timer-stop">Stop</button>
+  </div>
+  <button type="button" class="pq-btn pq-focus-exit" id="pq-focus-exit" title="Exit focus mode">Exit focus</button>
   <div class="pq-ann-panel" id="pq-lt-panel"><header><strong>Writing check</strong><button type="button" class="pq-btn" id="pq-lt-set">Settings</button><button type="button" class="pq-btn" id="pq-lt-close">Close</button></header><div class="pq-ann-list" id="pq-lt-list"></div></div>
   <div class="pq-ann-panel" id="pq-ann-panel">
     <header>
@@ -554,110 +645,151 @@
     <div class="pq-ann-list" id="pq-ann-list"></div>
   </div>
   <div class="pq-dash" id="pq-dash"><div class="pq-dash-inner">
-    <h2 id="pq-dash-hello">Welcome</h2>
-    <p class="pq-help" id="pq-dash-sub">Your private research desk — offline-first, no accounts.</p>
-    <div class="pq-dash-card">
-      <label class="pq-lbl">Researcher name</label>
-      <input class="pq-inp" id="pq-researcher" style="width:100%" placeholder="Your name">
-      <div class="pq-modal-actions" style="justify-content:flex-start">
-        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-save-name">Save name</button>
+    <div class="pq-dash-hero">
+      <h2 id="pq-dash-hello">Welcome</h2>
+      <p class="pq-dash-motto" id="pq-dash-motto">Your private research desk — offline-first.</p>
+      <div class="pq-dash-hero-actions">
+        <button type="button" class="pq-btn" id="pq-dash-change-name">Change name</button>
         <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue">Continue writing</button>
       </div>
     </div>
+
+    <div class="pq-dash-level-card">
+      <div class="pq-dash-level-main">
+        <div class="lv">Level <span id="pq-dash-level-num">1</span></div>
+        <div class="lv-name" id="pq-dash-level-name">Apprentice scribe</div>
+        <div class="lv-congrats" id="pq-dash-congrats">Start writing to unlock your first badges.</div>
+      </div>
+      <div class="pq-dash-recent-ach" id="pq-dash-recent-ach">
+        <div class="pq-mini-ach empty">No badges yet</div>
+        <div class="pq-mini-ach empty">Keep going</div>
+        <div class="pq-mini-ach empty">They appear here</div>
+      </div>
+    </div>
+
+    <div class="pq-dash-metrics">
+      <div class="pq-metric">
+        <div class="lab">Daily target</div>
+        <div class="val" id="pq-metric-daily">0/500</div>
+        <div class="bar"><i id="pq-metric-daily-bar" style="width:0%"></i></div>
+      </div>
+      <div class="pq-metric">
+        <div class="lab">Session</div>
+        <div class="val" id="pq-metric-session">0/500</div>
+        <div class="bar"><i id="pq-metric-session-bar" style="width:0%"></i></div>
+      </div>
+      <div class="pq-metric">
+        <div class="lab">Total words</div>
+        <div class="val" id="pq-metric-total">0</div>
+        <div class="sub" id="pq-metric-streak">Streak: 0 days</div>
+      </div>
+    </div>
+
+    <div class="pq-working-paper">
+      <div>
+        <div class="wp-label">Working paper</div>
+        <div class="wp-title" id="pq-working-title">Untitled paper</div>
+        <div class="wp-meta" id="pq-working-meta">—</div>
+      </div>
+      <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue-2">Open desk</button>
+    </div>
+
+    <div class="pq-free-card" id="pq-free-forever">
+      <div class="pq-free-kicker">✦ Our promise</div>
+      <h3>Free forever</h3>
+      <p>PaperQuill stays free — no paywall on the writing desk, no account required for local drafts.</p>
+      <div class="pq-free-actions">
+        <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/p/books-series.html" target="_blank" rel="noopener noreferrer">Buy the books</a>
+        <a class="pq-btn" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Project page · bugs &amp; ideas</a>
+      </div>
+    </div>
+
+    <div class="pq-dash-card" id="pq-dash-drive-card">
+      <strong>Google Drive</strong>
+      <div id="pq-dash-drive-badge" class="pq-drive-badge off">Not connected</div>
+      <p class="pq-help" id="pq-dash-drive-status">Connect to sync papers to your Drive.</p>
+      <p class="pq-help" id="pq-dash-drive-sync">Last sync: —</p>
+      <div class="pq-drive-row">
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-drive-connect">Connect</button>
+        <button type="button" class="pq-btn" id="pq-dash-drive-open">Open file</button>
+        <button type="button" class="pq-btn" id="pq-dash-drive-sync">Sync current</button>
+        <button type="button" class="pq-btn" id="pq-dash-drive-disconnect">Disconnect</button>
+      </div>
+    </div>
+
     <div class="pq-dash-tabs" id="pq-dash-tabs">
       <button type="button" class="active" data-pane="papers">Papers</button>
       <button type="button" data-pane="progress">Progress</button>
       <button type="button" data-pane="achievements">Achievements</button>
       <button type="button" data-pane="about">About</button>
     </div>
+
     <div class="pq-dash-pane active" id="pane-papers">
       <div class="pq-dash-card">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
-          <strong>Your papers</strong>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <strong>All papers</strong>
           <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-new">+ New paper</button>
         </div>
-        <div class="pq-proj-grid" id="pq-proj-grid"></div>
-      </div>
-      <div class="pq-dash-card">
-        <strong>Session &amp; daily goals</strong>
-        <p class="pq-help" id="pq-session-line">0 / 500 words this session</p>
-        <p class="pq-help" id="pq-daily-line">0 / 500 words today</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <input class="pq-inp" id="pq-session-target" type="number" min="0" value="500" style="width:100px" title="Session target">
-          <button type="button" class="pq-btn" id="pq-session-set">Set session goal</button>
-          <button type="button" class="pq-btn" id="pq-session-reset">Reset session</button>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <input class="pq-inp" id="pq-daily-target" type="number" min="0" value="500" style="width:100px" title="Daily target">
-          <button type="button" class="pq-btn" id="pq-daily-set">Set daily goal</button>
-        </div>
-      </div>
-      <div class="pq-dash-card" id="pq-dash-drive-card">
-        <strong>Google Drive</strong>
-        <div id="pq-dash-drive-badge" class="pq-drive-badge off">Not connected</div>
-        <p class="pq-help" id="pq-dash-drive-status">Connect to sync papers to your Drive.</p>
-        <p class="pq-help" id="pq-dash-drive-sync">Last sync: —</p>
-        <div class="pq-drive-row">
-          <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-drive-connect">Connect</button>
-          <button type="button" class="pq-btn" id="pq-dash-drive-open">Open file</button>
-          <button type="button" class="pq-btn" id="pq-dash-drive-sync">Sync current</button>
-          <button type="button" class="pq-btn" id="pq-dash-drive-disconnect">Disconnect</button>
-        </div>
-      </div>
-      <div class="pq-free-card" id="pq-free-forever">
-        <div class="pq-free-kicker">✦ Our promise</div>
-        <h3>Free forever</h3>
-        <p>PaperQuill will stay free — no paywall on the writing desk, no account required for local drafts. Your research workflow should not cost a subscription.</p>
-        <p class="pq-help" style="margin:0">If you want to support the work, you can buy the books. To report bugs or suggest features, use the PaperQuill post on the main site.</p>
-        <div class="pq-free-actions">
-          <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/p/books-series.html" target="_blank" rel="noopener noreferrer">Buy the books</a>
-          <a class="pq-btn" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Bugs &amp; ideas</a>
-        </div>
+        <div id="pq-proj-grid"></div>
       </div>
     </div>
+
     <div class="pq-dash-pane" id="pane-progress" hidden>
       <div class="pq-dash-card">
-        <strong>Writing stats</strong>
-        <p class="pq-help" id="pq-stat-total">Total words stored: —</p>
-        <p class="pq-help" id="pq-stat-month">Words this month: —</p>
+        <strong>Detailed progress</strong>
+        <div class="pq-progress-detail" id="pq-progress-detail">
+          <div class="row">
+            <div class="row-head"><strong>Today</strong><span id="pq-prog-daily-lab">0 / 500</span></div>
+            <div class="pq-progress-bar"><i id="pq-prog-daily-bar" style="width:0%"></i></div>
+          </div>
+          <div class="row">
+            <div class="row-head"><strong>This week</strong><span id="pq-prog-week-lab">0 words</span></div>
+            <div class="pq-progress-bar"><i id="pq-prog-week-bar" style="width:0%"></i></div>
+          </div>
+          <div class="row">
+            <div class="row-head"><strong>This month</strong><span id="pq-prog-month-lab">0 words</span></div>
+            <div class="pq-progress-bar"><i id="pq-prog-month-bar" style="width:0%"></i></div>
+          </div>
+          <div class="row">
+            <div class="row-head"><strong>Session</strong><span id="pq-prog-session-lab">0 / 500</span></div>
+            <div class="pq-progress-bar"><i id="pq-prog-session-bar" style="width:0%"></i></div>
+          </div>
+        </div>
         <p class="pq-help" id="pq-stat-streak">Streak: —</p>
         <p class="pq-help" id="pq-stat-level">Level: —</p>
+        <p class="pq-help" id="pq-stat-total">Total words stored: —</p>
       </div>
       <div class="pq-dash-card">
         <strong>Papers progress</strong>
         <div id="pq-progress-papers"></div>
       </div>
     </div>
+
     <div class="pq-dash-pane" id="pane-achievements" hidden>
       <div class="pq-dash-card">
-        <p class="pq-help">Earn badges as you write. Levels rise with lifetime words across all papers on this device.</p>
+        <p class="pq-help">Only unlocked badges are shown. Keep writing to reveal more.</p>
         <div id="pq-ach-list"></div>
       </div>
     </div>
+
     <div class="pq-dash-pane" id="pane-about" hidden>
       <div class="pq-dash-card">
         <strong>About PaperQuill</strong>
-        <p class="pq-help">A private research writing studio for solo researchers. Your drafts stay in this browser (IndexedDB) with optional disk JSON backups and Google Drive sync. No accounts required for local writing.</p>
+        <p class="pq-help">A private research writing studio for solo researchers. Drafts stay in this browser (IndexedDB) with optional disk backups and Google Drive sync. No account required for local writing.</p>
         <ul class="pq-help" style="padding-left:18px;line-height:1.7">
-          <li>Citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver) with live re-render</li>
-          <li>Shared source library · DOI &amp; OpenAlex · BibTeX/RIS import</li>
-          <li>Tutorial mode, templates, LanguageTool, quote bank, snapshots</li>
-          <li>Export DOCX, PDF (print), Markdown, HTML · Google Drive sync</li>
+          <li>Citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver)</li>
+          <li>Sources, DOI lookup, tutorial mode, LanguageTool, snapshots</li>
+          <li>Export DOCX, PDF, Markdown, HTML · Drive sync</li>
         </ul>
-        <p class="pq-help" style="margin-top:10px">Tip: open <strong>Tools</strong> for LanguageTool, Tutorial, Templates, and the rest of the studio toolkit.</p>
       </div>
-      <div class="pq-free-card">
-        <div class="pq-free-kicker">✦ Our promise</div>
-        <h3>Free forever</h3>
-        <p>PaperQuill is promised free forever for the core writing studio. Support is optional — buy the books if you wish, or simply use the desk.</p>
-        <div class="pq-free-actions">
-          <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/p/books-series.html" target="_blank" rel="noopener noreferrer">Books &amp; series</a>
-          <a class="pq-btn" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Report bugs · suggest features</a>
-        </div>
+      <div class="pq-dash-card">
+        <strong>Storage on this device</strong>
+        <p class="pq-storage-line" id="pq-storage-status">Checking IndexedDB…</p>
+        <p class="pq-help" id="pq-storage-detail">—</p>
       </div>
       <div class="pq-dash-card">
         <strong>Legal</strong>
-        <p class="pq-help">Read how PaperQuill handles your data and the rules of use. Opens on the main site.</p>
+        <p class="pq-help">How PaperQuill handles data and the rules of use.</p>
         <div class="pq-legal-row">
           <a class="pq-btn" href="https://www.authormasoncarter.com/p/terms-of-service-for-paperquill.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
           <a class="pq-btn" href="https://www.authormasoncarter.com/p/privacy-policy-for-paperquill.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
@@ -1177,20 +1309,65 @@
     let list=[];
     try{list=await idbAll()}catch(e){}
     list.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-    if(!list.length){grid.innerHTML='<p class="pq-help">No papers yet.</p>';return}
+    if(!list.length){grid.innerHTML='<p class="pq-help">No papers yet. Create one to begin.</p>';return}
     grid.innerHTML=list.map(p=>{
       const words=p.state&&p.state.sections?p.state.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0):(p.wordCount||0);
-      return '<div class="pq-proj-card'+(p.id===currentProjectId?' active':'')+'" data-id="'+p.id+'">'+
+      const secs=p.state&&p.state.sections?p.state.sections.length:0;
+      const done=p.state&&p.state.sections?p.state.sections.filter(x=>x.status==='done').length:0;
+      const src=(p.state&&p.state.sources)?p.state.sources.length:0;
+      const synced=p.state&&(p.state.driveLastSync||p.state.driveFileId);
+      return '<div class="pq-paper-row'+(p.id===currentProjectId?' active':'')+'" data-id="'+p.id+'">'+
         '<h4>'+escapeHtml(p.name||'Untitled')+'</h4>'+
-        '<p>'+words.toLocaleString()+' words · '+(p.updatedAt?String(p.updatedAt).slice(0,10):'')+'</p>'+
-        '<div style="margin-top:8px;display:flex;gap:6px">'+
-        '<button type="button" class="pq-btn pq-open-p" data-id="'+p.id+'">Open</button>'+
+        '<div class="meta">'+words.toLocaleString()+' words · '+secs+' sections · '+done+' done · '+src+' sources'+(synced?' · Drive':'')+' · '+(p.updatedAt?String(p.updatedAt).slice(0,10):'')+'</div>'+
+        '<div class="acts">'+
+        '<button type="button" class="pq-btn pq-btn-primary pq-open-p" data-id="'+p.id+'">Open</button>'+
+        '<button type="button" class="pq-btn pq-ren-p" data-id="'+p.id+'">Rename</button>'+
+        '<button type="button" class="pq-btn pq-meta-p" data-id="'+p.id+'">Metadata</button>'+
+        '<button type="button" class="pq-btn pq-sync-p" data-id="'+p.id+'">Sync</button>'+
         (list.length>1?'<button type="button" class="pq-btn pq-del-p" data-id="'+p.id+'">Delete</button>':'')+
         '</div></div>';
     }).join('');
     grid.querySelectorAll('.pq-open-p').forEach(b=>b.onclick=e=>{e.stopPropagation();switchProject(b.dataset.id)});
     grid.querySelectorAll('.pq-del-p').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteProject(b.dataset.id)});
-    grid.querySelectorAll('.pq-proj-card').forEach(c=>c.onclick=()=>switchProject(c.dataset.id));
+    grid.querySelectorAll('.pq-ren-p').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const rec=list.find(x=>x.id===b.dataset.id);if(!rec)return;
+      const t=await styledPrompt('Rename paper','New title',rec.name||'Untitled');
+      if(t===null)return;
+      const name=t.trim()||'Untitled';
+      try{
+        const full=await idbGet(rec.id);if(!full)return;
+        full.name=name;
+        if(full.state)full.state.paperTitle=name;
+        await idbPut(full);
+        if(currentProjectId===rec.id){state.paperTitle=name;scheduleSave()}
+        await renderProjectGrid();renderDashHero();toast('Renamed');
+      }catch(err){toast('Rename failed')}
+    });
+    grid.querySelectorAll('.pq-meta-p').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      const rec=await idbGet(b.dataset.id);if(!rec)return;
+      const st=rec.state||{};
+      const words=st.sections?st.sections.reduce((n,s)=>{const t=(s.content||'').replace(/<[^>]+>/g,' ').trim();return n+(t?t.split(/\s+/).length:0)},0):(rec.wordCount||0);
+      openModal('<h3>Paper metadata</h3>'+
+        '<p class="pq-help"><strong>Title:</strong> '+escapeHtml(rec.name||'')+'</p>'+
+        '<p class="pq-help"><strong>Words:</strong> '+words.toLocaleString()+'</p>'+
+        '<p class="pq-help"><strong>Sections:</strong> '+((st.sections||[]).length)+'</p>'+
+        '<p class="pq-help"><strong>Sources:</strong> '+((st.sources||[]).length)+'</p>'+
+        '<p class="pq-help"><strong>Style:</strong> '+escapeHtml(st.style||'—')+'</p>'+
+        '<p class="pq-help"><strong>Updated:</strong> '+escapeHtml(String(rec.updatedAt||'—'))+'</p>'+
+        '<p class="pq-help"><strong>Drive file:</strong> '+escapeHtml(st.driveFileId||'—')+'</p>'+
+        '<p class="pq-help"><strong>Last Drive sync:</strong> '+escapeHtml(st.driveLastSync||'—')+'</p>'+
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-ok">Close</button></div>');
+      $('#m-ok').onclick=closeModal;
+    });
+    grid.querySelectorAll('.pq-sync-p').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      if(b.dataset.id!==currentProjectId){
+        await switchProject(b.dataset.id);
+      }
+      await driveSavePaper();
+    });
   }
   function getDailyTarget(){const m=readMeta();return m.dailyTarget||500}
   function getDailyWords(){
@@ -1237,43 +1414,67 @@
     // Level 1 at 0, then every ~2000 words
     return Math.max(1,Math.floor(w/2000)+1);
   }
-  const ACHIEVEMENTS=[
-    {id:'first_words',title:'First ink',desc:'Write at least 50 words',ico:'✍️',test:s=>s.total>=50},
-    {id:'hundred',title:'Century',desc:'Reach 100 words stored',ico:'📄',test:s=>s.total>=100},
-    {id:'five_hundred',title:'Half-k draft',desc:'500 words across papers',ico:'🪶',test:s=>s.total>=500},
-    {id:'thousand',title:'Thousand club',desc:'1,000 words stored',ico:'📚',test:s=>s.total>=1000},
-    {id:'five_k',title:'Deep draft',desc:'5,000 words across papers',ico:'🏔️',test:s=>s.total>=5000},
-    {id:'ten_k',title:'Ten thousand',desc:'10,000 lifetime words',ico:'📖',test:s=>s.total>=10000},
-    {id:'twenty_five_k',title:'Manuscript scale',desc:'25,000 lifetime words',ico:'🏛️',test:s=>s.total>=25000},
-    {id:'cite_one',title:'In conversation',desc:'Add at least one source',ico:'🔗',test:s=>s.sources>=1},
-    {id:'cite_five',title:'Building the shelf',desc:'5 sources in the current paper',ico:'📑',test:s=>s.sources>=5},
-    {id:'cite_ten',title:'Well read',desc:'10 sources in a paper',ico:'📗',test:s=>s.sources>=10},
-    {id:'cite_twenty',title:'Literature dense',desc:'20 sources in a paper',ico:'📕',test:s=>s.sources>=20},
-    {id:'section_done',title:'Section closed',desc:'Mark at least one section Done',ico:'✅',test:s=>s.sectionsDone>=1},
-    {id:'half_done',title:'Halfway structure',desc:'Mark half of a paper’s sections Done',ico:'🧩',test:s=>s.halfDone},
-    {id:'paper_done',title:'Paper complete',desc:'Mark every section Done in a paper',ico:'🏁',test:s=>s.paperDone},
-    {id:'streak_3',title:'Three-day streak',desc:'Write on 3 consecutive days',ico:'🔥',test:s=>s.streak>=3},
-    {id:'streak_7',title:'Week of focus',desc:'7-day writing streak',ico:'⭐',test:s=>s.streak>=7},
-    {id:'streak_14',title:'Fortnight',desc:'14-day writing streak',ico:'🌟',test:s=>s.streak>=14},
-    {id:'streak_30',title:'Month of craft',desc:'30-day writing streak',ico:'💎',test:s=>s.streak>=30},
-    {id:'multi',title:'Portfolio',desc:'Keep 3 or more papers',ico:'🗂️',test:s=>s.papers>=3},
-    {id:'multi_five',title:'Series author',desc:'Keep 5 or more papers',ico:'📚',test:s=>s.papers>=5},
-    {id:'snapshot',title:'Time traveler',desc:'Save a paper snapshot',ico:'💾',test:s=>s.snapshots>=1},
-    {id:'snap_three',title:'Version vault',desc:'Keep 3 paper snapshots',ico:'🗄️',test:s=>s.snapshots>=3},
-    {id:'quotes',title:'Quote bank',desc:'Save 3 quotes',ico:'💬',test:s=>s.quotes>=3},
-    {id:'claims',title:'Claim tracker',desc:'Track 3 claims with evidence',ico:'⚖️',test:s=>s.claimsTracked>=3},
-    {id:'drive_sync',title:'Cloud desk',desc:'Sync a paper to Google Drive',ico:'☁️',test:s=>s.driveSynced},
-    {id:'level_3',title:'Level 3',desc:'Reach researcher level 3',ico:'🥉',test:s=>s.level>=3},
-    {id:'level_5',title:'Level 5',desc:'Reach researcher level 5',ico:'🎓',test:s=>s.level>=5},
-    {id:'level_10',title:'Level 10',desc:'Reach researcher level 10',ico:'🥇',test:s=>s.level>=10},
-    {id:'month_2k',title:'Productive month',desc:'2,000 words logged this month',ico:'📈',test:s=>s.month>=2000},
-    {id:'month_5k',title:'Heavy month',desc:'5,000 words logged this month',ico:'🚀',test:s=>s.month>=5000},
-    {id:'daily_goal',title:'Daily target met',desc:'Hit today’s daily word goal at least once',ico:'🎯',test:s=>s.dailyHit},
-    {id:'session_goal',title:'Session finisher',desc:'Reach a session word goal',ico:'⏱️',test:s=>s.sessionHit}
+  const LEVEL_NAMES=[
+    'Apprentice scribe','Ink explorer','Draft walker','Paragraph builder','Section steward',
+    'Chapter apprentice','Argument weaver','Citation scout','Literature navigator','Theory apprentice',
+    'Method maker','Evidence keeper','Revision artisan','Focus pilgrim','Deep-work adept',
+    'Archive traveler','Scholar in training','Research associate','Independent writer','Thesis contender',
+    'Monograph aspirant','Field chronicler','Critical reader','Synthesist','Knowledge gardener',
+    'Quiet powerhouse','Manuscript architect','Publication-minded','Seasoned researcher','Master of the desk'
   ];
+  function levelName(level){
+    const i=Math.max(0,Math.min(LEVEL_NAMES.length-1,(level||1)-1));
+    return LEVEL_NAMES[i];
+  }
+  function buildAchievements(){
+    const list=[];
+    const push=(id,title,desc,ico,test)=>list.push({id,title,desc,ico,test});
+    // Firsts
+    push('first_words','First ink','Write at least 50 words','✍️',s=>s.total>=50);
+    push('first_draft_status','First draft','Mark a section as Draft (or start one)','📝',s=>s.hasDraft);
+    push('first_revise','First revise','Mark a section as Revise','🔄',s=>s.hasRevise);
+    push('first_done_section','First done section','Mark a section Done','✅',s=>s.sectionsDone>=1);
+    push('first_note','First research note','Add research notes','🗒️',s=>s.hasNotes);
+    push('first_source','First source','Add a source to a paper','🔗',s=>s.sources>=1);
+    push('first_cite','First citation','Insert at least one citation in text','📎',s=>s.hasCite);
+    push('first_quote','First quote','Save a quote to the bank','💬',s=>s.quotes>=1);
+    push('first_claim','First claim','Track a claim','⚖️',s=>s.claimsTracked>=1);
+    push('first_snapshot','First snapshot','Save a paper snapshot','💾',s=>s.snapshots>=1);
+    push('first_paper_done','First paper complete','Mark every section Done in a paper','🏁',s=>s.paperDone);
+    push('first_drive','Cloud desk','Sync a paper to Google Drive','☁️',s=>s.driveSynced);
+    push('first_export_habit','Backup habit','Save a JSON or disk backup path used','📦',s=>s.total>=100);
+    // Word milestones
+    const wordMarks=[100,250,500,750,1000,1500,2000,3000,4000,5000,7500,10000,12500,15000,20000,25000,30000,40000,50000,75000,100000];
+    const wordIco=['📄','🪶','📗','📘','📚','🏔️','⛰️','🌋','🏛️','💎','🌟','🚀','🪐','🌌','🏆','👑','🔮','🎯','💫','🔥','🥇'];
+    wordMarks.forEach((w,i)=>push('words_'+w, w>=1000?(w/1000)+'k words':w+' words', 'Reach '+w.toLocaleString()+' lifetime words', wordIco[i%wordIco.length], s=>s.total>=w));
+    // Sources
+    [3,5,8,10,15,20,25,30,40,50].forEach((n,i)=>push('src_'+n, n+' sources', 'Have '+n+' sources in a paper','📖',s=>s.sources>=n));
+    // Streaks
+    [2,3,5,7,10,14,21,30,45,60,90].forEach(n=>push('streak_'+n, n+'-day streak', 'Write on '+n+' consecutive days','🔥',s=>s.streak>=n));
+    // Papers count
+    [2,3,5,7,10,15,20].forEach(n=>push('papers_'+n, n+' papers', 'Keep '+n+' or more papers','🗂️',s=>s.papers>=n));
+    // Sections done
+    [3,5,10,15,20,30,50].forEach(n=>push('done_sec_'+n, n+' sections done', 'Mark '+n+' sections Done across papers','🧩',s=>s.sectionsDone>=n));
+    // Quotes / claims / snaps
+    [3,5,10,20].forEach(n=>push('quotes_'+n, n+' quotes', 'Save '+n+' quotes','💬',s=>s.quotes>=n));
+    [3,5,10].forEach(n=>push('claims_'+n, n+' claims tracked', 'Track '+n+' claims with support','⚖️',s=>s.claimsTracked>=n));
+    [2,3,5,10].forEach(n=>push('snaps_'+n, n+' snapshots', 'Keep '+n+' paper snapshots','🗄️',s=>s.snapshots>=n));
+    // Daily / session / month
+    push('daily_goal','Daily target met','Hit today’s daily word goal','🎯',s=>s.dailyHit);
+    push('session_goal','Session finisher','Reach a session word goal','⏱️',s=>s.sessionHit);
+    [1000,2000,3000,5000,8000,10000].forEach(n=>push('month_'+n, 'Month · '+n.toLocaleString(), n.toLocaleString()+' words logged this month','📈',s=>s.month>=n));
+    // Levels
+    [2,3,5,7,10,12,15,20,25,30].forEach(n=>push('level_'+n, 'Level '+n, 'Reach researcher level '+n,'🎓',s=>s.level>=n));
+    // Half done structure
+    push('half_done','Halfway structure','Mark half of a paper’s sections Done','🧱',s=>s.halfDone);
+    push('multi_status','Status palette','Use Draft, Revise, and Done on sections','🎨',s=>s.hasDraft&&s.hasRevise&&s.sectionsDone>=1);
+    return list;
+  }
+  const ACHIEVEMENTS=buildAchievements();
   async function gatherStats(){
     let list=[];try{list=await idbAll()}catch(e){}
     let total=0,sectionsDone=0,halfDone=false,paperDone=false,maxSources=0,maxSnaps=0,maxQuotes=0,maxClaims=0,driveSynced=false;
+    let hasDraft=false,hasRevise=false,hasNotes=false,hasCite=false;
     list.forEach(p=>{
       let words=0;
       if(p.state&&p.state.sections){
@@ -1282,7 +1483,12 @@
         const done=p.state.sections.filter(x=>x.status==='done').length;
         sectionsDone+=done;
         if(secs&&done>=Math.ceil(secs/2))halfDone=true;
-        if(secs&&done===secs)paperDone=true;
+        if(secs&&done===secs&&secs>0)paperDone=true;
+        p.state.sections.forEach(sec=>{
+          if(sec.status==='draft')hasDraft=true;
+          if(sec.status==='revise')hasRevise=true;
+          if((sec.content||'').indexOf('data-source-id')>=0||(sec.content||'').indexOf('pq-cite')>=0)hasCite=true;
+        });
       }else if(p.wordCount!=null)words=p.wordCount;
       total+=words;
       const src=(p.state&&p.state.sources)?p.state.sources.length:0;
@@ -1294,28 +1500,63 @@
       const cl=(p.state&&p.state.claims)?p.state.claims.filter(c=>c.hasEvidence||c.hasCitation).length:0;
       if(cl>maxClaims)maxClaims=cl;
       if(p.state&&(p.state.driveLastSync||p.state.driveFileId))driveSynced=true;
+      if(p.state&&p.state.notes&&String(p.state.notes).trim())hasNotes=true;
     });
+    if(state){
+      (state.sections||[]).forEach(sec=>{
+        if(sec.status==='draft')hasDraft=true;
+        if(sec.status==='revise')hasRevise=true;
+        if((sec.content||'').indexOf('data-source-id')>=0||(sec.content||'').indexOf('pq-cite')>=0)hasCite=true;
+      });
+      if(state.notes&&String(state.notes).trim())hasNotes=true;
+      if(state.driveLastSync||state.driveFileId)driveSynced=true;
+    }
     const sources=Math.max(maxSources,(state.sources||[]).length);
     const snapshots=Math.max(maxSnaps,(state.paperSnapshots||[]).length);
     const quotes=Math.max(maxQuotes,(state.quotes||[]).length);
     const claimsTracked=Math.max(maxClaims,(state.claims||[]).filter(c=>c.hasEvidence||c.hasCitation).length);
-    if(state.driveLastSync||state.driveFileId)driveSynced=true;
     const streak=getStreak();
     const month=getMonthWords();
+    const week=getWeekWords();
     const level=levelFromWords(total);
     const dailyHit=getDailyWords()>=getDailyTarget()&&getDailyTarget()>0;
     const sessionTarget=(state.goals&&state.goals.sessionTarget)||500;
     const sessionNow=Math.max(0,totalWords()-(state.goals&&state.goals.sessionBase!=null?state.goals.sessionBase:sessionBase));
     const sessionHit=sessionTarget>0&&sessionNow>=sessionTarget;
-    return {total,sources,snapshots,streak,month,level,papers:list.length,list,sectionsDone,halfDone,paperDone,quotes,claimsTracked,driveSynced,dailyHit,sessionHit};
+    const unlocked=ACHIEVEMENTS.filter(a=>{
+      try{return a.test({total,sources,snapshots,streak,month,week,level,papers:list.length,sectionsDone,halfDone,paperDone,quotes,claimsTracked,driveSynced,dailyHit,sessionHit,hasDraft,hasRevise,hasNotes,hasCite})}catch(e){return false}
+    });
+    return {total,sources,snapshots,streak,month,week,level,papers:list.length,list,sectionsDone,halfDone,paperDone,quotes,claimsTracked,driveSynced,dailyHit,sessionHit,hasDraft,hasRevise,hasNotes,hasCite,unlocked,sessionNow,sessionTarget,dailyNow:getDailyWords(),dailyTarget:getDailyTarget()};
+  }
+  function getWeekWords(){
+    let log={};try{log=JSON.parse(localStorage.getItem('paperquill-wordlog')||'{}')||{}}catch(e){}
+    let sum=0;const today=new Date();
+    for(let i=0;i<7;i++){
+      const d=new Date(today);d.setDate(d.getDate()-i);
+      const key=d.toISOString().slice(0,10);
+      sum+=(log[key]||0);
+    }
+    return sum;
   }
   async function renderProgressPane(){
     const s=await gatherStats();
-    const t=$('#pq-stat-total'),m=$('#pq-stat-month'),st=$('#pq-stat-streak'),lv=$('#pq-stat-level');
-    if(t)t.textContent='Total words stored: '+s.total.toLocaleString();
-    if(m)m.textContent='Words this month: '+s.month.toLocaleString();
+    const setBar=(id,pct)=>{const el=$(id);if(el)el.style.width=Math.min(100,Math.max(0,pct))+'%'};
+    const dailyPct=s.dailyTarget?Math.round(100*s.dailyNow/s.dailyTarget):0;
+    const sessPct=s.sessionTarget?Math.round(100*s.sessionNow/s.sessionTarget):0;
+    const weekGoal=Math.max(s.dailyTarget*5,1);
+    const monthGoal=Math.max(s.dailyTarget*20,1);
+    if($('#pq-prog-daily-lab'))$('#pq-prog-daily-lab').textContent=s.dailyNow.toLocaleString()+' / '+s.dailyTarget.toLocaleString();
+    if($('#pq-prog-week-lab'))$('#pq-prog-week-lab').textContent=s.week.toLocaleString()+' words';
+    if($('#pq-prog-month-lab'))$('#pq-prog-month-lab').textContent=s.month.toLocaleString()+' words';
+    if($('#pq-prog-session-lab'))$('#pq-prog-session-lab').textContent=s.sessionNow.toLocaleString()+' / '+s.sessionTarget.toLocaleString();
+    setBar('#pq-prog-daily-bar',dailyPct);
+    setBar('#pq-prog-week-bar',Math.round(100*s.week/weekGoal));
+    setBar('#pq-prog-month-bar',Math.round(100*s.month/monthGoal));
+    setBar('#pq-prog-session-bar',sessPct);
+    const st=$('#pq-stat-streak'),lv=$('#pq-stat-level'),t=$('#pq-stat-total');
     if(st)st.textContent='Streak: '+s.streak+' day'+(s.streak===1?'':'s');
-    if(lv)lv.innerHTML='Level: <span class="pq-level-badge">'+s.level+'</span> · next level at '+(s.level*2000).toLocaleString()+' words';
+    if(lv)lv.innerHTML='Level: <span class="pq-level-badge">'+s.level+'</span> · '+escapeHtml(levelName(s.level));
+    if(t)t.textContent='Total words stored: '+s.total.toLocaleString();
     const box=$('#pq-progress-papers');if(!box)return;
     if(!s.list.length){box.innerHTML='<p class="pq-help">No papers yet.</p>';return}
     box.innerHTML=s.list.sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).map(p=>{
@@ -1332,35 +1573,101 @@
   async function renderAchievements(){
     const s=await gatherStats();
     const box=$('#pq-ach-list');if(!box)return;
-    const unlocked=ACHIEVEMENTS.filter(a=>a.test(s)).length;
+    const unlocked=s.unlocked||[];
+    if(!unlocked.length){
+      box.innerHTML='<p class="pq-help">No badges unlocked yet. Write a little — the first ones appear quickly.</p>';
+      return;
+    }
     box.innerHTML=
       '<div class="pq-ach-summary">'+
         '<span class="pq-level-badge">Level '+s.level+'</span>'+
-        '<span class="pq-ach-count">'+unlocked+' / '+ACHIEVEMENTS.length+' badges · '+s.total.toLocaleString()+' lifetime words</span>'+
+        '<span class="pq-ach-count">'+unlocked.length+' unlocked · '+s.total.toLocaleString()+' lifetime words</span>'+
       '</div>'+
       '<div class="pq-ach-grid">'+
-      ACHIEVEMENTS.map(a=>{
-        const ok=a.test(s);
-        return '<div class="pq-ach '+(ok?'unlocked':'locked')+'"><div class="ico">'+(ok?a.ico:'🔒')+'</div><div><div class="ach-title">'+escapeHtml(a.title)+'</div><div class="ach-desc">'+escapeHtml(a.desc)+'</div></div></div>';
-      }).join('')+
+      unlocked.slice().reverse().map(a=>
+        '<div class="pq-ach unlocked"><div class="ico">'+a.ico+'</div><div><div class="ach-title">'+escapeHtml(a.title)+'</div><div class="ach-desc">'+escapeHtml(a.desc)+'</div></div></div>'
+      ).join('')+
       '</div>';
   }
-  const GREETINGS=[
-    'Ready when you are.',
+  async function renderDashHero(){
+    const s=await gatherStats();
+    const m=readMeta();
+    const name=(m.researcher||state.authorName||'').trim();
+    const hello=$('#pq-dash-hello');
+    if(hello)hello.textContent=name?('Welcome, '+name):'Welcome';
+    const motto=$('#pq-dash-motto');
+    if(motto)motto.textContent=pickMotto();
+    if($('#pq-dash-level-num'))$('#pq-dash-level-num').textContent=String(s.level);
+    if($('#pq-dash-level-name'))$('#pq-dash-level-name').textContent=levelName(s.level);
+    const cong=$('#pq-dash-congrats');
+    if(cong){
+      if((s.unlocked||[]).length){
+        cong.textContent=(name?name+', ':'')+'you have unlocked '+(s.unlocked.length)+' badge'+(s.unlocked.length===1?'':'s')+' — keep the streak alive.';
+      }else{
+        cong.textContent=(name?name+', s':'S')+'tart a paragraph today. Your first badges are close.';
+      }
+    }
+    const recent=$('#pq-dash-recent-ach');
+    if(recent){
+      const top=(s.unlocked||[]).slice().reverse().slice(0,3);
+      if(!top.length){
+        recent.innerHTML='<div class="pq-mini-ach empty">No badges yet</div><div class="pq-mini-ach empty">Write to unlock</div><div class="pq-mini-ach empty">They appear here</div>';
+      }else{
+        while(top.length<3)top.push(null);
+        recent.innerHTML=top.map(a=>a
+          ?('<div class="pq-mini-ach"><div class="ico">'+a.ico+'</div><strong>'+escapeHtml(a.title)+'</strong><span>'+escapeHtml(a.desc)+'</span></div>')
+          :'<div class="pq-mini-ach empty">More soon</div>'
+        ).join('');
+      }
+    }
+    const dailyPct=s.dailyTarget?Math.min(100,Math.round(100*s.dailyNow/s.dailyTarget)):0;
+    const sessPct=s.sessionTarget?Math.min(100,Math.round(100*s.sessionNow/s.sessionTarget)):0;
+    if($('#pq-metric-daily'))$('#pq-metric-daily').textContent=s.dailyNow.toLocaleString()+'/'+s.dailyTarget.toLocaleString();
+    if($('#pq-metric-session'))$('#pq-metric-session').textContent=s.sessionNow.toLocaleString()+'/'+s.sessionTarget.toLocaleString();
+    if($('#pq-metric-total'))$('#pq-metric-total').textContent=s.total.toLocaleString();
+    if($('#pq-metric-streak'))$('#pq-metric-streak').textContent='Streak: '+s.streak+' day'+(s.streak===1?'':'s');
+    if($('#pq-metric-daily-bar'))$('#pq-metric-daily-bar').style.width=dailyPct+'%';
+    if($('#pq-metric-session-bar'))$('#pq-metric-session-bar').style.width=sessPct+'%';
+    if($('#pq-working-title'))$('#pq-working-title').textContent=state.paperTitle||'Untitled paper';
+    if($('#pq-working-meta'))$('#pq-working-meta').textContent=totalWords().toLocaleString()+' words · '+(state.sections||[]).length+' sections';
+  }
+  async function renderStorageStatus(){
+    const el=$('#pq-storage-status'), det=$('#pq-storage-detail');
+    try{
+      const list=await idbAll();
+      let bytes=0;
+      list.forEach(p=>{try{bytes+=JSON.stringify(p).length}catch(e){}});
+      const kb=Math.round(bytes/1024);
+      if(el)el.innerHTML='<strong>'+list.length+'</strong> paper'+(list.length===1?'':'s')+' in IndexedDB · ~'+kb.toLocaleString()+' KB estimated';
+      if(det)det.textContent='Active project: '+(state.paperTitle||'Untitled')+' · Sources in open paper: '+((state.sources||[]).length)+' · Library syncs across papers on this device.';
+      if(navigator.storage&&navigator.storage.estimate){
+        const est=await navigator.storage.estimate();
+        if(est&&det){
+          const used=est.usage!=null?Math.round(est.usage/1024)+' KB used':'';
+          const quota=est.quota!=null?Math.round(est.quota/1024/1024)+' MB quota':'';
+          det.textContent+=' Browser storage: '+[used,quota].filter(Boolean).join(' / ')+'.';
+        }
+      }
+    }catch(e){
+      if(el)el.textContent='Could not read IndexedDB status.';
+      if(det)det.textContent=String(e&&e.message||e);
+    }
+  }
+  const MOTTOS=[
     'One clear paragraph at a time.',
-    'Your sources are waiting.',
     'Protect the deep-work block.',
     'Draft ugly. Revise sharp.',
     'The gap in the literature will not fill itself.',
     'Citations situate; arguments convince.',
-    'Welcome back to the desk.',
     'Small sessions compound.',
-    'Write the section you are avoiding.'
+    'Write the section you are avoiding.',
+    'Your sources are waiting.',
+    'Quiet focus beats perfect conditions.',
+    'Finish the thought before you chase the next one.'
   ];
-  function pickGreeting(name){
-    const i=Math.floor(Date.now()/86400000)%GREETINGS.length;
-    const g=GREETINGS[i];
-    return name?('Welcome, '+name+' — '+g):('Welcome — '+g);
+  function pickMotto(){
+    const i=Math.floor(Date.now()/86400000)%MOTTOS.length;
+    return MOTTOS[i];
   }
   function openExportMenu(){
     openModal('<h3>Export</h3><p class="pq-help">Choose a format for the current paper.</p>'+
@@ -3726,6 +4033,40 @@
   }
 
   /* Pomodoro */
+  let pomoDuration=25*60;
+  function updateFocusTimerBar(){
+    const bar=$('#pq-focus-timer-bar'),lab=$('#pq-focus-timer-label');
+    if(!bar)return;
+    if(pomoRunning&&pomoLeft>0){
+      bar.classList.add('show');
+      const m=Math.floor(pomoLeft/60),s=String(Math.max(0,pomoLeft)%60).padStart(2,'0');
+      if(lab)lab.textContent='Focus · '+m+':'+s;
+    }else{
+      bar.classList.remove('show');
+    }
+  }
+  function stopPomodoro(silent){
+    clearInterval(pomoTimer);pomoRunning=false;pomoLeft=0;updateFocusTimerBar();
+    if(!silent)toast('Timer stopped');
+  }
+  function startPomodoro(mins){
+    clearInterval(pomoTimer);
+    pomoDuration=(mins||25)*60;
+    pomoLeft=pomoDuration;
+    pomoRunning=true;
+    updateFocusTimerBar();
+    pomoTimer=setInterval(()=>{
+      pomoLeft--;
+      updateFocusTimerBar();
+      const el=$('#m-pomo');if(el)el.textContent=Math.floor(pomoLeft/60)+':'+String(Math.max(0,pomoLeft)%60).padStart(2,'0')+' left';
+      if(pomoLeft<=0){
+        clearInterval(pomoTimer);pomoRunning=false;updateFocusTimerBar();
+        toast('Timer done — stretch and review your goal');
+        try{new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2OnJ6qjX1pX1dJPDQyPD9HVGJwdoCIk5uen5yWjIF0Y1hLPDE0O0NLV2Rsdn6GjpOYnJ6enZuWjYJ1ZVpQQzgxNDtBSE9VX2hvdn2CiI2RlJibnJ2dm5iTi4F2Z11TRTkyNDk/R09XW2JpbXR6gISHjI+Sk5WWl5iYl5aUkY2IgXhsYlhOQjYxMzY7QUdNU1phZ210eX6BhYmLj5GTlJaXmJmZmZiXlpSRjYqGf3ZrYVdMQDQxMzY6QEVKT1ZcYmhtc3h9gYSHi46QkpSVl5eYmJiYl5aUkY6Lh4J7cGdbUkg9NDA=').play()}catch(e){}
+      }
+    },1000);
+    toast(mins+'-minute timer started');
+  }
   function openPomodoro(){
     openModal('<h3>Focus timer</h3><p class="pq-help" id="m-pomo">'+(pomoRunning?Math.floor(pomoLeft/60)+':'+String(pomoLeft%60).padStart(2,'0')+' left':'Not running')+'</p>'+
       '<div class="pq-modal-actions" style="justify-content:flex-start">'+
@@ -3735,19 +4076,10 @@
       '<button type="button" class="pq-btn" id="m-stop">Stop</button>'+
       '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
     $('#m-cancel').onclick=closeModal;
-    const start=(mins)=>{
-      clearInterval(pomoTimer);pomoLeft=mins*60;pomoRunning=true;
-      pomoTimer=setInterval(()=>{
-        pomoLeft--;
-        if(pomoLeft<=0){clearInterval(pomoTimer);pomoRunning=false;toast('Timer done — stretch and review your goal');try{new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2OnJ6qjX1pX1dJPDQyPD9HVGJwdoCIk5uen5yWjIF0Y1hLPDE0O0NLV2Rsdn6GjpOYnJ6enZuWjYJ1ZVpQQzgxNDtBSE9VX2hvdn2CiI2RlJibnJ2dm5iTi4F2Z11TRTkyNDk/R09XW2JpbXR6gISHjI+Sk5WWl5iYl5aUkY2IgXhsYlhOQjYxMzY7QUdNU1phZ210eX6BhYmLj5GTlJaXmJmZmZiXlpSRjYqGf3ZrYVdMQDQxMzY6QEVKT1ZcYmhtc3h9gYSHi46QkpSVl5eYmJiYl5aUkY6Lh4J7cGdbUkg9NDA=').play()}catch(e){}}
-        const el=$('#m-pomo');if(el)el.textContent=Math.floor(pomoLeft/60)+':'+String(Math.max(0,pomoLeft)%60).padStart(2,'0')+' left';
-      },1000);
-      toast(mins+'-minute timer started');
-    };
-    $('#m-25').onclick=()=>start(25);
-    $('#m-15').onclick=()=>start(15);
-    $('#m-5').onclick=()=>start(5);
-    $('#m-stop').onclick=()=>{clearInterval(pomoTimer);pomoRunning=false;toast('Timer stopped');const el=$('#m-pomo');if(el)el.textContent='Not running'};
+    $('#m-25').onclick=()=>{startPomodoro(25);closeModal()};
+    $('#m-15').onclick=()=>{startPomodoro(15);closeModal()};
+    $('#m-5').onclick=()=>{startPomodoro(5);closeModal()};
+    $('#m-stop').onclick=()=>{stopPomodoro();const el=$('#m-pomo');if(el)el.textContent='Not running'};
   }
 
   /* Word log */
@@ -3931,21 +4263,35 @@
     $('#pq-add-section').style.display=side==='sections'?'':'none';
   }});
 
+  async function refreshDashboard(){
+    updateSessionLine();
+    updateDriveUI();
+    await renderDashHero();
+    await renderProjectGrid();
+    await renderProgressPane();
+    await renderAchievements();
+    await renderStorageStatus();
+  }
   $('#cap-home').onclick=async()=>{
     exitFocusMode();
     $('#pq-dash').classList.add('open');
     switchDashTab('papers');
+    await refreshDashboard();
+  };
+  const cont=$('#pq-dash-continue'), cont2=$('#pq-dash-continue-2');
+  if(cont)cont.onclick=()=>$('#pq-dash').classList.remove('open');
+  if(cont2)cont2.onclick=()=>$('#pq-dash').classList.remove('open');
+  const changeNameBtn=$('#pq-dash-change-name');
+  if(changeNameBtn)changeNameBtn.onclick=async()=>{
     const m=readMeta();
-    const name=m.researcher||state.authorName||'';
-    $('#pq-researcher').value=name;
-    $('#pq-dash-hello').textContent=pickGreeting(name);
-    $('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;
-    const dt=$('#pq-daily-target');if(dt)dt.value=getDailyTarget();
-    updateSessionLine();
-    updateDriveUI();
-    await renderProjectGrid();
-    await renderProgressPane();
-    await renderAchievements();
+    const cur=(m.researcher||state.authorName||'').trim();
+    const n=await styledPrompt('Your name','Shown in the welcome line and exports.',cur||'');
+    if(n===null)return;
+    const name=n.trim();
+    const meta=readMeta();meta.researcher=name;writeMeta(meta);
+    state.authorName=name;scheduleSave();
+    await renderDashHero();
+    toast(name?'Name saved':'Name cleared');
   };
   function switchDashTab(paneId){
     if(!paneId)return;
@@ -3967,6 +4313,8 @@
     });
     if(paneId==='progress')renderProgressPane();
     if(paneId==='achievements')renderAchievements();
+    if(paneId==='about')renderStorageStatus();
+    if(paneId==='papers')renderProjectGrid();
   }
   (function wireDashTabs(){
     const tabs=$('#pq-dash-tabs');
@@ -3989,36 +4337,37 @@
     const m=readMeta();m.dailyTarget=v;writeMeta(m);
     updateDailyBar();toast('Daily goal: '+v+' words');
   };
+  function scrollCaretIntoView(){
+    try{
+      const sel=window.getSelection();
+      if(sel&&sel.rangeCount){
+        const r=sel.getRangeAt(0);
+        let node=r.startContainer;
+        if(node.nodeType===3)node=node.parentElement;
+        if(node&&node.scrollIntoView)node.scrollIntoView({block:'center',behavior:'smooth'});
+      }
+    }catch(e){}
+  }
   function enterFocusMode(){
     $('#pq-dash')&&$('#pq-dash').classList.remove('open');
+    $('#pq-tools-menu')&&$('#pq-tools-menu').classList.remove('open');
     ROOT.classList.add('pq-focus');
-    const wrap=$('.pq-editor-wrap');
-    if(wrap){
-      wrap.scrollTop=0;
-      // after chrome hides, scroll active caret/editor into view
-      requestAnimationFrame(()=>{
-        editor.focus();
-        try{
-          const sel=window.getSelection();
-          if(sel&&sel.rangeCount){
-            const r=sel.getRangeAt(0);
-            const node=r.startContainer.nodeType===1?r.startContainer:r.startContainer.parentElement;
-            if(node&&node.scrollIntoView)node.scrollIntoView({block:'center',behavior:'smooth'});
-          }else{
-            editor.scrollIntoView({block:'start',behavior:'smooth'});
-          }
-        }catch(err){
-          editor.scrollIntoView({block:'start',behavior:'smooth'});
-        }
-      });
-    }else{
+    ROOT.classList.add('pq-side-collapsed');
+    requestAnimationFrame(()=>{
       editor.focus();
-    }
-    toast('Focus mode — Exit focus at top right');
+      scrollCaretIntoView();
+    });
+    toast('Focus mode — Exit at top right');
   }
   function exitFocusMode(){
     ROOT.classList.remove('pq-focus');
   }
+  editor.addEventListener('keydown',e=>{
+    if(!ROOT.classList.contains('pq-focus'))return;
+    if(e.key==='Enter'&&!e.shiftKey){
+      setTimeout(scrollCaretIntoView,30);
+    }
+  });
   $('#cap-sections').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
   const capScaf=$('#cap-scaffold');
   if(capScaf)capScaf.onclick=()=>toggleScaffold();
@@ -4074,6 +4423,30 @@
   $('#tool-papersnap').onclick=()=>{closeTools();takePaperSnapshot()};
   $('#tool-papersnaps').onclick=()=>{closeTools();viewPaperSnapshots()};
   $('#tool-pomodoro').onclick=()=>{closeTools();openPomodoro()};
+  const toolSess=$('#tool-session-goal');
+  if(toolSess)toolSess.onclick=async()=>{
+    closeTools();
+    const cur=(state.goals&&state.goals.sessionTarget)||500;
+    const v=await styledPrompt('Session word goal','Words to aim for this session.',String(cur));
+    if(v===null)return;
+    if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
+    state.goals.sessionTarget=Math.max(0,parseInt(v,10)||500);
+    scheduleSave();updateSessionLine();renderDashHero();toast('Session goal: '+state.goals.sessionTarget);
+  };
+  const toolDaily=$('#tool-daily-goal');
+  if(toolDaily)toolDaily.onclick=async()=>{
+    closeTools();
+    const cur=getDailyTarget();
+    const v=await styledPrompt('Daily word goal','Words to aim for each day.',String(cur));
+    if(v===null)return;
+    const m=readMeta();m.dailyTarget=Math.max(0,parseInt(v,10)||500);writeMeta(m);
+    updateDailyBar();renderDashHero();toast('Daily goal: '+m.dailyTarget);
+  };
+  const ftStop=$('#pq-focus-timer-stop');
+  if(ftStop)ftStop.onclick=()=>stopPomodoro();
+  const ftReset=$('#pq-focus-timer-reset');
+  if(ftReset)ftReset.onclick=()=>{if(pomoDuration)startPomodoro(Math.round(pomoDuration/60));};
+
   $('#tool-wordlog').onclick=()=>{closeTools();openWordLog()};
   $('#tool-titlepage').onclick=()=>{closeTools();openTitlePage()};
   $('#tool-palette').onclick=()=>{closeTools();openPalette()};
@@ -4093,12 +4466,8 @@
   if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Date.now();scheduleSave();renderSections()};
 
   $('#pq-dash-new').onclick=()=>createProject();
-  $('#pq-session-set').onclick=()=>{
-    const v=parseInt($('#pq-session-target').value,10)||500;
-    if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
-    state.goals.sessionTarget=v;scheduleSave();updateSessionLine();toast('Session goal set');
-  };
-  $('#pq-session-reset').onclick=()=>{
+  const sessReset=$('#pq-session-reset');
+  if(sessReset)sessReset.onclick=()=>{
     if(!state.goals)state.goals={sessionTarget:500,sessionBase:0};
     state.goals.sessionBase=totalWords();sessionBase=state.goals.sessionBase;scheduleSave();updateSessionLine();toast('Session count reset');
   };
@@ -4205,8 +4574,7 @@
     }});
   });
 
-  $('#pq-dash-save-name').onclick=()=>{const n=$('#pq-researcher').value.trim();const m=readMeta();m.researcher=n;writeMeta(m);state.authorName=n;scheduleSave();toast('Saved');$('#pq-dash-hello').textContent=n?'Welcome, '+n:'Welcome'};
-  $('#pq-dash-continue').onclick=()=>$('#pq-dash').classList.remove('open');
+  /* name change via pq-dash-change-name */
   $('#pq-modal-bg').onclick=e=>{if(e.target===$('#pq-modal-bg'))closeModal()};
   document.addEventListener('click',e=>{
     if(!e.target.closest('#pq-tools-menu')&&!e.target.closest('#cap-tools'))$('#pq-tools-menu').classList.remove('open');
@@ -4586,15 +4954,11 @@
     ROOT.classList.add('pq-side-collapsed');
     renderAll();updateSessionLine();
     const m=readMeta();
-    const name=m.researcher||state.authorName||'';
-    $('#pq-researcher').value=name;
-    $('#pq-session-target').value=(state.goals&&state.goals.sessionTarget)||500;
-    const dt=$('#pq-daily-target');if(dt)dt.value=getDailyTarget();
-    await renderProjectGrid();
-    $('#pq-dash-hello').textContent=pickGreeting(name);
-    if(!m.researcher)$('#pq-dash').classList.add('open');
-    updateDailyBar();
-    updateDriveUI();
+    await refreshDashboard();
+    // Open dashboard on first visit without a name; otherwise stay on desk
+    if(!m.researcher && !(state.authorName||'').trim()){
+      $('#pq-dash').classList.add('open');
+    }
     // silent token refresh if session exists
     if(!fromOAuth && driveReadSession()){
       try{await driveEnsureToken();updateDriveUI()}catch(e){/* stay quiet until user uses Drive */}
