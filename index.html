@@ -238,7 +238,7 @@
       background:var(--paper);color:var(--ink)
     }
     .pq-table-wrap th{background:var(--bg);font-weight:600;text-align:left}
-    .pq-table-wrap td:empty:before,.pq-table-wrap th:empty:before{content:'\00a0';
+    .pq-table-wrap td:empty:before,.pq-table-wrap th:empty:before{content:'\00a0';}
     .pq-table-del{
       position:absolute;top:-10px;right:-6px;z-index:5;
       width:28px;height:28px;border-radius:50%;border:1px solid var(--danger);
@@ -250,21 +250,25 @@
     #pq-root.pq-focus .pq-toolbar,
     #pq-root.pq-focus .pq-sidebar,
     #pq-root.pq-focus .pq-capsule,
+    #pq-root.pq-focus .pq-tools-menu,
     #pq-root.pq-focus .pq-works,
     #pq-root.pq-focus .pq-guide,
     #pq-root.pq-focus #pq-sec-title{display:none!important}
     #pq-root.pq-focus .pq-editor-wrap{padding-top:72px;padding-bottom:48px}
     #pq-root.pq-focus .pq-main{background:var(--paper);max-width:100%!important}
     #pq-root.pq-focus .pq-editor{max-width:38em;margin:0 auto;scroll-margin-top:80px;min-height:60vh}
-    #pq-root .pq-focus-exit{
-      display:none!important;visibility:hidden;pointer-events:none;
+    .pq-focus-exit,
+    #pq-root .pq-focus-exit,
+    #pq-root .pq-btn.pq-focus-exit{
+      display:none!important;visibility:hidden;pointer-events:none;opacity:0;
       position:fixed;top:14px;right:14px;z-index:960;
       border-radius:999px;padding:10px 16px;min-height:44px;font-weight:600;
       background:var(--paper);border:1px solid var(--border);
       box-shadow:0 6px 20px rgba(0,0,0,.14)
     }
-    #pq-root.pq-focus .pq-focus-exit{
-      display:inline-flex!important;visibility:visible;pointer-events:auto;align-items:center;gap:6px
+    #pq-root.pq-focus .pq-focus-exit,
+    #pq-root.pq-focus .pq-btn.pq-focus-exit{
+      display:inline-flex!important;visibility:visible;pointer-events:auto;opacity:1;align-items:center;gap:6px
     }
     .pq-focus-timer-bar{
       display:none;position:fixed;top:0;left:0;right:0;z-index:955;
@@ -379,6 +383,19 @@
     }
     .pq-dash-motto{font-size:.95rem;color:var(--muted);line-height:1.5;margin:0 0 12px;font-style:italic}
     .pq-dash-hero-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+    .pq-install-btn{display:none;align-items:center;gap:6px}
+    .pq-install-btn.show{display:inline-flex}
+    .pq-install-card{
+      display:none;background:var(--paper);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));
+      border-radius:14px;padding:14px 16px;margin-bottom:14px;
+      box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 12%,transparent)
+    }
+    .pq-install-card.show{display:block}
+    .pq-install-card .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+    .pq-install-card strong{font-size:.95rem}
+    .pq-install-card p{margin:4px 0 0;font-size:.8rem;color:var(--muted);line-height:1.45}
+    .pq-install-top{display:none}
+    .pq-install-top.show{display:inline-flex}
     .pq-dash-level-card{
       display:flex;flex-wrap:wrap;gap:14px;align-items:stretch;margin-bottom:14px
     }
@@ -507,6 +524,7 @@
     <button type="button" class="pq-btn" id="pq-disk-open">Open disk</button>
     <button type="button" class="pq-btn" id="pq-drive-sync" title="Sync current paper to Google Drive">Sync Drive</button>
     <span class="pq-wc" id="pq-drive-sync-info" title="Last Google Drive sync"></span>
+    <button type="button" class="pq-btn pq-btn-primary pq-install-btn pq-install-top" id="pq-top-install" title="Install PaperQuill">Install</button>
     <button type="button" class="pq-btn pq-btn-primary" id="pq-export">Export</button>
     <span class="pq-wc" id="pq-wc">0 words</span>
     <div class="pq-progress-wrap" title="Daily writing goal" id="pq-daily-wrap">
@@ -651,6 +669,7 @@
       <div class="pq-dash-hero-actions">
         <button type="button" class="pq-btn" id="pq-dash-change-name">Change name</button>
         <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue">Continue writing</button>
+        <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-dash-install" title="Install PaperQuill on this device">Install app</button>
       </div>
     </div>
 
@@ -692,6 +711,16 @@
         <div class="wp-meta" id="pq-working-meta">—</div>
       </div>
       <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue-2">Open desk</button>
+    </div>
+
+    <div class="pq-install-card" id="pq-install-card" role="region" aria-label="Install PaperQuill">
+      <div class="row">
+        <div>
+          <strong>Install PaperQuill</strong>
+          <p>Add it to your home screen for offline writing, faster launch, and a distraction-free desk.</p>
+        </div>
+        <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-install-card-btn">Install</button>
+      </div>
     </div>
 
     <div class="pq-free-card" id="pq-free-forever">
@@ -4349,13 +4378,13 @@
     }catch(e){}
   }
   function enterFocusMode(){
-    $('#pq-dash')&&$('#pq-dash').classList.remove('open');
-    $('#pq-tools-menu')&&$('#pq-tools-menu').classList.remove('open');
+    const dash=$('#pq-dash'); if(dash) dash.classList.remove('open');
+    const tools=$('#pq-tools-menu'); if(tools) tools.classList.remove('open');
     ROOT.classList.add('pq-focus');
     ROOT.classList.add('pq-side-collapsed');
+    // Do not auto-start pomodoro — timer only when user starts it from Tools
     requestAnimationFrame(()=>{
-      editor.focus();
-      scrollCaretIntoView();
+      try{editor.focus();scrollCaretIntoView()}catch(e){}
     });
     toast('Focus mode — Exit at top right');
   }
@@ -4581,7 +4610,116 @@
     if(!e.target.closest('#pq-dict')){dictEl.classList.remove('open');dictRange=null}
   });
 
-  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  /* ----- PWA install prompt ----- */
+  let deferredInstallPrompt = null;
+  function isAppInstalled(){
+    try{
+      if(window.matchMedia('(display-mode: standalone)').matches) return true;
+      if(window.matchMedia('(display-mode: minimal-ui)').matches) return true;
+      if(window.navigator.standalone === true) return true; // iOS Safari
+    }catch(e){}
+    return false;
+  }
+  function setInstallUI(show){
+    const on = !!show && !isAppInstalled();
+    ['pq-dash-install','pq-install-card-btn','pq-top-install'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.classList.toggle('show', on);
+    });
+    const card = document.getElementById('pq-install-card');
+    if(card) card.classList.toggle('show', on);
+  }
+  async function triggerInstall(){
+    if(isAppInstalled()){
+      toast('Already installed');
+      setInstallUI(false);
+      return;
+    }
+    if(deferredInstallPrompt){
+      try{
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if(choice && choice.outcome === 'accepted'){
+          toast('Installing…');
+          setInstallUI(false);
+        }else{
+          toast('Install dismissed');
+        }
+      }catch(e){
+        toast('Install unavailable');
+      }
+      deferredInstallPrompt = null;
+      return;
+    }
+    // iOS / browsers without beforeinstallprompt
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(isIOS){
+      openModal(
+        '<h3>Install on iPhone / iPad</h3>'+
+        '<p class="pq-dialog-msg">Safari does not show an install button. Use Share instead:</p>'+
+        '<ol class="pq-help" style="padding-left:18px;line-height:1.7">'+
+        '<li>Tap the <strong>Share</strong> icon</li>'+
+        '<li>Choose <strong>Add to Home Screen</strong></li>'+
+        '<li>Tap <strong>Add</strong></li>'+
+        '</ol>'+
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-ok">Got it</button></div>'
+      );
+      const ok = document.getElementById('m-ok'); if(ok) ok.onclick = closeModal;
+      return;
+    }
+    openModal(
+      '<h3>Install PaperQuill</h3>'+
+      '<p class="pq-dialog-msg">Your browser has not offered an install prompt yet. Try:</p>'+
+      '<ul class="pq-help" style="padding-left:18px;line-height:1.7">'+
+      '<li>Open this site over <strong>HTTPS</strong> (required for install)</li>'+
+      '<li>Use Chrome, Edge, or another Chromium browser</li>'+
+      '<li>Look for the install icon in the address bar</li>'+
+      '<li>Visit once online so the service worker can cache the desk</li>'+
+      '</ul>'+
+      '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-ok">OK</button></div>'
+    );
+    const ok = document.getElementById('m-ok'); if(ok) ok.onclick = closeModal;
+  }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    setInstallUI(true);
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    setInstallUI(false);
+    toast('PaperQuill installed');
+  });
+  // Show soft install entry on iOS even without beforeinstallprompt
+  if(!isAppInstalled() && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))){
+    setInstallUI(true);
+  }else if(isAppInstalled()){
+    setInstallUI(false);
+  }
+  document.getElementById('pq-dash-install')?.addEventListener('click', triggerInstall);
+  document.getElementById('pq-install-card-btn')?.addEventListener('click', triggerInstall);
+  document.getElementById('pq-top-install')?.addEventListener('click', triggerInstall);
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      // Prefer waiting worker when a new version is ready
+      if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      reg.addEventListener('updatefound', ()=>{
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange', ()=>{
+          if(nw.state === 'installed' && navigator.serviceWorker.controller){
+            toast('Update ready — reload to apply');
+          }
+        });
+      });
+    }).catch(()=>{});
+    navigator.serviceWorker.addEventListener('message', (ev)=>{
+      const d = ev.data || {};
+      if(d.type === 'SW_ACTIVATED'){ /* new SW live */ }
+    });
+  }
+
 
   /* ========== Google Drive (OAuth via Cloudflare Worker) ========== */
   const PQ_DRIVE = {
