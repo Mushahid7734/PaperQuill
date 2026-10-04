@@ -1,7 +1,7 @@
 /* PaperQuill service worker — offline-first app shell + IndexedDB helpers
- * Cache bump (v8) pushes SEO meta/thumbnail, default sections fix, tutorials & dissertation templates.
+ * Cache bump (v9) pushes editable title page, open desktop sidebar, polished sections panel.
  */
-const CACHE = 'paperquill-v8';
+const CACHE = 'paperquill-v9';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
