@@ -1,7 +1,7 @@
 /* PaperQuill service worker — offline-first app shell + IndexedDB helpers
- * Cache bump (v5) forces clients to pick up new assets after deploy.
+ * Cache bump (v6) pushes install-button UI + dashboard/focus fixes.
  */
-const CACHE = 'paperquill-v5';
+const CACHE = 'paperquill-v6';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
@@ -10,6 +10,7 @@ const IDB_STORE = 'meta';
 const ASSETS = [
   './',
   './index.html',
+  './PaperQuill.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
@@ -178,11 +179,11 @@ self.addEventListener('fetch', (e) => {
 });
 
 async function navigationHandler(req) {
+  // Network-first for HTML so deploys (install button, etc.) reach clients quickly
   try {
-    const net = await fetch(req);
+    const net = await fetch(req, { cache: 'no-store' });
     if (net && net.ok) {
       const cache = await caches.open(CACHE);
-      // Cache the document for next offline open
       try {
         await cache.put(req, net.clone());
         await cache.put('./', net.clone());
