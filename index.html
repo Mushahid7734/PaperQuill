@@ -596,12 +596,22 @@
     .pq-storage-line{font-size:.82rem;line-height:1.55;color:var(--ink);margin:0 0 6px}
     .pq-storage-line span{color:var(--muted)}
     @media(max-width:800px){
-      #pq-root{--sidebar:min(280px,85vw)}
-      #pq-root:not(.pq-side-collapsed) .pq-sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;box-shadow:4px 0 24px rgba(0,0,0,.12);max-width:85vw}
+      /* Compact sections drawer: text width + padding, not full-screen */
+      #pq-root{--sidebar:min(210px,62vw)}
+      #pq-root:not(.pq-side-collapsed) .pq-sidebar{
+        position:absolute;left:0;top:0;bottom:0;z-index:50;
+        width:min(210px,62vw);max-width:62vw;
+        box-shadow:4px 0 24px rgba(0,0,0,.12);
+      }
+      #pq-root:not(.pq-side-collapsed) .pq-side-inner{
+        width:min(210px,62vw);max-width:62vw;padding:8px 8px 10px;
+      }
       .pq-main{width:100%}
       .pq-capsule{flex-wrap:nowrap;gap:4px;padding:8px 8px;max-width:96vw;bottom:14px}
       .pq-capsule .pq-btn{padding:10px;min-height:44px;min-width:44px}
       .pq-tools-menu{bottom:72px}
+      .pq-item{padding:8px 8px;font-size:.78rem}
+      .pq-item .pq-item-title{white-space:normal;line-height:1.3}
     }
     @media(max-width:380px){
       .pq-capsule{gap:3px;padding:6px 6px}
@@ -651,8 +661,10 @@
     .pq-ref-body{display:flex;flex:1;min-height:0;position:relative}
     .pq-ref-side{
       width:min(280px,88vw);background:var(--panel);border-right:1px solid var(--border);
-      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden
+      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;
+      transition:width .22s ease,max-width .22s ease,border .22s,box-shadow .22s
     }
+    .pq-ref-side.collapsed{width:0;max-width:0;border:none;overflow:hidden;pointer-events:none}
     .pq-ref-side-head{padding:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
     .pq-ref-side-head strong{flex:1;font-size:.9rem}
     .pq-ref-folders{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin}
@@ -748,12 +760,44 @@
     .pq-ref-hl-layer .hl.pink{background:color-mix(in srgb,#d4899c 40%,transparent)}
     .pq-ref-side-panel{
       width:min(320px,100%);border-left:1px solid var(--border);background:var(--panel);
-      display:flex;flex-direction:column;flex-shrink:0;overflow:hidden
+      display:flex;flex-direction:column;flex-shrink:0;overflow:visible;
+      transition:width .22s ease,max-width .22s ease,border .22s,box-shadow .22s;
+      position:relative
     }
-    .pq-ref-side-panel .tabs{display:flex;gap:2px;padding:6px;border-bottom:1px solid var(--border)}
+    .pq-ref-side-panel.collapsed{
+      width:0;max-width:0;border:none;overflow:visible;pointer-events:none;
+      box-shadow:none
+    }
+    .pq-ref-side-panel.collapsed .tabs,
+    .pq-ref-side-panel.collapsed .pane{display:none!important;pointer-events:none}
+    .pq-ref-side-panel .tabs{display:flex;gap:2px;padding:6px 6px 6px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
     .pq-ref-side-panel .tabs button{flex:1;font-size:.72rem;padding:6px;border:none;background:transparent;color:var(--muted);border-radius:6px;cursor:pointer}
     .pq-ref-side-panel .tabs button.active{background:var(--paper);color:var(--ink);font-weight:600}
-    .pq-ref-side-panel .pane{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin}
+    .pq-ref-side-panel .pane{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;min-height:0}
+    /* Edge arrow on notes panel — collapse when open, expand when collapsed */
+    .pq-ref-panel-collapse{
+      position:absolute;left:0;top:50%;transform:translate(-100%,-50%);
+      z-index:30;width:28px;height:56px;padding:0;margin:0;
+      border:1px solid var(--border);border-right:none;
+      border-radius:10px 0 0 10px;background:var(--panel);color:var(--ink);
+      font-size:1.35rem;line-height:1;font-weight:600;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:-2px 0 10px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;
+      pointer-events:auto
+    }
+    .pq-ref-panel-collapse:hover{background:var(--hover)}
+    .pq-ref-side-panel.collapsed{
+      /* keep the edge tab visible at the right of the reader */
+      pointer-events:none
+    }
+    .pq-ref-side-panel.collapsed .pq-ref-panel-collapse{
+      pointer-events:auto;
+      left:0;transform:translate(-100%,-50%);
+      background:var(--accent);color:var(--paper);border-color:var(--accent);
+    }
+    .pq-ref-panel-collapse-inline{
+      font-size:1rem;font-weight:700;padding:4px 10px;min-height:32px;min-width:36px;line-height:1
+    }
     .pq-ref-note-card{border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;background:var(--paper);font-size:.8rem}
     .pq-ref-note-card .meta{font-size:.7rem;color:var(--muted);margin-bottom:4px}
     #pq-root.pq-ref-mode .pq-top,
@@ -770,10 +814,34 @@
     }
     .pq-ref-search-hit{border-left:3px solid var(--ok);padding-left:8px}
     @media(max-width:700px){
-      .pq-ref-side{position:absolute;left:0;top:0;bottom:0;z-index:10;box-shadow:4px 0 20px rgba(0,0,0,.12)}
-      .pq-ref-side.collapsed{width:0;border:none;padding:0;overflow:hidden}
-      .pq-ref-side-panel{position:absolute;right:0;top:0;bottom:0;z-index:10;max-width:92vw;box-shadow:-4px 0 20px rgba(0,0,0,.12)}
-      .pq-ref-side-panel.collapsed{width:0;border:none;overflow:hidden}
+      /* Folders drawer: collapsible overlay, compact width */
+      .pq-ref-side{
+        position:absolute;left:0;top:0;bottom:0;z-index:20;
+        width:min(220px,68vw);max-width:68vw;
+        box-shadow:4px 0 20px rgba(0,0,0,.14);
+        transition:width .22s ease,max-width .22s ease,border .22s,box-shadow .22s;
+      }
+      .pq-ref-side.collapsed{
+        width:0;max-width:0;border:none;padding:0;overflow:hidden;
+        box-shadow:none;pointer-events:none;
+      }
+      /* PDF notes/highlights panel: collapsible overlay */
+      .pq-ref-side-panel{
+        position:absolute;right:0;top:0;bottom:0;z-index:20;
+        width:min(280px,80vw);max-width:80vw;
+        box-shadow:-4px 0 20px rgba(0,0,0,.14);
+        transition:width .22s ease,max-width .22s ease,border .22s,box-shadow .22s;
+        overflow:visible;
+      }
+      .pq-ref-side-panel.collapsed{
+        width:0;max-width:0;border:none;overflow:visible;
+        box-shadow:none;pointer-events:none;
+      }
+      /* Larger touch target for the edge arrow on phones */
+      .pq-ref-panel-collapse{
+        width:32px;height:64px;font-size:1.5rem;
+        box-shadow:-3px 0 12px rgba(0,0,0,.12);
+      }
     }
   </style>
 </head>
@@ -1147,6 +1215,7 @@
         <div class="pq-ref-side-head">
           <strong>Folders</strong>
           <button type="button" class="pq-btn" id="ref-folder-all" style="font-size:.72rem;padding:4px 8px">All</button>
+          <button type="button" class="pq-btn pq-ref-panel-collapse-inline" id="ref-folders-collapse" title="Collapse folders" aria-label="Collapse folders">‹</button>
         </div>
         <div class="pq-ref-folders" id="ref-folders"></div>
         <p class="pq-help" style="padding:8px 10px;margin:0;font-size:.68rem">PDFs stay on this device (IndexedDB). Highlights &amp; notes sync with disk JSON / Drive metadata.</p>
@@ -1173,12 +1242,14 @@
           <button type="button" class="pq-btn" id="ref-find-next" title="Next match">▾</button>
           <button type="button" class="pq-btn" id="ref-hl-y" title="Highlight selection (keyboard: H)">HL · H</button>
           <button type="button" class="pq-btn" id="ref-add-note">+ Note</button>
+          <button type="button" class="pq-btn" id="ref-toggle-anno" title="Notes &amp; highlights panel">Notes</button>
           <button type="button" class="pq-btn" id="ref-dl-pdf">Download</button>
           <button type="button" class="pq-btn" id="ref-fs" title="Fullscreen reader">Fullscreen</button>
         </div>
         <div class="pq-ref-reader-body">
           <div class="pq-ref-pdf-wrap" id="ref-pdf-wrap"></div>
           <aside class="pq-ref-side-panel" id="ref-anno-panel">
+            <button type="button" class="pq-ref-panel-collapse" id="ref-anno-collapse" title="Collapse notes panel" aria-label="Collapse notes panel">›</button>
             <div class="tabs">
               <button type="button" class="active" data-rpane="notes">Notes</button>
               <button type="button" data-rpane="highlights">Highlights</button>
@@ -3010,6 +3081,57 @@
     const data=await res.json();
     return (data.data||[]).map(mapSemanticScholarWork).filter(Boolean);
   }
+  async function searchOpenLibrary(q){
+    const isbnMatch=String(q).replace(/[-\s]/g,'').match(/^(97[89]\d{10}|\d{9}[\dXx])$/);
+    let url;
+    if(isbnMatch)url='https://openlibrary.org/search.json?isbn='+encodeURIComponent(isbnMatch[1])+'&limit=12';
+    else url='https://openlibrary.org/search.json?q='+encodeURIComponent(q)+'&limit=12';
+    const r=await fetch(url);
+    if(!r.ok)return [];
+    const data=await r.json();
+    return (data.docs||[]).map(d=>{
+      const authors=(d.author_name||[]).map(n=>{
+        const p=String(n).trim().split(/\s+/);
+        return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+      }).join('; ');
+      const year=d.first_publish_year?String(d.first_publish_year):(d.publish_year&&d.publish_year[0]?String(d.publish_year[0]):'');
+      const olid=d.key||'';
+      return {
+        type:'book', authors, title:d.title||'', year,
+        container:'', publisher:(d.publisher&&d.publisher[0])||'',
+        volume:'',issue:'',pages:d.number_of_pages_median?String(d.number_of_pages_median):'',
+        doi:'', url:olid?('https://openlibrary.org'+olid):'',
+        abstract:(d.first_sentence&&(d.first_sentence.value||d.first_sentence))||'',
+        isbn:(d.isbn&&d.isbn[0])||'', sourceLib:'Open Library'
+      };
+    }).filter(x=>x.title);
+  }
+  async function searchGoogleBooks(q){
+    const isbnMatch=String(q).replace(/[-\s]/g,'').match(/^(97[89]\d{10}|\d{9}[\dXx])$/);
+    const gq=isbnMatch?('isbn:'+isbnMatch[1]):q;
+    const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(gq)+'&maxResults=12&printType=all');
+    if(!r.ok)return [];
+    const data=await r.json();
+    return (data.items||[]).map(item=>{
+      const vi=item.volumeInfo||{};
+      const authors=(vi.authors||[]).map(n=>{
+        const p=String(n).trim().split(/\s+/);
+        return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+      }).join('; ');
+      let year='';
+      if(vi.publishedDate)year=String(vi.publishedDate).slice(0,4);
+      const ids=vi.industryIdentifiers||[];
+      const isbn13=(ids.find(x=>x.type==='ISBN_13')||{}).identifier||'';
+      const isbn10=(ids.find(x=>x.type==='ISBN_10')||{}).identifier||'';
+      return {
+        type:'book', authors, title:vi.title||'', year,
+        container:vi.series||'', publisher:vi.publisher||'',
+        volume:'',issue:'',pages:vi.pageCount?String(vi.pageCount):'',
+        doi:'', url:vi.infoLink||vi.canonicalVolumeLink||(item.id?('https://books.google.com/books?id='+item.id):''),
+        abstract:vi.description||'', isbn:isbn13||isbn10||'', sourceLib:'Google Books'
+      };
+    }).filter(x=>x.title);
+  }
   async function searchSources(query, lib){
     const q=(query||'').trim();
     if(q.length<2)return [];
@@ -3019,6 +3141,8 @@
       if(which==='europepmc'||which==='epmc')return await searchEuropePmc(q);
       if(which==='semanticscholar'||which==='s2')return await searchSemanticScholar(q);
       if(which==='doaj')return await searchDoaj(q);
+      if(which==='openlibrary'||which==='open library')return await searchOpenLibrary(q);
+      if(which==='googlebooks'||which==='google books'||which==='google')return await searchGoogleBooks(q);
       return await searchOpenAlex(q);
     }catch(e){console.warn('searchSources',e);return []}
   }
@@ -3215,6 +3339,8 @@
       '<label class="pq-lbl" for="m-lib">Library</label>'+
       '<select class="pq-sel" id="m-lib" style="width:100%;font-size:.88rem;padding:8px 10px;border-radius:8px;appearance:auto">'+
       '<option value="openalex"'+(lib0==='openalex'?' selected':'')+'>OpenAlex — broad academic graph</option>'+
+      '<option value="openlibrary"'+(lib0==='openlibrary'?' selected':'')+'>Open Library — books &amp; ISBN</option>'+
+      '<option value="googlebooks"'+(lib0==='googlebooks'?' selected':'')+'>Google Books — books &amp; monographs</option>'+
       '<option value="crossref"'+(lib0==='crossref'?' selected':'')+'>Crossref — DOI registry &amp; journals</option>'+
       '<option value="europepmc"'+(lib0==='europepmc'?' selected':'')+'>Europe PMC — life sciences + OA full text</option>'+
       '<option value="semanticscholar"'+(lib0==='semanticscholar'?' selected':'')+'>Semantic Scholar — AI abstracts &amp; OA PDFs</option>'+
@@ -3599,7 +3725,13 @@
     list.querySelectorAll('.pq-edit-src').forEach(b=>b.onclick=()=>editSource(b.dataset.id));
     list.querySelectorAll('.pq-del-src').forEach(b=>b.onclick=()=>{state.sources=state.sources.filter(s=>s.id!==b.dataset.id);scheduleSave();renderSources();reRenderAllCitations()});
   }
-  function switchSection(id){saveCurrent();state.activeSectionId=id;loadSection();renderSections();scheduleSave()}
+  function switchSection(id){
+    saveCurrent();state.activeSectionId=id;loadSection();renderSections();scheduleSave();
+    // Mobile: close sections drawer after picking a section so the editor stays usable
+    if(window.matchMedia && window.matchMedia('(max-width:800px)').matches){
+      ROOT.classList.add('pq-side-collapsed');
+    }
+  }
   function loadSection(){
     const sec=getActiveSection();if(!sec)return;
     secTitle.value=sec.title||'';
@@ -7192,6 +7324,13 @@
     $('#pq-ref').classList.add('open');
     const cap=$('#cap-refs');if(cap)cap.classList.add('on');
     refState.folders=refReadFolders();
+    // Mobile: start with folders drawer collapsed so the list is usable
+    const side=$('#ref-side');
+    if(side && window.matchMedia && window.matchMedia('(max-width:700px)').matches){
+      side.classList.add('collapsed');
+    }else if(side){
+      side.classList.remove('collapsed');
+    }
     refreshRefLibrary();
   }
   function closeRefManager(){
@@ -7227,6 +7366,10 @@
         if(e.target.closest('.ref-fdel'))return;
         refState.activeFolderId=row.dataset.id;
         renderRefFolders();renderRefList();
+        // On mobile, collapse folders drawer after pick so the list is usable
+        if(window.matchMedia && window.matchMedia('(max-width:700px)').matches){
+          const side=$('#ref-side');if(side)side.classList.add('collapsed');
+        }
       };
     });
     $$('.ref-fdel',el).forEach(b=>b.onclick=async e=>{
@@ -7477,16 +7620,46 @@
     if(typeof pdfjsLib==='undefined')return toast('PDF.js not loaded — check network');
     refState.openItemId=id;
     refState.page=1;
-    refState.scale=1.4;
+    refState.scale=1; // refined after first page metrics
     refState.findMatches=[];
     refState.findIdx=-1;
     $('#ref-reader').classList.add('open');
     $('#ref-reader-title').textContent=item.title||item.fileName||'PDF';
     const fl=$('#ref-find-label');if(fl)fl.textContent='';
     const fq=$('#ref-find-q');if(fq)fq.value='';
+    // Mobile: collapse notes panel so PDF fills the screen; desktop keeps it open
+    const anno=$('#ref-anno-panel');
+    if(anno){
+      const mobile=window.matchMedia && window.matchMedia('(max-width:700px)').matches;
+      anno.classList.toggle('collapsed',!!mobile);
+      const arrow=$('#ref-anno-collapse');
+      if(arrow){
+        arrow.textContent=mobile?'‹':'›';
+        arrow.title=mobile?'Open notes panel':'Collapse notes panel';
+      }
+      const tog=$('#ref-toggle-anno');
+      if(tog)tog.classList.toggle('on',!mobile);
+    }
     try{
       const loading=pdfjsLib.getDocument({data:buf});
       refState.pdfDoc=await loading.promise;
+      // Fit page width to the reader: snug on mobile, comfortable on desktop
+      try{
+        const page1=await refState.pdfDoc.getPage(1);
+        const base=page1.getViewport({scale:1});
+        const wrap=$('#ref-pdf-wrap');
+        // Wait a frame so layout reflects collapsed notes panel
+        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+        const avail=Math.max(160,(wrap&&wrap.clientWidth?wrap.clientWidth:window.innerWidth)-20);
+        const mobile=window.matchMedia && window.matchMedia('(max-width:700px)').matches;
+        // Mobile: fit full width with small padding; desktop: ~92% of available width, capped
+        let s=avail/base.width;
+        if(mobile)s=Math.max(0.5, Math.min(1.35, s*0.98));
+        else s=Math.max(0.85, Math.min(1.75, s*0.92));
+        refState.scale=s;
+      }catch(e){
+        refState.scale=(window.matchMedia && window.matchMedia('(max-width:700px)').matches)?0.85:1.25;
+      }
       // page texts
       if(item.pageTexts&&item.pageTexts.length===refState.pdfDoc.numPages){
         refState.pageTexts=item.pageTexts.slice();
@@ -8198,6 +8371,8 @@
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+
       '<input class="pq-inp" id="m-meta-q" placeholder="Title, DOI, or author…" style="flex:1;min-width:140px" value="'+escapeHtml(qGuess)+'">'+
       '<select class="pq-sel" id="m-meta-lib" style="width:auto">'+
+      '<option value="openlibrary">Open Library (books)</option>'+
+      '<option value="googlebooks">Google Books</option>'+
       '<option value="openalex">OpenAlex</option>'+
       '<option value="crossref">Crossref</option>'+
       '<option value="semanticscholar">Semantic Scholar</option>'+
@@ -8370,6 +8545,77 @@
           abstract:b.abstract||'',sourceLib:'DOAJ'
         });
       });
+    }else if(lib==='openlibrary'){
+      // Open Library — strong for books / ISBN / title
+      const isbnMatch=q.replace(/[-\s]/g,'').match(/^(97[89]\d{10}|\d{9}[\dXx])$/);
+      let docs=[];
+      if(isbnMatch){
+        const r=await fetch('https://openlibrary.org/search.json?isbn='+encodeURIComponent(isbnMatch[1])+'&limit=8');
+        const data=await r.json();
+        docs=data.docs||[];
+      }else{
+        const r=await fetch('https://openlibrary.org/search.json?q='+encodeURIComponent(q)+'&limit=8');
+        const data=await r.json();
+        docs=data.docs||[];
+      }
+      docs.forEach(d=>{
+        const authors=(d.author_name||[]).map(n=>{
+          const p=String(n).trim().split(/\s+/);
+          return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+        }).join('; ');
+        const year=d.first_publish_year?String(d.first_publish_year):(d.publish_year&&d.publish_year[0]?String(d.publish_year[0]):'');
+        const isbn=(d.isbn&&d.isbn[0])||'';
+        const olid=d.key||'';
+        const publisher=(d.publisher&&d.publisher[0])||'';
+        results.push({
+          type:'book',
+          authors,
+          title:d.title||'',
+          year,
+          container:'',
+          publisher,
+          volume:'',issue:'',pages:d.number_of_pages_median?String(d.number_of_pages_median):'',
+          doi:'',
+          url:olid?('https://openlibrary.org'+olid):'',
+          abstract:(d.first_sentence&&(d.first_sentence.value||d.first_sentence))||'',
+          isbn,
+          sourceLib:'Open Library'
+        });
+      });
+    }else if(lib==='googlebooks'){
+      // Google Books API (no key required for modest client-side use)
+      const isbnMatch=q.replace(/[-\s]/g,'').match(/^(97[89]\d{10}|\d{9}[\dXx])$/);
+      const gq=isbnMatch?('isbn:'+isbnMatch[1]):q;
+      const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(gq)+'&maxResults=8&printType=all');
+      const data=await r.json();
+      (data.items||[]).forEach(item=>{
+        const vi=item.volumeInfo||{};
+        const authors=(vi.authors||[]).map(n=>{
+          const p=String(n).trim().split(/\s+/);
+          return p.length>1?p[p.length-1]+', '+p.slice(0,-1).join(' '):n;
+        }).join('; ');
+        let year='';
+        if(vi.publishedDate)year=String(vi.publishedDate).slice(0,4);
+        const ids=vi.industryIdentifiers||[];
+        const isbn13=(ids.find(x=>x.type==='ISBN_13')||{}).identifier||'';
+        const isbn10=(ids.find(x=>x.type==='ISBN_10')||{}).identifier||'';
+        const isBook=/book/i.test(vi.printType||'')||!(vi.categories&&/periodical|magazine/i.test((vi.categories||[]).join(' ')));
+        results.push({
+          type:isBook?'book':'article',
+          authors,
+          title:vi.title||'',
+          year,
+          container:vi.series||'',
+          publisher:vi.publisher||'',
+          volume:'',issue:'',
+          pages:vi.pageCount?String(vi.pageCount):'',
+          doi:'',
+          url:vi.infoLink||vi.canonicalVolumeLink||(item.id?('https://books.google.com/books?id='+item.id):''),
+          abstract:vi.description||'',
+          isbn:isbn13||isbn10||'',
+          sourceLib:'Google Books'
+        });
+      });
     }
     return results;
   }
@@ -8530,6 +8776,38 @@
     });
     const tog=$('#ref-toggle-folders');
     if(tog)tog.onclick=()=>$('#ref-side').classList.toggle('collapsed');
+    function setAnnoCollapsed(collapsed){
+      const p=$('#ref-anno-panel');
+      if(!p)return;
+      p.classList.toggle('collapsed',!!collapsed);
+      const arrow=$('#ref-anno-collapse');
+      if(arrow){
+        arrow.textContent=collapsed?'‹':'›';
+        arrow.title=collapsed?'Open notes panel':'Collapse notes panel';
+        arrow.setAttribute('aria-label',arrow.title);
+      }
+      const tog=$('#ref-toggle-anno');
+      if(tog)tog.classList.toggle('on',!collapsed);
+    }
+    const togAnno=$('#ref-toggle-anno');
+    if(togAnno)togAnno.onclick=()=>{
+      const p=$('#ref-anno-panel');
+      if(!p)return;
+      setAnnoCollapsed(!p.classList.contains('collapsed'));
+    };
+    const annoCollapse=$('#ref-anno-collapse');
+    if(annoCollapse)annoCollapse.onclick=e=>{
+      e.preventDefault();e.stopPropagation();
+      const p=$('#ref-anno-panel');
+      if(!p)return;
+      setAnnoCollapsed(!p.classList.contains('collapsed'));
+    };
+    const foldersCollapse=$('#ref-folders-collapse');
+    if(foldersCollapse)foldersCollapse.onclick=e=>{
+      e.preventDefault();e.stopPropagation();
+      const side=$('#ref-side');
+      if(side)side.classList.add('collapsed');
+    };
     // find in PDF
     const fq=$('#ref-find-q');
     if(fq){
