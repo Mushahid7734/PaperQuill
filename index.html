@@ -831,6 +831,51 @@
       background:color-mix(in srgb,#ff9800 75%,transparent)!important;outline:2px solid #e65100;
     }
     .pq-ref-search-hit{border-left:3px solid var(--ok);padding-left:8px}
+    /* Write + PDF split (desktop side-by-side; mobile stacked with collapsible PDF) */
+    #pq-root.pq-write-split .pq-ref{
+      position:fixed;z-index:900;background:var(--bg);
+    }
+    #pq-root.pq-write-split:not(.pq-ref-mode) .pq-ref{display:flex}
+    #pq-root.pq-write-split .pq-body{min-height:0}
+    @media(min-width:901px){
+      #pq-root.pq-write-split.pq-ref-mode .pq-top,
+      #pq-root.pq-write-split.pq-ref-mode .pq-body,
+      #pq-root.pq-write-split.pq-ref-mode .pq-capsule{display:flex!important}
+      #pq-root.pq-write-split{
+        display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;
+      }
+      #pq-root.pq-write-split .pq-top{grid-column:1/-1;grid-row:1}
+      #pq-root.pq-write-split .pq-body{grid-column:1;grid-row:2;min-width:0}
+      #pq-root.pq-write-split .pq-ref{
+        grid-column:2;grid-row:2;position:relative;inset:auto;z-index:5;
+        border-left:1px solid var(--border);width:auto;max-width:none
+      }
+      #pq-root.pq-write-split .pq-capsule{grid-column:1/-1;grid-row:3;position:relative;bottom:auto;left:auto;transform:none;margin:8px auto}
+      #pq-root.pq-write-split .pq-ref-top .pq-logo{display:none}
+    }
+    @media(max-width:900px){
+      #pq-root.pq-write-split .pq-ref{
+        top:auto;left:0;right:0;bottom:0;height:48%;max-height:55vh;
+        border-top:1px solid var(--border);box-shadow:0 -6px 24px rgba(0,0,0,.12);
+        border-radius:14px 14px 0 0
+      }
+      #pq-root.pq-write-split.pq-pdf-collapsed .pq-ref{
+        height:48px;max-height:48px;overflow:hidden
+      }
+      #pq-root.pq-write-split.pq-pdf-collapsed .pq-ref-body{display:none}
+      #pq-root.pq-write-split .pq-body{padding-bottom:52%}
+      #pq-root.pq-write-split.pq-pdf-collapsed .pq-body{padding-bottom:56px}
+      #pq-root.pq-write-split .pq-ref-top{padding:6px 8px}
+      #pq-root.pq-write-split .pq-capsule{bottom:calc(48% + 8px)}
+      #pq-root.pq-write-split.pq-pdf-collapsed .pq-capsule{bottom:56px}
+    }
+    .pq-split-toggle{
+      display:none;position:absolute;left:50%;transform:translateX(-50%);top:4px;z-index:25;
+      min-height:36px;padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600
+    }
+    @media(max-width:900px){
+      #pq-root.pq-write-split .pq-split-toggle{display:inline-flex}
+    }
     @media(max-width:700px){
       /* Folders drawer: collapsible overlay, compact width */
       .pq-ref-side{
@@ -1218,6 +1263,7 @@
       <strong style="font-size:.95rem">Reference Manager</strong>
       <span class="pq-tag">local</span>
       <div class="pq-sep"></div>
+      <button type="button" class="pq-btn pq-split-toggle" id="ref-split-collapse" title="Show or hide PDF panel">PDF ▴</button>
       <button type="button" class="pq-btn" id="ref-back-write" title="Back to writing desk">← Writing desk</button>
       <button type="button" class="pq-btn" id="ref-toggle-folders" title="Folders">Folders</button>
       <input class="pq-inp" id="ref-search" placeholder="Search PDFs, notes, highlights…" style="flex:1;min-width:140px;max-width:320px">
@@ -1265,6 +1311,8 @@
           <button type="button" class="pq-btn" id="ref-hl-y" title="Highlight selection (keyboard: H)">HL · H</button>
           <button type="button" class="pq-btn" id="ref-add-note">+ Note</button>
           <button type="button" class="pq-btn" id="ref-toggle-anno" title="Notes &amp; highlights panel">Notes</button>
+          <button type="button" class="pq-btn" id="ref-write-split" title="Write beside this PDF">Write</button>
+          <button type="button" class="pq-btn" id="ref-popout" title="Open PDF in a new window">Pop out</button>
           <button type="button" class="pq-btn" id="ref-dl-pdf">Download</button>
           <button type="button" class="pq-btn" id="ref-fs" title="Fullscreen reader">Fullscreen</button>
         </div>
@@ -2485,10 +2533,10 @@
     return MOTTOS[i];
   }
   function openExportMenu(){
-    openModal('<h3>Export</h3><p class="pq-help">Choose a format for the current paper.</p>'+
+    openModal('<h3>Export</h3><p class="pq-help">DOCX includes style-aware title page, running head, and page numbers. Print-ready PDF opens a formatted preview you can save as PDF.</p>'+
       '<div class="pq-modal-actions" style="justify-content:flex-start;flex-direction:column;align-items:stretch">'+
-      '<button type="button" class="pq-btn pq-btn-primary" id="m-docx">DOCX (Word)</button>'+
-      '<button type="button" class="pq-btn" id="m-pdf">PDF (print dialog)</button>'+
+      '<button type="button" class="pq-btn pq-btn-primary" id="m-docx">DOCX (Word · submission layout)</button>'+
+      '<button type="button" class="pq-btn" id="m-pdf">Print-ready PDF</button>'+
       '<button type="button" class="pq-btn" id="m-md">Markdown</button>'+
       '<button type="button" class="pq-btn" id="m-html">HTML</button>'+
       '<button type="button" class="pq-btn" id="m-json">JSON backup</button>'+
@@ -2549,6 +2597,17 @@
     const text=(tmp.innerText||tmp.textContent||'').replace(/\r/g,'');
     return text.split(/\n+/).map(s=>s.replace(/[ \t]+\n/g,'\n').replace(/[ \t]{2,}/g,' ').trim()).filter(Boolean);
   }
+  function exportRunningHeadText(style){
+    if(style==='apa7'){
+      const rh=(state.runningHead||state.paperTitle||'RUNNING HEAD').trim();
+      return rh.toUpperCase().slice(0,50);
+    }
+    if(style==='mla9'){
+      const last=((state.authorName||'').split(/[\s,]+/).filter(Boolean).pop())||'Author';
+      return last;
+    }
+    return (state.runningHead||state.paperTitle||'').trim().slice(0,50);
+  }
   function exportPdf(){
     saveCurrent();reRenderAllCitations();rebuildWorksCited();
     const style=state.style;
@@ -2556,13 +2615,21 @@
     const disamb=buildDisambiguation();
     const margin=L.marginInch+'in';
     const indent=(L.indentInch)+'in';
+    const head=exportRunningHeadText(style);
+    const showHead=!!(style==='apa7'||style==='mla9'||(state.runningHead&&state.runningHead.trim()));
     let h='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+escapeHtml(state.paperTitle||'')+'</title><style>\n'+
-      '@page{margin:'+margin+'}\n'+
+      '@page{size:letter;margin:'+margin+'}\n'+
       'html,body{margin:0;padding:0;background:#fff;color:#000}\n'+
       'body{font-family:"'+L.font+'",Times,serif;font-size:'+L.sizePt+'pt;line-height:'+L.lineCss+';'+
-      'max-width:none;margin:0;padding:0;text-align:'+(L.justify?'justify':'left')+';-webkit-print-color-adjust:exact}\n'+
-      'h1.title{font-size:'+(L.titleSize/2+2)+'pt;font-weight:bold;text-align:center;margin:0 0 0.75em;line-height:'+L.lineCss+'}\n'+
-      '.meta{text-align:center;margin:0 0 0.25em;line-height:'+L.lineCss+'}\n'+
+      'max-width:none;margin:0;padding:0;text-align:'+(L.justify?'justify':'left')+';-webkit-print-color-adjust:exact;print-color-adjust:exact}\n'+
+      '.print-sheet{width:100%}\n'+
+      '.print-sheet thead{display:table-header-group}\n'+
+      '.print-sheet tbody{display:table-row-group}\n'+
+      '.run-head{font-family:"'+L.font+'",Times,serif;font-size:'+L.sizePt+'pt;display:flex;justify-content:space-between;align-items:baseline;'+
+      'border:0;margin:0 0 12pt;padding:0;line-height:1.2}\n'+
+      '.run-head .pg::after{content:counter(page)}\n'+
+      '.title-page{page-break-after:always;min-height:80vh;display:flex;flex-direction:column;justify-content:center}\n'+
+      '.title-page p{text-align:'+(style==='mla9'?'left':'center')+';margin:0.35em 0;line-height:'+L.lineCss+'}\n'+
       'h2{font-family:"'+L.font+'",Times,serif;font-size:'+L.sizePt+'pt;font-weight:bold;'+
       'text-align:'+(L.headingCenter?'center':'left')+';margin:1.25em 0 0.75em;line-height:'+L.lineCss+';page-break-after:avoid}\n'+
       'p.body{margin:0;text-align:'+(L.justify?'justify':'left')+';line-height:'+L.lineCss+'}\n'+
@@ -2570,14 +2637,21 @@
       'p.body.indent{text-indent:'+indent+'}\n'+
       'p.bib{margin:0 0 0.5em;padding-left:'+indent+';text-indent:-'+indent+';text-align:left;line-height:'+L.lineCss+'}\n'+
       'h2.bib-title{text-align:center;margin-top:1.5em}\n'+
-      '@media print{body{padding:0}}\n'+
+      '@media print{body{padding:0}.no-print{display:none!important}}\n'+
+      '@media screen{body{padding:24px;max-width:8.5in;margin:0 auto;box-shadow:0 0 0 1px #ddd}'+
+      '.screen-bar{position:sticky;top:0;background:#f7f4ef;padding:10px 12px;margin:0 0 16px;border:1px solid #d4cdc3;border-radius:8px;display:flex;gap:8px;flex-wrap:wrap;z-index:2}}\n'+
       '</style></head><body>';
-    h+='<div class="title-page">'+titlePagePlainLines().map(function(t){return '<p style="text-align:center;margin:0.4em 0">'+escapeHtml(t)+'</p>';}).join('')+'</div><hr style="margin:2em 0">';
-    if(state.authorName)h+='<p class="meta">'+escapeHtml(state.authorName)+'</p>';
-    if(state.institution)h+='<p class="meta">'+escapeHtml(state.institution)+'</p>';
-    if(state.course)h+='<p class="meta">'+escapeHtml(state.course)+'</p>';
+    h+='<div class="screen-bar no-print"><strong>Print-ready preview</strong>'+
+      '<button onclick="print()" style="font:inherit;padding:6px 12px;border-radius:6px;border:1px solid #3d4f5f;background:#3d4f5f;color:#fff;cursor:pointer">Print / Save as PDF</button>'+
+      '<span style="font-size:12px;color:#666">Use the browser print dialog → Destination: Save as PDF. Margins are set to '+margin+'.</span></div>';
+    h+='<table class="print-sheet" cellspacing="0" cellpadding="0" style="width:100%;border:0"><thead><tr><td>';
+    if(showHead){
+      h+='<div class="run-head"><span>'+escapeHtml(head)+'</span><span class="pg"></span></div>';
+    }
+    h+='</td></tr></thead><tbody><tr><td>';
+    h+='<div class="title-page">'+titlePagePlainLines().map(function(t){return '<p>'+escapeHtml(t)+'</p>';}).join('')+'</div>';
     state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
-      if(sec.key==='works')return;
+      if(sec.key==='works'||sec.key==='title')return;
       h+='<h2>'+escapeHtml(sec.title)+'</h2>';
       const paras=htmlToParagraphs(sec.content);
       paras.forEach((para,idx)=>{
@@ -2592,11 +2666,12 @@
       tmp.innerHTML=formatBibliographyEntry(s,style,i,disamb);
       h+='<p class="bib">'+escapeHtml(tmp.innerText||'')+'</p>';
     });
-    h+='<script>onload=function(){setTimeout(function(){print()},250)}<\/script></body></html>';
+    h+='</td></tr></tbody></table>';
+    h+='<script>document.title='+JSON.stringify((state.paperTitle||'Paper')+' — print-ready')+';<\/script></body></html>';
     const w=window.open('','_blank');
     if(!w){toast('Allow pop-ups to export PDF');return}
     w.document.open();w.document.write(h);w.document.close();
-    toast('Print dialog → Destination: Save as PDF');
+    toast('Print-ready window open — use Print → Save as PDF');
   }
   function getActiveSection(){return state.sections.find(s=>s.id===state.activeSectionId)||state.sections[0]}
   function saveCurrent(){
@@ -3324,15 +3399,53 @@
     }
     return s;
   }
-  function addSourceFromHit(s){
+  async function findCrossPaperDuplicate(candidate){
+    // Same DOI or title+year already in this paper or another project on this device
+    const fp=sourceFingerprint(candidate);
+    const inPaper=(state.sources||[]).find(x=>sourceFingerprint(x)===fp);
+    if(inPaper)return {scope:'paper',src:inPaper};
+    try{
+      if(typeof libAll==='function'){
+        const lib=await libAll();
+        const hit=(lib||[]).find(x=>sourceFingerprint(x)===fp);
+        if(hit)return {scope:'library',src:hit};
+      }
+    }catch(e){}
+    try{
+      const projects=await idbAll();
+      for(const p of projects||[]){
+        if(p.id===currentProjectId)continue;
+        const srcs=(p.state&&p.state.sources)||[];
+        const hit=srcs.find(x=>sourceFingerprint(x)===fp);
+        if(hit)return {scope:'project',projectName:p.name||(p.state&&p.state.paperTitle)||'Another paper',src:hit};
+      }
+    }catch(e){}
+    return null;
+  }
+  async function addSourceFromHit(s){
     if(!s)return false;
-    if(s.doi&&state.sources.some(x=>(x.doi||'').toLowerCase()===s.doi.toLowerCase())){
-      toast('Already in library (same DOI)');
+    const dup=await findCrossPaperDuplicate(s);
+    if(dup&&dup.scope==='paper'){
+      toast('Already in this paper');
       return false;
     }
-    if(!s.doi&&s.title&&state.sources.some(x=>(x.title||'').toLowerCase()===(s.title||'').toLowerCase()&&(x.year||'')===(s.year||''))){
-      toast('Already in library (same title + year)');
-      return false;
+    if(dup&&(dup.scope==='library'||dup.scope==='project')){
+      const existing=dup.src;
+      const already=state.sources.some(x=>sourceFingerprint(x)===sourceFingerprint(existing));
+      if(already){toast('Already in this paper');return false}
+      const label=dup.scope==='library'?'shared library':('“'+(dup.projectName||'another paper')+'”');
+      const use=await styledConfirm(
+        'Duplicate found',
+        'This source already exists in '+label+'. Add a link to the same record in this paper instead of creating a second copy?',
+        'Use existing','Add anyway'
+      );
+      if(use){
+        const copy=Object.assign({},existing,{id:existing.id||uid()});
+        if(!state.sources.some(x=>x.id===copy.id))state.sources.push(copy);
+        scheduleSave();renderSources();
+        toast('Linked existing source (no duplicate)');
+        return true;
+      }
     }
     const rec={
       id:uid(),
@@ -3353,6 +3466,7 @@
       sourceLib:s.sourceLib||''
     };
     state.sources.push(rec);
+    try{if(typeof libPut==='function')await libPut(rec)}catch(e){}
     scheduleSave();renderSources();
     toast('Added: '+(rec.title||'').slice(0,48));
     return true;
@@ -4226,20 +4340,29 @@
       scheduleSave();closeModal();renderSources();reRenderAllCitations();
     };
   }
-  async function insertCitation(sourceId){
-    const src=state.sources.find(s=>s.id===sourceId);if(!src)return;
-    const pageIn=await styledPrompt('Locator','Optional page, range, or locator (e.g. 42 · 12–15 · para. 4 · ch. 3). Leave blank for author–year only.','','Cite','Cancel');
-    if(pageIn===null)return;
-    const page=pageIn.trim();
+  function insertCitationHtml(src,page){
     const disamb=buildDisambiguation();
     const order=citedSourceIds();
     let idx=order.indexOf(src.id);
     if(idx<0)idx=order.length;
-    const text=formatInText(src,state.style,page,disamb,idx);
-    const html='<span class="pq-cite" data-source-id="'+src.id+'" data-page="'+escapeHtml(page)+'" contenteditable="false">'+escapeHtml(text)+'</span>\u00a0';
+    const text=formatInText(src,state.style,page||'',disamb,idx);
+    return '<span class="pq-cite" data-source-id="'+src.id+'" data-page="'+escapeHtml(page||'')+'" contenteditable="false">'+escapeHtml(text)+'</span>\u00a0';
+  }
+  async function insertCitation(sourceId, presetPage){
+    const src=state.sources.find(s=>s.id===sourceId);if(!src)return;
+    let page='';
+    if(presetPage!=null&&presetPage!==''){
+      page=String(presetPage).trim();
+    }else{
+      const pageIn=await styledPrompt('Locator','Optional page, range, or locator (e.g. 42 · 12–15 · para. 4 · ch. 3). Leave blank for author–year only.','','Cite','Cancel');
+      if(pageIn===null)return;
+      page=pageIn.trim();
+    }
+    const html=insertCitationHtml(src,page);
     editor.focus();
     try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
     saveCurrent();scheduleSave();rebuildWorksCited();updateWc();
+    toast('Cited'+(page?' · p. '+page:''));
   }
 
   /* Templates */
@@ -4562,138 +4685,172 @@
     $('#hl-p').onclick=()=>{closeModal();addHighlight('pink')};
   }
 
-  /* Export DOCX with richer formatting */
+  /* Export DOCX — valid OOXML for Microsoft Word (avoid corrupt package / "in use" errors) */
+  function downloadBlobFile(blob, filename){
+    const name=filename||'download';
+    try{
+      if(typeof saveAs==='function'){
+        saveAs(blob,name);
+        return;
+      }
+    }catch(e){}
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=name;a.rel='noopener';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{try{URL.revokeObjectURL(url)}catch(e){};try{a.remove()}catch(e){}},1500);
+  }
   async function exportDocx(){
     if(typeof docx==='undefined')return toast('DOCX unavailable');
-    saveCurrent();reRenderAllCitations();rebuildWorksCited();
-    const{Document,Packer,Paragraph,TextRun,HeadingLevel,AlignmentType,Header,Footer,PageNumber,PageBreak}=docx;
-    const style=state.style;
-    const L=getExportLayout(style);
-    const disamb=buildDisambiguation();
-    const font=L.font;
-    const sz=L.sizeHalfPoints;
-    const line=L.line;
-    const indentTwip=Math.round(L.indentInch*1440);
-    const marginTwip=Math.round(L.marginInch*1440);
-    const bodyAlign=L.justify?AlignmentType.BOTH:AlignmentType.LEFT;
-    const children=[];
-
-    const bodyPara=(text,isFirst)=>{
-      return new Paragraph({
-        children:[new TextRun({text:text||' ',font,size:sz})],
-        alignment:bodyAlign,
-        spacing:{line,type:'auto',after:0,before:0},
-        indent:isFirst?{}:{firstLine:indentTwip}
-      });
-    };
-
-    // Formal title page (style + template aware)
-    const tpLines=titlePagePlainLines();
-    const tpAlign=(state.style==='mla9')?AlignmentType.LEFT:AlignmentType.CENTER;
-    tpLines.forEach((t,i)=>{
-      const isTitle=i===tpLines.findIndex(x=>x===(state.paperTitle||'').trim())||(t===(state.paperTitle||'').trim());
-      children.push(new Paragraph({
-        children:[new TextRun({text:t||' ',bold:!!isTitle,font,size:isTitle?L.titleSize:sz})],
-        alignment:tpAlign,
-        spacing:{line,type:'auto',after:0,before:isTitle?line:0}
-      }));
-    });
-    children.push(new Paragraph({children:[new TextRun({text:' ',font,size:sz})],spacing:{line,type:'auto'}}));
     try{
-      if(PageBreak){
-        children.push(new Paragraph({children:[new PageBreak()]}));
-      }else{
-        children.push(new Paragraph({children:[new TextRun({text:'',font,size:sz})],spacing:{line,type:'auto',before:line*2}}));
+      saveCurrent();reRenderAllCitations();rebuildWorksCited();
+      const{Document,Packer,Paragraph,TextRun,AlignmentType,Header,Footer,PageNumber}=docx;
+      const style=state.style||'mla9';
+      const L=getExportLayout(style);
+      const disamb=buildDisambiguation();
+      const font=L.font||'Times New Roman';
+      const sz=L.sizeHalfPoints||24;
+      const line=L.line||480;
+      const indentTwip=Math.round((L.indentInch||0.5)*1440);
+      const marginTwip=Math.round((L.marginInch||1)*1440);
+      const bodyAlign=L.justify?AlignmentType.BOTH:AlignmentType.LEFT;
+      // docx.js expects lineRule, not type
+      const sp=(extra)=>({line,lineRule:'auto',after:0,before:0,...(extra||{})});
+      const children=[];
+
+      const bodyPara=(text,isFirst)=>new Paragraph({
+        children:[new TextRun({text:String(text||' '),font,size:sz})],
+        alignment:bodyAlign,
+        spacing:sp(),
+        indent:isFirst?undefined:{firstLine:indentTwip}
+      });
+
+      // Title page
+      const tpLines=(typeof titlePagePlainLines==='function'?titlePagePlainLines():[state.paperTitle||'Untitled']).filter(Boolean);
+      const tpAlign=style==='mla9'?AlignmentType.LEFT:AlignmentType.CENTER;
+      const titleStr=(state.paperTitle||'').trim();
+      tpLines.forEach((t)=>{
+        const isTitle=!!titleStr&&t===titleStr;
+        children.push(new Paragraph({
+          children:[new TextRun({text:String(t||' '),bold:isTitle,font,size:isTitle?(L.titleSize||sz):sz})],
+          alignment:tpAlign,
+          spacing:sp(isTitle?{before:line}:{})
+        }));
+      });
+      // Page break after title page (pageBreakBefore on next para is most reliable in docx@8)
+      children.push(new Paragraph({
+        children:[new TextRun({text:'',font,size:sz})],
+        spacing:sp()
+      }));
+
+      let firstBody=true;
+      state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
+        if(sec.key==='works'||sec.key==='title')return;
+        children.push(new Paragraph({
+          children:[new TextRun({text:String(sec.title||'Section'),bold:true,font,size:L.headingSize||sz})],
+          alignment:L.headingCenter?AlignmentType.CENTER:AlignmentType.LEFT,
+          spacing:sp({before:line}),
+          pageBreakBefore:firstBody
+        }));
+        firstBody=false;
+        const paras=htmlToParagraphs(sec.content);
+        if(!paras.length)children.push(bodyPara(' ',true));
+        else paras.forEach((para,idx)=>children.push(bodyPara(para,idx===0)));
+      });
+
+      // Bibliography
+      children.push(new Paragraph({
+        children:[new TextRun({text:bibliographyTitle(style),bold:true,font,size:L.headingSize||sz})],
+        alignment:AlignmentType.CENTER,
+        spacing:sp({before:line})
+      }));
+      let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
+      if(style!=='ieee'&&style!=='vancouver'){
+        list.sort((a,b)=>inTextAuthor(a,style).localeCompare(inTextAuthor(b,style))||yearOf(a).localeCompare(yearOf(b)));
       }
+      list.forEach((src,i)=>{
+        const tmp=document.createElement('div');
+        tmp.innerHTML=formatBibliographyEntry(src,style,i,disamb);
+        const entryText=(tmp.innerText||'').replace(/\s+/g,' ').trim();
+        children.push(new Paragraph({
+          children:[new TextRun({text:entryText||' ',font,size:sz})],
+          alignment:AlignmentType.LEFT,
+          indent:{left:indentTwip,hanging:indentTwip},
+          spacing:sp()
+        }));
+      });
+
+      const headerText=(typeof exportRunningHeadText==='function'?exportRunningHeadText(style):(state.paperTitle||'')).slice(0,50);
+      const pageW=Math.round((8.5-2*(L.marginInch||1))*1440);
+      const headerChildren=style==='mla9'
+        ? [new Paragraph({
+            children:[
+              new TextRun({text:(headerText||'Author')+' ',font,size:sz}),
+              new TextRun({children:[PageNumber.CURRENT],font,size:sz})
+            ],
+            alignment:AlignmentType.RIGHT,
+            spacing:{line:240,lineRule:'auto'}
+          })]
+        : [new Paragraph({
+            children:[
+              new TextRun({text:headerText||'',font,size:sz}),
+              new TextRun({text:'\t',font,size:sz}),
+              new TextRun({children:[PageNumber.CURRENT],font,size:sz})
+            ],
+            tabStops:[{type:'right',position:pageW}],
+            spacing:{line:240,lineRule:'auto'}
+          })];
+
+      const doc=new Document({
+        creator:'PaperQuill',
+        title:state.paperTitle||'Untitled paper',
+        description:'Exported from PaperQuill',
+        styles:{
+          default:{
+            document:{
+              run:{font,size:sz},
+              paragraph:{spacing:{line,lineRule:'auto'}}
+            }
+          }
+        },
+        sections:[{
+          properties:{
+            page:{
+              margin:{top:marginTwip,right:marginTwip,bottom:marginTwip,left:marginTwip}
+            }
+          },
+          headers:{default:new Header({children:headerChildren})},
+          footers:{
+            default:new Footer({
+              children:[new Paragraph({
+                children:[new TextRun({text:'',font,size:18})],
+                alignment:AlignmentType.CENTER
+              })]
+            })
+          },
+          children
+        }]
+      });
+
+      // Prefer ArrayBuffer → typed Blob so Word always gets a complete package
+      let blob;
+      if(Packer.toBlob){
+        blob=await Packer.toBlob(doc);
+      }else{
+        const buf=await Packer.toBuffer(doc);
+        blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+      }
+      // Ensure correct MIME (some browsers treat generic blobs as locked/invalid)
+      if(blob&&blob.type!=='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
+        blob=new Blob([await blob.arrayBuffer()],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+      }
+      const fname=((state.paperTitle||'paperquill').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'paperquill')+'.docx';
+      downloadBlobFile(blob,fname);
+      toast('DOCX exported · open in Word or LibreOffice');
     }catch(e){
-      children.push(new Paragraph({children:[new TextRun({text:'',font,size:sz})],spacing:{line,type:'auto',before:line*2}}));
+      console.error(e);
+      toast('DOCX export failed: '+(e&&e.message?e.message:'error'));
     }
-
-    state.sections.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(sec=>{
-      if(sec.key==='works'||sec.key==='title')return;
-      children.push(new Paragraph({
-        children:[new TextRun({text:sec.title||'Section',bold:true,font,size:L.headingSize})],
-        alignment:L.headingCenter?AlignmentType.CENTER:AlignmentType.LEFT,
-        spacing:{line,type:'auto',before:line,after:0}
-      }));
-      const paras=htmlToParagraphs(sec.content);
-      if(!paras.length){
-        children.push(bodyPara(' ',true));
-      }else{
-        paras.forEach((para,idx)=>children.push(bodyPara(para,idx===0)));
-      }
-    });
-
-    // Bibliography
-    children.push(new Paragraph({
-      children:[new TextRun({text:bibliographyTitle(style),bold:true,font,size:L.headingSize})],
-      alignment:AlignmentType.CENTER,
-      spacing:{line,type:'auto',before:line,after:0}
-    }));
-    let list=citedSourceIds().map(id=>state.sources.find(s=>s.id===id)).filter(Boolean);
-    if(style!=='ieee'&&style!=='vancouver')list.sort((a,b)=>inTextAuthor(a,style).localeCompare(inTextAuthor(b,style))||yearOf(a).localeCompare(yearOf(b)));
-    list.forEach((src,i)=>{
-      const tmp=document.createElement('div');
-      tmp.innerHTML=formatBibliographyEntry(src,style,i,disamb);
-      const entryText=tmp.innerText||'';
-      children.push(new Paragraph({
-        children:[new TextRun({text:entryText,font,size:sz})],
-        alignment:AlignmentType.LEFT,
-        indent:{left:indentTwip,hanging:indentTwip},
-        spacing:{line,type:'auto',after:0,before:0}
-      }));
-    });
-
-    const headerText=(style==='apa7'&&state.runningHead)
-      ? state.runningHead.toUpperCase()
-      : (state.paperTitle||'');
-
-    const doc=new Document({
-      styles:{
-        default:{
-          document:{
-            styles:[{id:'Normal',run:{font,size:sz}}]
-          }
-        },
-        paragraphStyles:[
-          {id:'Heading1',name:'Heading 1',basedOn:'Normal',next:'Normal',quickStyle:true,
-            run:{size:L.headingSize,bold:true,font},
-            paragraph:{spacing:{line,type:'auto'},outlineLevel:0}}
-        ]
-      },
-      sections:[{
-        properties:{
-          page:{
-            margin:{top:marginTwip,right:marginTwip,bottom:marginTwip,left:marginTwip}
-          }
-        },
-        headers:{
-          default:new Header({
-            children:[new Paragraph({
-              children:[
-                new TextRun({text:headerText.slice(0,60),font,size:sz}),
-                new TextRun({text:'\t',font,size:sz}),
-                new TextRun({children:[PageNumber.CURRENT],font,size:sz})
-              ],
-              tabStops:[{type:'right',position:Math.round((8.5-2*L.marginInch)*1440)}],
-              spacing:{line:240,type:'auto'}
-            })]
-          })
-        },
-        footers:{
-          default:new Footer({
-            children:[new Paragraph({
-              children:[new TextRun({text:'',font,size:18})],
-              alignment:AlignmentType.CENTER
-            })]
-          })
-        },
-        children
-      }]
-    });
-    const blob=await Packer.toBlob(doc);
-    if(typeof saveAs==='function')saveAs(blob,(state.paperTitle||'paperquill').replace(/[^\w\-]+/g,'_')+'.docx');
-    toast('DOCX exported · '+style.toUpperCase()+' layout');
   }
 
 
@@ -7508,6 +7665,7 @@
   }
   function closeRefManager(){
     closeRefReader();
+    exitWriteSplit();
     ROOT.classList.remove('pq-ref-mode');
     $('#pq-ref').classList.remove('open');
     const cap=$('#cap-refs');if(cap)cap.classList.remove('on');
@@ -8366,11 +8524,13 @@
           '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">'+
           '<button type="button" class="pq-btn ref-add-u" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">+ Underpinning</button>'+
           '<button type="button" class="pq-btn ref-add-e" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">+ Engagement</button>'+
-          '<button type="button" class="pq-btn pq-btn-primary ref-h-scaf" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">→ Scaffold</button>'+
+          '<button type="button" class="pq-btn pq-btn-primary ref-h-cite" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">Cite in paper</button>'+
+          '<button type="button" class="pq-btn ref-h-scaf" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">→ Scaffold</button>'+
           '<button type="button" class="pq-btn ref-hgo" data-page="'+h.page+'" style="font-size:.68rem;padding:3px 7px">Go</button>'+
           '<button type="button" class="pq-btn ref-hdel" data-id="'+h.id+'" style="font-size:.68rem;padding:3px 7px">Delete</button>'+
           '</div></div>';
-      }).join(''):'<p class="pq-help">Select text in the PDF, then press <strong>HL</strong>. Add underpinnings &amp; engagement here, then send to a paper’s Scaffold.</p>';
+      }).join(''):'<p class="pq-help">Select text in the PDF, then press <strong>HL</strong>. Use <strong>Cite in paper</strong> for a one-tap citation with page number, or send to Scaffold.</p>';
+      $$('.ref-h-cite',hls).forEach(b=>b.onclick=e=>{e.stopPropagation();citeFromRefHighlight(item.id,b.dataset.id)});
       $$('.ref-hdel',hls).forEach(b=>b.onclick=async()=>{
         const it=await refMetaGet(item.id);if(!it)return;
         it.highlights=(it.highlights||[]).filter(h=>h.id!==b.dataset.id);
@@ -8825,6 +8985,27 @@
     const item=await refMetaGet(id);if(!item)return;
     if(!refHasUsableMeta(item))return toast('Add metadata first');
     const m=item.meta;
+    const cand={type:m.type||'article',authors:m.authors||'',title:m.title||'',year:m.year||'',doi:m.doi||'',container:m.container||''};
+    const cross=await findCrossPaperDuplicate(cand);
+    if(cross&&cross.scope!=='paper'){
+      const use=await styledConfirm(
+        'Duplicate found',
+        'A matching source already exists in '+(cross.scope==='library'?'your shared library':('“'+(cross.projectName||'another paper')+'”'))+'. Link that record to this paper?',
+        'Use existing','Create new'
+      );
+      if(use&&cross.src){
+        const copy=Object.assign({},cross.src);
+        if(!state.sources.some(x=>x.id===copy.id||sourceFingerprint(x)===sourceFingerprint(copy))){
+          state.sources.push(copy);
+        }
+        item.linkedSourceId=copy.id;
+        item.updatedAt=new Date().toISOString();
+        await refMetaPut(item);
+        scheduleSave();renderSources();await refreshRefLibrary();
+        toast('Linked existing source');
+        return;
+      }
+    }
     if(refIsInSources(item)){
       toast('Already in source library');
       await refreshRefLibrary();
@@ -8899,14 +9080,106 @@
     }
   }
 
+  async function ensureRefSourceLinked(itemId){
+    const item=await refMetaGet(itemId);if(!item)return null;
+    if(item.linkedSourceId){
+      const existing=state.sources.find(s=>s.id===item.linkedSourceId);
+      if(existing)return existing;
+    }
+    if(refHasUsableMeta(item)){
+      await refAddToSources(itemId);
+      const refreshed=await refMetaGet(itemId);
+      if(refreshed&&refreshed.linkedSourceId){
+        return state.sources.find(s=>s.id===refreshed.linkedSourceId)||null;
+      }
+      // may already be linked by fingerprint
+      if(refreshed&&refreshed.meta){
+        const fp=sourceFingerprint(refreshed.meta);
+        return state.sources.find(s=>sourceFingerprint(s)===fp)||null;
+      }
+    }
+    return null;
+  }
+  async function citeFromRefHighlight(itemId, highlightId){
+    const item=await refMetaGet(itemId);if(!item)return toast('PDF not found');
+    const hl=(item.highlights||[]).find(h=>h.id===highlightId);
+    if(!hl)return toast('Highlight not found');
+    let src=await ensureRefSourceLinked(itemId);
+    if(!src){
+      toast('Add metadata first (Info → Edit metadata), then Cite');
+      try{openRefMetadata(itemId)}catch(e){}
+      return;
+    }
+    const page=hl.page?String(hl.page):'';
+    // Leave ref open in split so mobile users can keep reading
+    enterWriteSplit(itemId);
+    await insertCitation(src.id, page);
+  }
+  function enterWriteSplit(keepPdfId){
+    ROOT.classList.add('pq-write-split');
+    ROOT.classList.remove('pq-pdf-collapsed');
+    // Show writing desk chrome while keeping ref open
+    ROOT.classList.remove('pq-ref-mode');
+    const ref=$('#pq-ref');
+    if(ref)ref.classList.add('open');
+    const cap=$('#cap-refs');if(cap)cap.classList.add('on');
+    const btn=$('#ref-split-collapse');
+    if(btn)btn.textContent='PDF ▴';
+    // Focus editor for typing
+    try{editor&&editor.focus()}catch(e){}
+    if(keepPdfId&&refState.openItemId!==keepPdfId){
+      try{openRefReader(keepPdfId)}catch(e){}
+    }
+  }
+  function exitWriteSplit(){
+    ROOT.classList.remove('pq-write-split','pq-pdf-collapsed');
+  }
+  function togglePdfCollapsed(){
+    if(!ROOT.classList.contains('pq-write-split'))return;
+    ROOT.classList.toggle('pq-pdf-collapsed');
+    const collapsed=ROOT.classList.contains('pq-pdf-collapsed');
+    const btn=$('#ref-split-collapse');
+    if(btn)btn.textContent=collapsed?'PDF ▾':'PDF ▴';
+  }
+  function popOutPdfReader(){
+    const id=refState.openItemId;
+    if(!id){toast('Open a PDF first');return}
+    try{
+      sessionStorage.setItem('pq-popout-ref',id);
+      const url=location.pathname+(location.search||'')+(location.search?'&':'?')+'pqPopout=1&refId='+encodeURIComponent(id);
+      const w=window.open(url,'_blank','noopener,noreferrer,width=960,height=900');
+      if(!w)toast('Allow pop-ups for a second window');
+      else toast('PDF opened in a new window — write here, read there');
+    }catch(e){toast('Could not open window')}
+  }
+  async function handlePopoutOnLoad(){
+    try{
+      const params=new URLSearchParams(location.search||'');
+      if(params.get('pqPopout')!=='1')return;
+      const id=params.get('refId')||sessionStorage.getItem('pq-popout-ref');
+      if(!id)return;
+      openRefManager();
+      await openRefReader(id);
+      // In popout, prioritize the reader
+      const reader=$('#ref-reader');
+      if(reader)reader.classList.add('open');
+    }catch(e){console.warn(e)}
+  }
+
   function wireRefManager(){
     const cap=$('#cap-refs');
     if(cap)cap.onclick=()=>{
-      if($('#pq-ref').classList.contains('open'))closeRefManager();
+      if($('#pq-ref').classList.contains('open')&&!ROOT.classList.contains('pq-write-split'))closeRefManager();
+      else if(ROOT.classList.contains('pq-write-split')){exitWriteSplit();closeRefManager()}
       else openRefManager();
     };
     const back=$('#ref-back-write');
-    if(back)back.onclick=()=>closeRefManager();
+    if(back)back.onclick=()=>{
+      if(ROOT.classList.contains('pq-write-split')){exitWriteSplit();closeRefManager()}
+      else closeRefManager();
+    };
+    const splitCol=$('#ref-split-collapse');
+    if(splitCol)splitCol.onclick=()=>togglePdfCollapsed();
     const home=$('#cap-home');
     if(home)home.addEventListener('click',()=>{if($('#pq-ref').classList.contains('open'))closeRefManager()});
     const up=$('#ref-upload');
@@ -8985,6 +9258,13 @@
     }
     const an=$('#ref-add-note');if(an)an.onclick=()=>refAddNote();
     const dl=$('#ref-dl-pdf');if(dl)dl.onclick=()=>refDownloadPdf();
+    const wsplit=$('#ref-write-split');
+    if(wsplit)wsplit.onclick=()=>{
+      if(!refState.openItemId){toast('Open a PDF first');return}
+      enterWriteSplit(refState.openItemId);
+      toast('Split view — write on the left, PDF on the right (or below on phones)');
+    };
+    const pop=$('#ref-popout');if(pop)pop.onclick=()=>popOutPdfReader();
     const fs=$('#ref-fs');
     if(fs)fs.onclick=()=>toggleRefFullscreen();
     document.addEventListener('fullscreenchange',()=>{
@@ -9113,9 +9393,11 @@
     renderAll();updateSessionLine();
     const m=readMeta();
     await refreshDashboard();
+    try{await handlePopoutOnLoad()}catch(e){}
     // Open dashboard on first visit without a name; otherwise stay on desk
     if(!m.researcher && !(state.authorName||'').trim()){
-      $('#pq-dash').classList.add('open');
+      const params=new URLSearchParams(location.search||'');
+      if(params.get('pqPopout')!=='1')$('#pq-dash').classList.add('open');
     }
     // silent token refresh if session exists
     if(!fromOAuth && driveReadSession()){
