@@ -1794,6 +1794,56 @@
   let fileHandle=null, diskName='', projectDirty=false;
   let currentProjectId=null, sessionBase=0;
   let dictRange=null; // for synonym replacement
+  let lastEditorTextOffset=0; // survives button clicks / modal focus loss
+
+  function getEditorTextOffset(){
+    try{
+      const sel=window.getSelection();
+      if(!sel||!sel.rangeCount)return lastEditorTextOffset;
+      const range=sel.getRangeAt(0);
+      const node=range.startContainer;
+      if(!node||!editor.contains(node.nodeType===3?node.parentNode:node))return lastEditorTextOffset;
+      const pre=range.cloneRange();
+      pre.selectNodeContents(editor);
+      pre.setEnd(range.startContainer, range.startOffset);
+      lastEditorTextOffset=pre.toString().length;
+      return lastEditorTextOffset;
+    }catch(e){return lastEditorTextOffset}
+  }
+  function setEditorTextOffset(offset){
+    try{
+      offset=Math.max(0, offset|0);
+      const walker=document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+      let remaining=offset, node=null, lastText=null;
+      while((node=walker.nextNode())){
+        lastText=node;
+        const len=(node.textContent||'').length;
+        if(remaining<=len){
+          const r=document.createRange();
+          r.setStart(node, Math.max(0, remaining));
+          r.collapse(true);
+          const sel=window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(r);
+          lastEditorTextOffset=offset;
+          return true;
+        }
+        remaining-=len;
+      }
+      // place at end
+      const r=document.createRange();
+      if(lastText){
+        r.setStart(lastText, (lastText.textContent||'').length);
+      }else{
+        r.selectNodeContents(editor);
+      }
+      r.collapse(false);
+      const sel=window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return true;
+    }catch(e){return false}
+  }
 
   const editor=$('#pq-editor'), secTitle=$('#pq-sec-title'), worksBody=$('#pq-works-body'), worksHeading=$('#pq-works-heading');
   const acEl=$('#pq-ac'), dictEl=$('#pq-dict');
@@ -4348,20 +4398,117 @@
     const text=formatInText(src,state.style,page||'',disamb,idx);
     return '<span class="pq-cite" data-source-id="'+src.id+'" data-page="'+escapeHtml(page||'')+'" contenteditable="false">'+escapeHtml(text)+'</span>\u00a0';
   }
+  /** Drop a durable DOM marker at the current caret so insertion survives modal focus loss. */
+  function placeCiteBookmark(){
+    try{
+      // Clear any leftover markers
+      $$('#pq-cite-bookmark,[data-pq-bm="1"]',editor).forEach(el=>{try{el.remove()}catch(e){}});
+      // Prefer live caret; if focus already left the editor (Cite button), restore last known text offset
+      let okLive=false;
+      try{
+        const sel=window.getSelection();
+        if(sel&&sel.rangeCount){
+          const node=sel.anchorNode;
+          if(node&&editor.contains(node.nodeType===3?node.parentNode:node)) okLive=true;
+        }
+      }catch(e){}
+      if(!okLive){
+        editor.focus();
+        setEditorTextOffset(lastEditorTextOffset);
+      }else{
+        getEditorTextOffset(); // refresh stored offset
+      }
+      const sel=window.getSelection();
+      if(!sel||!sel.rangeCount)return false;
+      const range=sel.getRangeAt(0);
+      const node=range.startContainer;
+      if(!node||!editor.contains(node.nodeType===3?node.parentNode:node))return false;
+      const bm=document.createElement('span');
+      bm.id='pq-cite-bookmark';
+      bm.setAttribute('data-pq-bm','1');
+      bm.style.cssText='display:inline;width:0;height:0;overflow:hidden;font-size:0;line-height:0;';
+      bm.appendChild(document.createTextNode('\u200b'));
+      const r=range.cloneRange();
+      r.collapse(true);
+      r.insertNode(bm);
+      const after=document.createRange();
+      after.setStartAfter(bm);
+      after.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(after);
+      return true;
+    }catch(e){console.warn('placeCiteBookmark',e);return false}
+  }
+  function insertHtmlAtCiteBookmark(html){
+    const bm=editor.querySelector('#pq-cite-bookmark')||editor.querySelector('[data-pq-bm="1"]');
+    if(bm){
+      try{
+        bm.insertAdjacentHTML('beforebegin',html);
+        // Place caret after the inserted citation (after the bookmark, then remove bookmark)
+        const after=document.createRange();
+        after.setStartAfter(bm);
+        after.collapse(true);
+        const sel=window.getSelection();
+        editor.focus();
+        sel.removeAllRanges();
+        sel.addRange(after);
+        bm.remove();
+        return true;
+      }catch(e){console.warn('insert at bookmark',e);try{bm.remove()}catch(e2){}}
+    }
+    // Fallback: live selection inside editor
+    try{
+      editor.focus();
+      const sel=window.getSelection();
+      if(sel&&sel.rangeCount){
+        const n=sel.anchorNode;
+        if(n&&editor.contains(n.nodeType===3?n.parentNode:n)){
+          try{
+            if(document.execCommand('insertHTML',false,html))return true;
+          }catch(e){}
+          try{
+            const range=sel.getRangeAt(0);
+            range.deleteContents();
+            const temp=document.createElement('div');
+            temp.innerHTML=html;
+            const frag=document.createDocumentFragment();
+            let node,last=null;
+            while((node=temp.firstChild)) last=frag.appendChild(node);
+            range.insertNode(frag);
+            if(last){range.setStartAfter(last);range.collapse(true);sel.removeAllRanges();sel.addRange(range)}
+            return true;
+          }catch(e){}
+        }
+      }
+    }catch(e){}
+    // Last resort: append at end of editor (never at start of a random paragraph)
+    try{
+      const temp=document.createElement('div');
+      temp.innerHTML=html;
+      while(temp.firstChild) editor.appendChild(temp.firstChild);
+      return true;
+    }catch(e){return false}
+  }
   async function insertCitation(sourceId, presetPage){
     const src=state.sources.find(s=>s.id===sourceId);if(!src)return;
+    // Bookmark caret NOW — before any modal steals focus
+    placeCiteBookmark();
     let page='';
     if(presetPage!=null&&presetPage!==''){
       page=String(presetPage).trim();
     }else{
       const pageIn=await styledPrompt('Locator','Optional page, range, or locator (e.g. 42 · 12–15 · para. 4 · ch. 3). Leave blank for author–year only.','','Cite','Cancel');
-      if(pageIn===null)return;
+      if(pageIn===null){
+        // User cancelled — remove orphan bookmark
+        try{$$('#pq-cite-bookmark,[data-pq-bm="1"]',editor).forEach(el=>el.remove())}catch(e){}
+        return;
+      }
       page=pageIn.trim();
     }
     const html=insertCitationHtml(src,page);
-    editor.focus();
-    try{document.execCommand('insertHTML',false,html)}catch(e){editor.innerHTML+=html}
+    insertHtmlAtCiteBookmark(html);
     saveCurrent();scheduleSave();rebuildWorksCited();updateWc();
+    try{wireCiteClicks&&wireCiteClicks()}catch(e){}
     toast('Cited'+(page?' · p. '+page:''));
   }
 
@@ -6707,10 +6854,64 @@
     acEl.style.left=Math.min(range.getBoundingClientRect().left-rr.left,innerWidth-280)+'px';
     acEl.style.top=(range.getBoundingClientRect().bottom-rr.top+4)+'px';
     acEl.classList.add('open');
-    $$('.pq-ac-item',acEl).forEach(el=>{el.onmousedown=e=>{e.preventDefault();
-      const node2=range.startContainer;if(node2&&node2.nodeType===3){const t=node2.textContent||'',u=range.startOffset,a=t.lastIndexOf('@',u-1);if(a>=0){node2.textContent=t.slice(0,a)+t.slice(u);const r=document.createRange();r.setStart(node2,a);r.collapse(true);sel.removeAllRanges();sel.addRange(r)}}
-      insertCitation(el.dataset.id);acEl.classList.remove('open');
+    $$('.pq-ac-item',acEl).forEach(el=>{el.onmousedown=e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      // 1) Remove the @query token at the live caret (prefer current selection, fall back to keyup range)
+      let live=null;
+      try{
+        const s2=window.getSelection();
+        if(s2&&s2.rangeCount) live=s2.getRangeAt(0);
+      }catch(err){}
+      const useRange=live||range;
+      const node2=useRange.startContainer;
+      if(node2&&node2.nodeType===3){
+        const t=node2.textContent||'';
+        const u=useRange.startOffset;
+        const a=t.lastIndexOf('@',Math.max(0,u-1));
+        if(a>=0){
+          // Split/remove via Range so surrounding DOM structure is preserved better than textContent rewrite
+          try{
+            const del=document.createRange();
+            del.setStart(node2,a);
+            del.setEnd(node2,u);
+            del.deleteContents();
+            const caret=document.createRange();
+            caret.setStart(node2,a);
+            caret.collapse(true);
+            const s3=window.getSelection();
+            s3.removeAllRanges();
+            s3.addRange(caret);
+          }catch(err){
+            node2.textContent=t.slice(0,a)+t.slice(u);
+            try{
+              const r=document.createRange();
+              r.setStart(node2,Math.min(a,(node2.textContent||'').length));
+              r.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(r);
+            }catch(err2){}
+          }
+        }
+      }
+      // 2) Record caret after @query removal, then insertCitation pins a DOM bookmark before the locator modal
+      getEditorTextOffset();
+      insertCitation(el.dataset.id);
+      acEl.classList.remove('open');
     }});
+  });
+
+  // Track caret so Cite / @ can restore position after UI focus changes
+  editor.addEventListener('keyup', getEditorTextOffset);
+  editor.addEventListener('mouseup', getEditorTextOffset);
+  editor.addEventListener('focus', getEditorTextOffset);
+  document.addEventListener('selectionchange', ()=>{
+    try{
+      const sel=window.getSelection();
+      if(!sel||!sel.rangeCount)return;
+      const n=sel.anchorNode;
+      if(n&&editor.contains(n.nodeType===3?n.parentNode:n)) getEditorTextOffset();
+    }catch(e){}
   });
 
   /* name change via pq-dash-change-name */
