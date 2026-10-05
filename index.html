@@ -595,6 +595,20 @@
     .pq-progress-detail .row-head span{color:var(--muted);font-size:.78rem}
     .pq-storage-line{font-size:.82rem;line-height:1.55;color:var(--ink);margin:0 0 6px}
     .pq-storage-line span{color:var(--muted)}
+    /* Save status + mobile drawer backdrop */
+    .pq-save-status{font-size:.72rem;color:var(--muted);min-width:4.5rem;text-align:right}
+    .pq-save-status.saving{color:var(--warn)}
+    .pq-save-status.error{color:var(--danger)}
+    .pq-save-status.ok{color:var(--ok)}
+    .pq-side-backdrop{
+      display:none;position:absolute;inset:0;z-index:45;
+      background:rgba(20,24,28,.28);-webkit-tap-highlight-color:transparent
+    }
+    #pq-root:not(.pq-side-collapsed).pq-side-open-mobile .pq-side-backdrop{display:block}
+    .pq-storage-warn{
+      border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--paper));
+      color:var(--ink);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.82rem;line-height:1.45
+    }
     @media(max-width:800px){
       /* Compact sections drawer: text width + padding, not full-screen */
       #pq-root{--sidebar:min(210px,62vw)}
@@ -612,6 +626,9 @@
       .pq-tools-menu{bottom:72px}
       .pq-item{padding:8px 8px;font-size:.78rem}
       .pq-item .pq-item-title{white-space:normal;line-height:1.3}
+      /* Larger primary actions on phones */
+      #pq-insert-cite,#pq-export,#pq-add-source{min-height:40px;padding:8px 12px}
+      .pq-top .pq-btn{min-height:36px}
     }
     @media(max-width:380px){
       .pq-capsule{gap:3px;padding:6px 6px}
@@ -703,8 +720,9 @@
     .pq-ref-pdf-wrap{flex:1;overflow:auto;background:#3d4043;position:relative;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
     .pq-ref-pdf-wrap .page-canvas-wrap{margin:16px auto;box-shadow:0 4px 20px rgba(0,0,0,.4);position:relative;background:#fff}
     .pq-ref-pdf-wrap canvas{
-      display:block;width:100%;height:auto;
-      image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
+      /* Explicit CSS size is set in JS — do NOT use width:100% (that resamples and blurs text) */
+      display:block;max-width:none;height:auto;
+      image-rendering:auto;
     }
     .pq-ref-pdf-wrap .textLayer{
       position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;opacity:1;line-height:1;
@@ -884,6 +902,7 @@
     </div>
   </div>
   <div class="pq-body">
+    <div class="pq-side-backdrop" id="pq-side-backdrop" aria-hidden="true"></div>
     <aside class="pq-sidebar"><div class="pq-side-inner">
       <div class="pq-side-tabs">
         <button type="button" class="active" data-side="sections">Sections</button>
@@ -897,6 +916,7 @@
     <div class="pq-main">
       <div class="pq-toolbar">
         <span id="pq-style-hint" class="pq-help" style="margin:0;flex:1">Type @ to cite · double-click a word for synonyms · LT Check for grammar · Tutorial for section guides</span>
+        <span id="pq-save-status" class="pq-wc pq-save-status" title="Autosave status">Saved</span>
         <span id="pq-disk-status" class="pq-wc"></span>
         <select class="pq-sel" id="pq-sec-status" title="Section status" style="width:auto">
           <option value="draft">Draft</option>
@@ -1235,6 +1255,8 @@
           <span class="pq-wc" id="ref-page-label">1 / 1</span>
           <button type="button" class="pq-btn" id="ref-page-next" title="Next page">›</button>
           <button type="button" class="pq-btn" id="ref-zoom-out">−</button>
+          <button type="button" class="pq-btn" id="ref-fit-width" title="Fit page width">Fit W</button>
+          <button type="button" class="pq-btn" id="ref-fit-page" title="Fit whole page">Fit page</button>
           <button type="button" class="pq-btn" id="ref-zoom-in">+</button>
           <input class="pq-inp" id="ref-find-q" placeholder="Find in this PDF…" style="width:min(180px,28vw);font-size:.8rem;padding:5px 8px">
           <button type="button" class="pq-btn" id="ref-find-prev" title="Previous match">▴</button>
@@ -1820,8 +1842,17 @@
   }
 
   let saveTimer=null;
+  let lastSaveAt=0;
+  function setSaveStatus(kind,label){
+    const el=$('#pq-save-status');
+    if(!el)return;
+    el.classList.remove('saving','error','ok');
+    if(kind)el.classList.add(kind);
+    el.textContent=label||'Saved';
+  }
   function scheduleSave(){
     clearTimeout(saveTimer);
+    setSaveStatus('saving','Saving…');
     saveTimer=setTimeout(persist,400);
   }
   async function persist(){
@@ -1840,12 +1871,28 @@
         wordCount:totalWords(),
         state
       });
-    }catch(e){}
+      lastSaveAt=Date.now();
+      setSaveStatus('ok','Saved · just now');
+    }catch(e){
+      setSaveStatus('error','Save failed');
+      try{toast('Could not save to IndexedDB — use Backup JSON')}catch(err){}
+    }
     try{await syncSourcesToLibrary()}catch(e){}
-    try{localStorage.setItem('paperquill-fallback',JSON.stringify({id:currentProjectId,state}))}catch(e){}
+    try{localStorage.setItem('paperquill-fallback',JSON.stringify({id:currentProjectId,state,at:new Date().toISOString()}))}catch(e){}
     logDailyWords();
     updateSessionLine();
   }
+  // Keep "Saved · Xm ago" relatively fresh
+  setInterval(()=>{
+    if(!lastSaveAt)return;
+    const el=$('#pq-save-status');
+    if(!el||el.classList.contains('saving')||el.classList.contains('error'))return;
+    const sec=Math.round((Date.now()-lastSaveAt)/1000);
+    if(sec<8)setSaveStatus('ok','Saved · just now');
+    else if(sec<90)setSaveStatus('ok','Saved · '+sec+'s ago');
+    else if(sec<3600)setSaveStatus('ok','Saved · '+Math.round(sec/60)+'m ago');
+    else setSaveStatus('','Saved');
+  },12000);
   function logDailyWords(){
     try{
       const key='paperquill-wordlog';
@@ -2334,6 +2381,52 @@
     if($('#pq-working-title'))$('#pq-working-title').textContent=state.paperTitle||'Untitled paper';
     if($('#pq-working-meta'))$('#pq-working-meta').textContent=totalWords().toLocaleString()+' words · '+(state.sections||[]).length+' sections';
   }
+  function storageNudgeSilenced(){
+    try{
+      const until=parseInt(localStorage.getItem('pq-storage-nudge-until')||'0',10);
+      return until && Date.now()<until;
+    }catch(e){return false}
+  }
+  function silenceStorageNudge(days){
+    try{
+      const d=Math.max(1,days||14);
+      localStorage.setItem('pq-storage-nudge-until',String(Date.now()+d*864e5));
+    }catch(e){}
+  }
+  function userHasDriveBackup(){
+    try{
+      if(state&&state.driveFileId)return true;
+      if(state&&state.driveLastSync)return true;
+      if(typeof driveReadSession==='function'&&driveReadSession())return true;
+    }catch(e){}
+    return false;
+  }
+  /**
+   * Storage nudges are rare and opt-out:
+   * - Drive-connected users: never toast; About page stays factual only
+   * - No Drive: toast at most once per silence window, and only when ≥95% full
+   * - Never called on every autosave
+   */
+  async function checkStorageHealth(opts){
+    opts=opts||{};
+    if(!(navigator.storage&&navigator.storage.estimate))return null;
+    try{
+      const est=await navigator.storage.estimate();
+      if(!est||!est.quota)return null;
+      const ratio=est.usage/est.quota;
+      const pct=Math.round(ratio*100);
+      const critical=ratio>=0.95;
+      const high=ratio>=0.88;
+      // Drive users already back up off-device — don't nag
+      if(userHasDriveBackup())return {ratio,pct,warn:false,critical:false,driveUser:true};
+      if(!critical)return {ratio,pct,warn:high,critical:false};
+      if(opts.allowToast&&!storageNudgeSilenced()){
+        toast('This browser is almost out of space ('+pct+'%). Sync Drive or export JSON if you need room.');
+        silenceStorageNudge(21); // don't bring it up again for 3 weeks
+      }
+      return {ratio,pct,warn:true,critical:true};
+    }catch(e){return null}
+  }
   async function renderStorageStatus(){
     const el=$('#pq-storage-status'), det=$('#pq-storage-detail');
     try{
@@ -2342,14 +2435,33 @@
       list.forEach(p=>{try{bytes+=JSON.stringify(p).length}catch(e){}});
       const kb=Math.round(bytes/1024);
       if(el)el.innerHTML='<strong>'+list.length+'</strong> paper'+(list.length===1?'':'s')+' in IndexedDB · ~'+kb.toLocaleString()+' KB estimated';
-      if(det)det.textContent='Active project: '+(state.paperTitle||'Untitled')+' · Sources in open paper: '+((state.sources||[]).length)+' · Library syncs across papers on this device.';
+      let detail='Active project: '+(state.paperTitle||'Untitled')+' · Sources in open paper: '+((state.sources||[]).length)+'.';
+      if(userHasDriveBackup()){
+        detail+=' Google Drive is connected — browser space is only a local working copy.';
+      }else{
+        detail+=' Library data stays on this device unless you Sync Drive or export.';
+      }
       if(navigator.storage&&navigator.storage.estimate){
         const est=await navigator.storage.estimate();
-        if(est&&det){
+        if(est){
           const used=est.usage!=null?Math.round(est.usage/1024)+' KB used':'';
           const quota=est.quota!=null?Math.round(est.quota/1024/1024)+' MB quota':'';
-          det.textContent+=' Browser storage: '+[used,quota].filter(Boolean).join(' / ')+'.';
+          detail+=' Browser storage: '+[used,quota].filter(Boolean).join(' / ')+'.';
         }
+      }
+      if(det)det.textContent=detail;
+      // Soft banner only if critical AND no Drive AND not silenced — with dismiss
+      const health=await checkStorageHealth({allowToast:false});
+      if(det&&health&&health.critical&&!userHasDriveBackup()&&!storageNudgeSilenced()){
+        det.innerHTML=escapeHtml(detail)+
+          '<div class="pq-storage-warn" id="pq-storage-warn-box">This browser profile is nearly full. Sync Drive or export JSON if you need more headroom. '+
+          '<button type="button" class="pq-btn" id="pq-storage-dismiss" style="margin-top:6px;font-size:.72rem">Don\'t remind me</button></div>';
+        const dbtn=$('#pq-storage-dismiss');
+        if(dbtn)dbtn.onclick=()=>{
+          silenceStorageNudge(30);
+          const box=$('#pq-storage-warn-box');if(box)box.remove();
+          toast('Storage reminders off for 30 days');
+        };
       }
     }catch(e){
       if(el)el.textContent='Could not read IndexedDB status.';
@@ -3730,6 +3842,7 @@
     // Mobile: close sections drawer after picking a section so the editor stays usable
     if(window.matchMedia && window.matchMedia('(max-width:800px)').matches){
       ROOT.classList.add('pq-side-collapsed');
+      try{if(typeof syncSideBackdrop==='function')syncSideBackdrop()}catch(e){}
     }
   }
   function loadSection(){
@@ -4615,7 +4728,8 @@
       {ok:weakClaims.length===0,label:'Tracked claims have evidence + citation',fix:weakClaims.length?weakClaims.length+' weak claims':'—'},
       {ok:absOk,label:'Abstract length reasonable (100–350 words)',fix:abstractSec?(absWords+' words'):'No abstract section'},
       {ok:underTarget.length===0,label:'Section word targets met',fix:underTarget.length?underTarget.map(s=>s.title).join(', '):'—'},
-      {ok:!!(state.driveLastSync||diskName),label:'Recent backup path (Drive or disk)',fix:'Sync Drive or Save disk / Backup JSON'}
+      {ok:!!(state.driveLastSync||diskName),label:'Recent backup path (Drive or disk)',fix:'Sync Drive or Save disk / Backup JSON'},
+      {ok:(state.sources||[]).every(s=>s.title&&s.authors&&s.year),label:'Source records have title, authors, year',fix:'Run Citation audit for incomplete metadata'}
     ];
     const score=checks.filter(c=>c.ok).length;
     return {checks,score,total:checks.length,cited,unused,orphan,notDone,emptySecs,weakClaims,absWords};
@@ -4649,17 +4763,27 @@
     const drive=state.driveLastSync||'—';
     const snaps=(state.paperSnapshots||[]).length;
     const secSnaps=state.sections.reduce((n,s)=>n+((s.snapshots||[]).length),0);
+    let fallbackInfo='—';
+    try{
+      const raw=localStorage.getItem('paperquill-fallback');
+      if(raw){
+        const fb=JSON.parse(raw);
+        fallbackInfo=(fb.at||'')+' · '+(fb.state&&fb.state.paperTitle?fb.state.paperTitle:'paper');
+      }
+    }catch(e){}
     openModal('<h3>Recovery &amp; backups</h3>'+
       '<p class="pq-help">Drafts live in this browser (IndexedDB). Use backups before major edits or clearing site data.</p>'+
       '<div class="pq-src-card"><strong>Last disk save</strong><div class="pq-help">'+escapeHtml(String(lastDisk))+'</div></div>'+
       '<div class="pq-src-card"><strong>Last JSON download</strong><div class="pq-help">'+escapeHtml(String(lastJson))+'</div></div>'+
       '<div class="pq-src-card"><strong>Last Drive sync</strong><div class="pq-help">'+escapeHtml(String(drive))+(state.driveFileId?' · file linked':'')+'</div></div>'+
       '<div class="pq-src-card"><strong>Snapshots</strong><div class="pq-help">'+snaps+' paper · '+secSnaps+' section</div></div>'+
+      '<div class="pq-src-card"><strong>Local emergency fallback</strong><div class="pq-help">'+escapeHtml(String(fallbackInfo))+'</div></div>'+
       '<div class="pq-modal-actions" style="justify-content:flex-start;flex-wrap:wrap">'+
       '<button type="button" class="pq-btn pq-btn-primary" id="m-json">Download JSON now</button>'+
       '<button type="button" class="pq-btn" id="m-disk">Save to disk</button>'+
       '<button type="button" class="pq-btn" id="m-psnap">Snapshot paper</button>'+
       '<button type="button" class="pq-btn" id="m-drive">Sync Drive</button>'+
+      '<button type="button" class="pq-btn" id="m-fallback">Restore emergency fallback</button>'+
       '<button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
     $('#m-cancel').onclick=closeModal;
     $('#m-json').onclick=()=>{
@@ -4672,21 +4796,36 @@
     $('#m-disk').onclick=()=>{closeModal();saveToDisk(false)};
     $('#m-psnap').onclick=()=>{closeModal();takePaperSnapshot()};
     $('#m-drive').onclick=()=>{closeModal();driveSavePaper()};
+    const fbBtn=$('#m-fallback');
+    if(fbBtn)fbBtn.onclick=async()=>{
+      try{
+        const raw=localStorage.getItem('paperquill-fallback');
+        if(!raw){toast('No emergency fallback found');return}
+        if(!(await styledConfirm('Restore fallback','Replace the current paper with the emergency localStorage copy? Current content will be overwritten.','Restore','Cancel')))return;
+        const fb=JSON.parse(raw);
+        if(!fb||!fb.state){toast('Fallback is invalid');return}
+        state=Object.assign(emptyState(),fb.state);
+        if(fb.id)currentProjectId=fb.id;
+        normalizeState();renderAll();scheduleSave();closeModal();
+        toast('Restored emergency fallback');
+      }catch(e){toast('Restore failed');console.error(e)}
+    };
   }
 
   function maybeBackupReminder(){
     try{
+      // Drive-first users already have an off-device path — never nudge them
+      if(userHasDriveBackup())return;
       const meta=readMeta();
       const last=meta.lastBackupNudge?Date.parse(meta.lastBackupNudge):0;
-      if(Date.now()-last<36e5*12)return; // 12h
-      const hasDrive=!!state.driveLastSync;
+      if(Date.now()-last<36e5*72)return; // at most every 3 days
       const hasDisk=!!meta.lastDiskBackup;
       const words=totalWords();
-      if(words<800)return;
-      if(hasDrive||hasDisk)return;
+      if(words<2000)return; // only after real drafting volume
+      if(hasDisk)return;
       meta.lastBackupNudge=new Date().toISOString();
       writeMeta(meta);
-      toast('Tip: download JSON or Sync Drive — drafts stay on this device only');
+      toast('Optional: Sync Drive or download JSON so this paper isn’t only on this device');
     }catch(e){}
   }
 
@@ -4778,15 +4917,30 @@
       if(!state.sources.find(s=>s.id===m[1]))orphan.push(m[1]);
     }
     const unused=state.sources.filter(s=>!cited.includes(s.id));
+    const incomplete=(state.sources||[]).filter(s=>{
+      const miss=[];
+      if(!(s.title&&String(s.title).trim()))miss.push('title');
+      if(!(s.authors&&String(s.authors).trim()))miss.push('authors');
+      if(!(s.year&&String(s.year).trim()))miss.push('year');
+      if((s.type==='article'||s.type==='journal')&&!(s.container&&String(s.container).trim()))miss.push('journal');
+      if((s.type==='article'||s.type==='journal')&&!(s.doi||s.url))miss.push('DOI/URL');
+      if(s.type==='book'&&!(s.publisher&&String(s.publisher).trim()))miss.push('publisher');
+      return miss.length?{src:s,miss}:null;
+    }).filter(Boolean);
     openModal('<h3>Citation audit</h3>'+
-      '<p class="pq-help"><strong>'+cited.length+'</strong> cited · <strong>'+unused.length+'</strong> unused in library · <strong>'+orphan.length+'</strong> orphan markers</p>'+
+      '<p class="pq-help"><strong>'+cited.length+'</strong> cited · <strong>'+unused.length+'</strong> unused · <strong>'+orphan.length+'</strong> orphan markers · <strong>'+incomplete.length+'</strong> incomplete records</p>'+
       (orphan.length?'<p class="pq-help" style="color:var(--danger)">Orphan citation IDs (source deleted): '+orphan.map(escapeHtml).join(', ')+'</p>':'')+
-      (unused.length?'<h4 style="margin:12px 0 6px;font-size:.9rem">Unused sources</h4>'+unused.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml(s.authors||'')+'</div><button type="button" class="pq-btn pq-del-unused" data-id="'+s.id+'">Remove from paper</button></div>').join(''):'<p class="pq-help">All sources are cited.</p>')+
+      (incomplete.length?'<h4 style="margin:12px 0 6px;font-size:.9rem">Incomplete metadata</h4>'+incomplete.map(x=>'<div class="pq-src-card"><strong>'+escapeHtml(x.src.title||'Untitled')+'</strong><div class="pq-src-meta">Missing: '+escapeHtml(x.miss.join(', '))+'</div><button type="button" class="pq-btn pq-edit-inc" data-id="'+x.src.id+'">Edit source</button></div>').join(''):'')+
+      (unused.length?'<h4 style="margin:12px 0 6px;font-size:.9rem">Unused sources</h4>'+unused.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml(s.authors||'')+'</div><button type="button" class="pq-btn pq-del-unused" data-id="'+s.id+'">Remove from paper</button></div>').join(''):'<p class="pq-help">All sources are cited (or library is empty).</p>')+
       '<div class="pq-modal-actions"><button type="button" class="pq-btn pq-btn-primary" id="m-cancel">Close</button></div>');
     $('#m-cancel').onclick=closeModal;
     $$('.pq-del-unused').forEach(b=>b.onclick=()=>{
       state.sources=state.sources.filter(s=>s.id!==b.dataset.id);
       scheduleSave();renderSources();openCitationAudit();
+    });
+    $$('.pq-edit-inc').forEach(b=>b.onclick=()=>{
+      closeModal();
+      if(typeof editSource==='function')editSource(b.dataset.id);
     });
   }
 
@@ -6166,7 +6320,20 @@
       setTimeout(scrollCaretIntoView,30);
     }
   });
-  $('#cap-sections').onclick=()=>ROOT.classList.toggle('pq-side-collapsed');
+  function syncSideBackdrop(){
+    const mobile=window.matchMedia&&window.matchMedia('(max-width:800px)').matches;
+    const open=mobile&&!ROOT.classList.contains('pq-side-collapsed');
+    ROOT.classList.toggle('pq-side-open-mobile',!!open);
+  }
+  $('#cap-sections').onclick=()=>{
+    ROOT.classList.toggle('pq-side-collapsed');
+    syncSideBackdrop();
+  };
+  const sideBd=$('#pq-side-backdrop');
+  if(sideBd)sideBd.onclick=()=>{
+    ROOT.classList.add('pq-side-collapsed');
+    syncSideBackdrop();
+  };
   // Keep sections open on desktop when resizing up from mobile
   try{
     const mq=window.matchMedia('(max-width:800px)');
@@ -6488,7 +6655,6 @@
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').then(reg=>{
-      // Prefer waiting worker when a new version is ready
       if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
       reg.addEventListener('updatefound', ()=>{
         const nw = reg.installing;
@@ -6499,10 +6665,17 @@
           }
         });
       });
+      // Periodic update check when online
+      try{setInterval(()=>{if(navigator.onLine)reg.update().catch(()=>{})},6e5)}catch(e){}
     }).catch(()=>{});
     navigator.serviceWorker.addEventListener('message', (ev)=>{
       const d = ev.data || {};
-      if(d.type === 'SW_ACTIVATED'){ /* new SW live */ }
+      if(d.type === 'SW_ACTIVATED'){
+        // Silent — avoid nagging; update is applied in the background
+      }
+      if(d.type === 'FLUSH_QUEUE'){
+        /* optional deferred network actions from SW */
+      }
     });
   }
 
@@ -7561,14 +7734,23 @@
     if(!files.length){toast('Choose PDF files');return}
     const folder=refState.activeFolderId==='all'?'inbox':refState.activeFolderId;
     let n=0;
+    const uploadedIds=[];
     toast('Uploading & indexing text…');
     for(const file of files){
       try{
         const buf=await file.arrayBuffer();
         const id=uid();
         const ex=await extractPdfPageTexts(buf);
+        // Prefer a clean title from filename; first-page text helps metadata search later
+        let titleGuess=file.name.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
+        if(ex.pageTexts&&ex.pageTexts[0]){
+          const firstLine=(ex.pageTexts[0].split(/\n/)[0]||'').trim().slice(0,120);
+          if(firstLine.length>12&&firstLine.length<100&&!/^(abstract|introduction|chapter)/i.test(firstLine)){
+            // keep filename as primary title; store first line as search hint in notes if empty
+          }
+        }
         const item={
-          id, folderId:folder, title:file.name.replace(/\.pdf$/i,''),
+          id, folderId:folder, title:titleGuess||file.name,
           fileName:file.name, mime:'application/pdf', size:file.size,
           notes:'', tags:[], highlights:[], annotations:[],
           pageTexts:ex.pageTexts, fullText:ex.fullText,
@@ -7577,11 +7759,21 @@
         };
         await refBlobPut(id, buf);
         await refMetaPut(item);
+        uploadedIds.push(id);
         n++;
       }catch(e){console.warn(e)}
     }
     await refreshRefLibrary();
     toast('Uploaded '+n+' PDF'+(n===1?'':'s')+' (text indexed for search)');
+    // One-step metadata: offer fetch for the first new PDF
+    if(uploadedIds.length===1&&typeof openRefMetadata==='function'){
+      try{
+        const go=await styledConfirm('Add citation metadata?','Fetch title, authors, and year from Open Library / Google Books / OpenAlex for this PDF?','Fetch metadata','Skip');
+        if(go)openRefMetadata(uploadedIds[0]);
+      }catch(e){}
+    }else if(uploadedIds.length>1){
+      toast('Tip: open each PDF → Metadata to fetch book/article details');
+    }
   }
   async function refNewFolder(){
     const name=await styledPrompt('New folder','Folder name','Readings');
@@ -7652,13 +7844,13 @@
         await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
         const avail=Math.max(160,(wrap&&wrap.clientWidth?wrap.clientWidth:window.innerWidth)-20);
         const mobile=window.matchMedia && window.matchMedia('(max-width:700px)').matches;
-        // Mobile: fit full width with small padding; desktop: ~92% of available width, capped
+        // Fit width: keep text readable; bitmap is still rendered at devicePixelRatio for sharpness
         let s=avail/base.width;
-        if(mobile)s=Math.max(0.5, Math.min(1.35, s*0.98));
-        else s=Math.max(0.85, Math.min(1.75, s*0.92));
+        if(mobile)s=Math.max(0.65, Math.min(1.6, s*0.98));
+        else s=Math.max(0.9, Math.min(2.0, s*0.96));
         refState.scale=s;
       }catch(e){
-        refState.scale=(window.matchMedia && window.matchMedia('(max-width:700px)').matches)?0.85:1.25;
+        refState.scale=(window.matchMedia && window.matchMedia('(max-width:700px)').matches)?1.0:1.35;
       }
       // page texts
       if(item.pageTexts&&item.pageTexts.length===refState.pdfDoc.numPages){
@@ -7691,8 +7883,8 @@
     try{if(wrap._refIO){wrap._refIO.disconnect();wrap._refIO=null}}catch(e){}
     const item=refState.openItemId?await refMetaGet(refState.openItemId):null;
     const findQ=(refState.findQ||'').toLowerCase();
-    const dpr=Math.min(window.devicePixelRatio||1, 2.5);
-    const cssScale=refState.scale;
+    const dpr=Math.min(window.devicePixelRatio||1, 3);
+    const cssScale=Math.max(0.45, refState.scale||1);
     // Build placeholder shells first (instant), then paint pages progressively
     wrap.innerHTML='';
     const holders=[];
@@ -7718,57 +7910,67 @@
       holder.dataset.painting='1';
       try{
         const page=await doc.getPage(pageNum);
-        // Viewport at CSS scale; canvas buffer at CSS*dpr for sharp pixels
-        const viewport=page.getViewport({scale:cssScale});
-        const outputScale=dpr;
+        // High-DPI path: bake devicePixelRatio into the PDF.js viewport scale so glyphs
+        // are rasterized sharp, then display the canvas at CSS (logical) size.
+        const outputScale=Math.min(Math.max(dpr,1), 3);
+        const renderScale=cssScale*outputScale;
+        const viewport=page.getViewport({scale:renderScale});
+        const cssW=Math.floor(viewport.width/outputScale);
+        const cssH=Math.floor(viewport.height/outputScale);
         const canvas=document.createElement('canvas');
-        const ctx=canvas.getContext('2d',{alpha:false});
-        canvas.width=Math.floor(viewport.width*outputScale);
-        canvas.height=Math.floor(viewport.height*outputScale);
-        canvas.style.width=Math.floor(viewport.width)+'px';
-        canvas.style.height=Math.floor(viewport.height)+'px';
-        const transform=outputScale!==1?[outputScale,0,0,outputScale,0,0]:null;
+        const ctx=canvas.getContext('2d',{alpha:false,desynchronized:true});
+        canvas.width=Math.floor(viewport.width);
+        canvas.height=Math.floor(viewport.height);
+        canvas.style.width=cssW+'px';
+        canvas.style.height=cssH+'px';
+        if(ctx){
+          try{
+            ctx.imageSmoothingEnabled=true;
+            ctx.imageSmoothingQuality='high';
+          }catch(e){}
+        }
         holder.classList.remove('page-placeholder');
-        holder.style.width=Math.floor(viewport.width)+'px';
-        holder.style.height=Math.floor(viewport.height)+'px';
+        holder.style.width=cssW+'px';
+        holder.style.height=cssH+'px';
         holder.style.minHeight='';
         holder.innerHTML='';
         holder.appendChild(canvas);
         const textLayerDiv=document.createElement('div');
         textLayerDiv.className='textLayer';
-        textLayerDiv.style.width=Math.floor(viewport.width)+'px';
-        textLayerDiv.style.height=Math.floor(viewport.height)+'px';
+        textLayerDiv.style.width=cssW+'px';
+        textLayerDiv.style.height=cssH+'px';
         textLayerDiv.style.setProperty('--scale-factor',String(cssScale));
         holder.appendChild(textLayerDiv);
         const hlLayer=document.createElement('div');
         hlLayer.className='pq-ref-hl-layer';
-        hlLayer.style.width=Math.floor(viewport.width)+'px';
-        hlLayer.style.height=Math.floor(viewport.height)+'px';
+        hlLayer.style.width=cssW+'px';
+        hlLayer.style.height=cssH+'px';
         holder.appendChild(hlLayer);
 
+        // Viewport already includes DPR — no extra transform matrix
         const renderTask=page.render({
           canvasContext:ctx,
           viewport,
-          transform:transform||undefined,
           intent:'display'
         });
         await renderTask.promise;
 
-        // Text layer for selection / find / highlight
+        // Text layer uses CSS-scale viewport (matches on-screen box, not bitmap pixels)
         try{
           const textContent=await page.getTextContent();
+          const cssViewport=page.getViewport({scale:cssScale});
           if(pdfjsLib.renderTextLayer){
             await pdfjsLib.renderTextLayer({
               textContentSource:textContent,
               container:textLayerDiv,
-              viewport,
+              viewport:cssViewport,
               textDivs:[]
             }).promise;
           }else if(typeof pdfjsLib.TextLayer==='function'){
             const tl=new pdfjsLib.TextLayer({
               textContentSource:textContent,
               container:textLayerDiv,
-              viewport
+              viewport:cssViewport
             });
             await tl.render();
           }else{
@@ -7776,7 +7978,7 @@
               if(!itx.str)return;
               const span=document.createElement('span');
               span.textContent=itx.str;
-              const tx=pdfjsLib.Util.transform(viewport.transform, itx.transform);
+              const tx=pdfjsLib.Util.transform(cssViewport.transform, itx.transform);
               const fontH=(itx.height||10)*cssScale;
               span.style.left=tx[4]+'px';
               span.style.top=(tx[5]-fontH)+'px';
@@ -8737,6 +8939,27 @@
     const pn=$('#ref-page-next');if(pn)pn.onclick=()=>{if(refState.pdfDoc&&refState.page<refState.pdfDoc.numPages)refScrollToPage(refState.page+1)};
     const zi=$('#ref-zoom-in');if(zi)zi.onclick=async()=>{refState.scale=Math.min(3,refState.scale+0.15);await renderRefAllPages()};
     const zo=$('#ref-zoom-out');if(zo)zo.onclick=async()=>{refState.scale=Math.max(0.5,refState.scale-0.15);await renderRefAllPages()};
+    async function refFitScale(mode){
+      if(!refState.pdfDoc)return;
+      try{
+        const page=await refState.pdfDoc.getPage(refState.page||1);
+        const base=page.getViewport({scale:1});
+        const wrap=$('#ref-pdf-wrap');
+        const availW=Math.max(160,(wrap&&wrap.clientWidth?wrap.clientWidth:window.innerWidth)-20);
+        const availH=Math.max(200,(wrap&&wrap.clientHeight?wrap.clientHeight:window.innerHeight)-80);
+        let s;
+        if(mode==='page'){
+          s=Math.min(availW/base.width, availH/base.height)*0.98;
+        }else{
+          s=(availW/base.width)*0.98;
+        }
+        refState.scale=Math.max(0.45, Math.min(2.5, s));
+        await renderRefAllPages();
+        toast(mode==='page'?'Fit page':'Fit width');
+      }catch(e){console.warn(e)}
+    }
+    const fw=$('#ref-fit-width');if(fw)fw.onclick=()=>refFitScale('width');
+    const fitPg=$('#ref-fit-page');if(fitPg)fitPg.onclick=()=>refFitScale('page');
     const hl=$('#ref-hl-y');
     if(hl){
       // mousedown preventDefault keeps the text selection from collapsing before click
@@ -8886,6 +9109,7 @@
     }else{
       ROOT.classList.remove('pq-side-collapsed');
     }
+    try{if(typeof syncSideBackdrop==='function')syncSideBackdrop()}catch(e){}
     renderAll();updateSessionLine();
     const m=readMeta();
     await refreshDashboard();
@@ -8897,6 +9121,9 @@
     if(!fromOAuth && driveReadSession()){
       try{await driveEnsureToken();updateDriveUI()}catch(e){/* stay quiet until user uses Drive */}
     }
+    // Storage toast only if critically full and no Drive (rare)
+    try{await checkStorageHealth({allowToast:true})}catch(e){}
+    try{setSaveStatus('ok','Saved')}catch(e){}
   })();
 })();
 </script>
