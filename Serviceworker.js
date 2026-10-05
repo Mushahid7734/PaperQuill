@@ -1,12 +1,13 @@
 /* PaperQuill service worker — offline-first app shell + IndexedDB helpers
- * Cache bump (v10) pushes Reference Manager, sharp PDF viewer, metadata/sources,
- * linked disk save, fullscreen highlights, and modal-in-fullscreen fixes.
+ * Cache bump (v11) pushes citation insert-at-caret fix (@ cite / Cite button),
+ * DOM bookmark + text-offset restore across locator modal, plus prior v10
+ * Reference Manager, sharp PDF viewer, metadata/sources, linked disk save,
+ * fullscreen highlights, and modal-in-fullscreen fixes.
  */
-const CACHE = 'paperquill-v10';
+const CACHE = 'paperquill-v11';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
-
 /** App shell (same-origin). Paths match typical deploy next to index.html. */
 const ASSETS = [
   './',
@@ -16,7 +17,6 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
 ];
-
 /** Third-party scripts the desk + reference manager need offline. */
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js',
@@ -25,7 +25,6 @@ const CDN_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@400;500;600&display=swap',
 ];
-
 /** Online-only APIs — never cache; fail fast offline. */
 function isOnlineOnly(url) {
   try {
@@ -48,7 +47,6 @@ function isOnlineOnly(url) {
     return false;
   }
 }
-
 /* ---------- IndexedDB (SW-side metadata / offline queue) ---------- */
 function openSwDb() {
   return new Promise((resolve, reject) => {
@@ -114,7 +112,6 @@ async function queueClear() {
     tx.onerror = () => reject(tx.error);
   });
 }
-
 /* ---------- Install / activate (push new changes) ---------- */
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -143,7 +140,6 @@ self.addEventListener('install', (e) => {
     })()
   );
 });
-
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     (async () => {
@@ -159,7 +155,6 @@ self.addEventListener('activate', (e) => {
     })()
   );
 });
-
 /* ---------- Fetch: offline-first for shell, network for APIs ---------- */
 self.addEventListener('fetch', (e) => {
   const req = e.request;
@@ -167,17 +162,14 @@ self.addEventListener('fetch', (e) => {
   const url = req.url;
   // Never intercept online-only APIs (Drive, LT, DOI, OpenAlex, etc.)
   if (isOnlineOnly(url)) return;
-
   // Navigations: app shell offline fallback
   if (req.mode === 'navigate') {
     e.respondWith(navigationHandler(req));
     return;
   }
-
   // Same-origin static / cached / CDN
   e.respondWith(assetHandler(req));
 });
-
 async function navigationHandler(req) {
   // Network-first for HTML so deploys reach clients quickly
   try {
@@ -208,7 +200,6 @@ async function navigationHandler(req) {
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
   );
 }
-
 async function assetHandler(req) {
   const cached = await caches.match(req);
   if (cached) {
@@ -238,7 +229,6 @@ async function assetHandler(req) {
     return new Response('', { status: 503, statusText: 'Offline' });
   }
 }
-
 function eRevalidate(req) {
   fetch(req)
     .then(async (res) => {
@@ -249,7 +239,6 @@ function eRevalidate(req) {
     })
     .catch(() => {});
 }
-
 /* ---------- Messages from the page ---------- */
 self.addEventListener('message', (e) => {
   const data = e.data || {};
@@ -306,7 +295,6 @@ self.addEventListener('message', (e) => {
     })().catch((err) => reply({ ok: false, error: String(err) }));
   }
 });
-
 /* ---------- Background sync (when browser supports it) ---------- */
 self.addEventListener('sync', (e) => {
   if (e.tag === 'paperquill-flush-queue') {
