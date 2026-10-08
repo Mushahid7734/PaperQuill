@@ -906,7 +906,86 @@
         box-shadow:-3px 0 12px rgba(0,0,0,.12);
       }
     }
-  </style>
+  
+    /* Collaboration UI */
+    .pq-collab-bar{
+      display:none;align-items:center;gap:8px;flex-wrap:wrap;
+      padding:6px 12px;background:color-mix(in srgb,var(--accent) 12%,var(--panel));
+      border-bottom:1px solid var(--border);font-size:.78rem;
+    }
+    .pq-collab-bar.show{display:flex}
+    .pq-collab-bar .dot{
+      width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:4px
+    }
+    .pq-collab-presence{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    .pq-collab-avatar{
+      width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--paper);
+      font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+      border:2px solid var(--paper)
+    }
+    .pq-collab-status{color:var(--muted);font-size:.72rem}
+    .pq-notif-wrap{position:relative;display:none;align-items:center}
+    #pq-root.pq-in-room .pq-notif-wrap{display:inline-flex}
+    .pq-notif-btn{
+      position:relative;min-width:42px;min-height:34px;padding:6px 10px;
+      display:inline-flex;align-items:center;justify-content:center
+    }
+    .pq-notif-btn svg{width:20px;height:20px}
+    .pq-notif-badge{
+      position:absolute;top:2px;right:2px;min-width:18px;height:18px;padding:0 5px;
+      border-radius:999px;background:#1877f2;color:#fff;font-size:.7rem;
+      font-weight:700;display:none;align-items:center;justify-content:center;line-height:1;
+      border:2px solid var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.15);z-index:2
+    }
+    .pq-notif-badge.on{display:flex}
+    .pq-notif-panel{
+      display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:80;
+      width:min(340px,92vw);max-height:min(420px,70vh);overflow:auto;
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      box-shadow:0 12px 40px rgba(0,0,0,.18);padding:8px
+    }
+    .pq-notif-panel.open{display:block}
+    .pq-notif-item{
+      position:relative;text-align:left;width:100%;padding:10px 28px 10px 10px;
+      border-radius:8px;border:0;background:transparent;cursor:pointer;font:inherit;color:inherit;margin-bottom:4px
+    }
+    .pq-notif-item:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+    .pq-notif-item.unread{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+    .pq-notif-item .meta{font-size:.68rem;color:var(--muted);margin-top:2px}
+    .pq-notif-x{
+      position:absolute;top:6px;right:6px;width:22px;height:22px;border:0;border-radius:6px;
+      background:transparent;cursor:pointer;color:var(--muted);font-size:16px;line-height:1
+    }
+    .pq-notif-x:hover{background:color-mix(in srgb,var(--danger,#c0392b) 15%,transparent);color:var(--ink)}
+    .pq-collab-only{display:none !important}
+    #pq-root.pq-in-room .pq-collab-only{display:inline-flex !important}
+    .pq-cm-ico{
+      position:absolute;z-index:5;width:24px;height:24px;border-radius:50%;
+      border:1px solid var(--border);background:var(--panel);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:.7rem;padding:0;
+      box-shadow:0 1px 3px rgba(0,0,0,.12)
+    }
+    .pq-cm-ico.done{opacity:.55}
+    .pq-cm-ico svg{width:13px;height:13px}
+    .pq-ann-mark{background:color-mix(in srgb,var(--accent) 22%,transparent);border-bottom:2px dashed var(--accent);cursor:pointer}
+
+    .pq-btn-collab-on{background:var(--ok)!important;color:#fff!important;border-color:var(--ok)!important}
+    .pq-remote-hl{outline:2px dashed color-mix(in srgb,var(--cite) 60%,transparent);outline-offset:1px}
+    .pq-ann-card.remote{border-color:color-mix(in srgb,var(--cite) 45%,var(--border));background:color-mix(in srgb,var(--cite) 6%,var(--paper))}
+    .pq-ann-card .shared-tag{
+      display:inline-block;font-size:.62rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:.04em;padding:1px 6px;border-radius:999px;margin-left:4px;
+      background:color-mix(in srgb,var(--cite) 18%,transparent);color:var(--cite);border:1px solid var(--cite)
+    }
+    .pq-collab-presence .pq-collab-avatar{position:relative}
+    .pq-collab-sec-hint{font-size:.65rem;color:var(--muted);margin-left:6px}
+    .pq-yjs-badge{
+      display:none;align-items:center;gap:4px;font-size:.7rem;font-weight:600;
+      padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--ok) 18%,transparent);
+      color:var(--ok);border:1px solid var(--ok)
+    }
+    .pq-yjs-badge.on{display:inline-flex}
+</style>
 </head>
 <body>
 <div id="pq-root">
@@ -931,8 +1010,15 @@
     <button type="button" class="pq-btn" id="pq-search-src" title="Search OpenAlex, Crossref, Europe PMC, Semantic Scholar, DOAJ">Find sources</button>
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-hl-btn" title="Highlight selection">Highlight</button>
-    <button type="button" class="pq-btn" id="pq-comment-btn" title="Comment on selection">Comment</button>
-    <button type="button" class="pq-btn" id="pq-ann-panel-btn" title="Annotations panel">Notes on text</button>
+    <button type="button" class="pq-btn pq-collab-only" id="pq-comment-btn" title="Comment on selection (room paper)">Comment</button>
+    <button type="button" class="pq-btn pq-collab-only" id="pq-ann-panel-btn" title="Notes on text (room paper)">Notes on text</button>
+    <span class="pq-notif-wrap pq-collab-only" id="pq-notif-wrap" title="Collaboration notifications">
+      <button type="button" class="pq-btn pq-notif-btn" id="pq-notif-btn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/><path d="M9 17a3 3 0 0 0 6 0"/></svg>
+        <span class="pq-notif-badge" id="pq-notif-badge">0</span>
+      </button>
+      <div class="pq-notif-panel" id="pq-notif-panel" role="menu"></div>
+    </span>
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-disk-save" title="Save JSON to disk">Save disk</button>
     <button type="button" class="pq-btn" id="pq-disk-open">Open disk</button>
@@ -940,12 +1026,24 @@
     <span class="pq-wc" id="pq-drive-sync-info" title="Last Google Drive sync"></span>
     <button type="button" class="pq-btn pq-btn-primary pq-install-btn pq-install-top" id="pq-top-install" title="Install PaperQuill">Install</button>
     <button type="button" class="pq-btn pq-btn-primary" id="pq-export">Export</button>
+    <span class="pq-wc" id="pq-collab-label" style="display:none"></span>
+
     <span class="pq-wc" id="pq-wc">0 words</span>
     <div class="pq-progress-wrap" title="Daily writing goal" id="pq-daily-wrap">
       <div class="pq-progress-bar"><i id="pq-daily-bar" style="width:0%"></i></div>
       <span class="pq-wc" id="pq-daily-label">0/500</span>
     </div>
   </div>
+  
+  <div class="pq-collab-bar" id="pq-collab-bar" aria-live="polite">
+    <span><span class="dot"></span><strong id="pq-collab-room-title">Collaboration active</strong></span>
+    <span class="pq-yjs-badge" id="pq-yjs-badge" title="Firebase live sync on shared paper">Live sync</span>
+    <span class="pq-collab-status" id="pq-collab-status">—</span>
+    <div class="pq-collab-presence" id="pq-collab-presence" title="People currently here"></div>
+    <button type="button" class="pq-btn" id="pq-collab-publish" title="Push full paper (sections, sources, text) to the room for everyone" style="font-size:.72rem;padding:4px 10px">Publish to room</button>
+    <button type="button" class="pq-btn" id="pq-collab-leave-bar" title="Leave this room" style="margin-left:auto;font-size:.72rem;padding:4px 10px">Leave room</button>
+  </div>
+
   <div class="pq-body">
     <div class="pq-side-backdrop" id="pq-side-backdrop" aria-hidden="true"></div>
     <aside class="pq-sidebar"><div class="pq-side-inner">
@@ -1060,6 +1158,8 @@
     <button type="button" class="pq-btn" id="tool-snaps">View snapshots</button>
     <button type="button" class="pq-btn" id="tool-papersnap">Snapshot whole paper</button>
     <button type="button" class="pq-btn" id="tool-papersnaps">Paper snapshots</button>
+        <div class="pq-tools-cat">Collaboration</div>
+    <button type="button" class="pq-btn" id="tool-collab">Collaborate…</button>
     <div class="pq-tools-cat">System</div>
     <button type="button" class="pq-btn" id="tool-search">Search paper</button>
     <button type="button" class="pq-btn" id="tool-notes">Research notes</button>
@@ -1095,6 +1195,7 @@
       <div class="pq-dash-hero-actions">
         <button type="button" class="pq-btn" id="pq-dash-change-name">Change name</button>
         <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-continue">Continue writing</button>
+        <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-collab" title="Share or join a collaboration room">Collaborate</button>
         <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-dash-install" title="Install PaperQuill on this device">Install app</button>
       </div>
     </div>
@@ -1335,6 +1436,1726 @@
   </div>
   <div class="pq-toast" id="pq-toast"></div>
 </div>
+
+<script type="module">
+  // PaperQuill Collab – full forever-free layer
+  // Firebase: Auth + presence + annotations + section status
+  // Yjs + WebRTC: true concurrent section editing (no Firebase cost for typing)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+  import { getDatabase, ref, set, update, onValue, onDisconnect, remove, get } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+  // Live collaboration uses Firebase Realtime Database only (no WebRTC/Yjs).
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCaX9tAsJ6nE96D9KySeq8Yr9jmQedGB8",
+    authDomain: "paperquill-300f6.firebaseapp.com",
+    databaseURL: "https://paperquill-300f6-default-rtdb.firebaseio.com",
+    projectId: "paperquill-300f6",
+    storageBucket: "paperquill-300f6.firebasestorage.app",
+    messagingSenderId: "669958413447",
+    appId: "1:669958413447:web:518e714279b5d1345c6c22"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let collabPaperId = null;
+  let collabMeta = null;
+  let collabLocalPaperId = null; // IndexedDB project id for the shared paper
+  let collabUnsubs = [];
+  let presenceTimer = null;
+  let membersCache = {};
+  let ydoc = null;
+  let yprovider = null;
+  let ytext = null;
+  let yjsActive = false;
+  let yjsApplying = false; // prevent echo loops
+  let livePushTimer = null;
+  let liveApplying = false;
+  const PRESENCE_INTERVAL = 10000;
+
+  // ---------- Auth ----------
+  async function collabSignIn() {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
+    } catch (e) {
+      console.error(e);
+      toastSafe("Sign-in failed");
+      return null;
+    }
+  }
+  function collabSignOut() { stopCollab(); return signOut(auth); }
+  function toastSafe(m) { if (typeof toast === "function") toast(m); }
+
+  function liveSectionKey() {
+    // Stable across host/guest: section order from shared snapshot
+    try {
+      const ctx = pqContext();
+      if (ctx.sectionOrder != null && ctx.sectionOrder !== "") return "o" + String(ctx.sectionOrder);
+      if (ctx.sectionKey) return "k_" + String(ctx.sectionKey);
+      if (ctx.sectionId) return "id_" + String(ctx.sectionId);
+    } catch (e) {}
+    return "o0";
+  }
+
+  function isOnSharedPaper() {
+    if (!collabPaperId) return false;
+    try {
+      const ctx = pqContext();
+      const pid = ctx.paperId || null;
+      if (!pid) return false;
+      if (collabLocalPaperId && pid === collabLocalPaperId) return true;
+      if (ctx.collabRoomId && ctx.collabRoomId === collabPaperId) {
+        collabLocalPaperId = pid;
+        return true;
+      }
+      if (String(pid).indexOf("collab_") === 0) {
+        collabLocalPaperId = pid;
+        return true;
+      }
+      if (window._pendingSharePaperId && pid === window._pendingSharePaperId) {
+        collabLocalPaperId = pid;
+        return true;
+      }
+      if (window._lastCollabLocalPaperId && pid === window._lastCollabLocalPaperId) {
+        collabLocalPaperId = pid;
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function pauseActiveSession() {
+    try { stopPresence(); } catch (e) {}
+    try { stopCollabListeners(); } catch (e) {}
+    try { stopYjs(); } catch (e) {}
+    try { stopLiveSync(); } catch (e) {}
+  }
+
+  async function activateRoomSession(roomId, localPaperId, meta) {
+    if (!roomId) return false;
+    pauseActiveSession();
+    collabPaperId = roomId;
+    if (meta) collabMeta = meta;
+    if (localPaperId) collabLocalPaperId = localPaperId;
+    try {
+      if (!collabMeta) {
+        const snap = await get(ref(db, `collab/${roomId}/meta`));
+        if (snap.exists()) collabMeta = snap.val();
+      }
+    } catch (e) { console.warn(e); }
+    try { startCollabListeners(roomId); } catch (e) { console.warn(e); }
+    try { startPresence(roomId); } catch (e) { console.warn(e); }
+    try { startLiveSync(roomId); } catch (e) { console.warn(e); }
+    try { await startYjs(roomId); } catch (e) {}
+    try { await catchUpRoom(roomId); } catch (e) { console.warn(e); }
+    updateCollabUI();
+    return true;
+  }
+
+  async function onPaperOpened(localPaperId, paperCollabRoomId) {
+    try {
+      if (paperCollabRoomId) {
+        if (collabPaperId !== paperCollabRoomId) {
+          await activateRoomSession(paperCollabRoomId, localPaperId, null);
+        } else {
+          collabLocalPaperId = localPaperId || collabLocalPaperId;
+          try { startCollabListeners(collabPaperId); } catch (e) {}
+          try { startPresence(collabPaperId); } catch (e) {}
+          try { startLiveSync(collabPaperId); } catch (e) {}
+          updateCollabUI();
+        }
+      } else if (collabPaperId && collabLocalPaperId && localPaperId === collabLocalPaperId) {
+        updateCollabUI();
+      } else {
+        // Other paper: hide collab chrome, pause live. Memberships in other rooms stay.
+        pauseActiveSession();
+        window._lastCollabPaperId = collabPaperId;
+        window._lastCollabMeta = collabMeta;
+        window._lastCollabLocalPaperId = collabLocalPaperId;
+        collabPaperId = null;
+        collabMeta = null;
+        collabLocalPaperId = null;
+        updateCollabUI();
+      }
+    } catch (e) {
+      console.warn(e);
+      updateCollabUI();
+    }
+  }
+
+  function rememberUserRoom(roomId, title, role) {
+    if (!auth.currentUser || !roomId) return;
+    const uid = auth.currentUser.uid;
+    set(ref(db, `userRooms/${uid}/${roomId}`), {
+      title: title || roomId,
+      role: role || "editor",
+      joinedAt: Date.now(),
+      lastSeen: Date.now()
+    }).catch(e => console.warn(e));
+  }
+
+  async function forgetUserRoom(roomId) {
+    if (!auth.currentUser || !roomId) return;
+    try {
+      await remove(ref(db, `userRooms/${auth.currentUser.uid}/${roomId}`));
+    } catch (e) { console.warn(e); }
+  }
+
+  async function fetchActiveRooms() {
+    if (!auth.currentUser) return [];
+    const uid = auth.currentUser.uid;
+    let map = {};
+    try {
+      const snap = await get(ref(db, `userRooms/${uid}`));
+      map = snap.val() || {};
+    } catch (e) {
+      console.warn(e);
+      // Fall back to local remembered rooms that still exist in Firebase
+      const local = readRoomList();
+      const out = [];
+      for (const r of local) {
+        try {
+          const m = await get(ref(db, `collab/${r.id}/meta`));
+          if (m.exists()) out.push({ id: r.id, title: r.title || (m.val().title) || r.id, role: r.role || "editor", active: true });
+        } catch (err) {}
+      }
+      return out;
+    }
+    const out = [];
+    for (const [rid, info] of Object.entries(map)) {
+      try {
+        const m = await get(ref(db, `collab/${rid}/meta`));
+        if (!m.exists()) {
+          // Stale index — clean up
+          try { await remove(ref(db, `userRooms/${uid}/${rid}`)); } catch (e) {}
+          continue;
+        }
+        const meta = m.val() || {};
+        out.push({
+          id: rid,
+          title: (info && info.title) || meta.title || rid,
+          role: (info && info.role) || "editor",
+          active: true,
+          joinedAt: (info && info.joinedAt) || 0
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    out.sort((a, b) => (b.joinedAt || 0) - (a.joinedAt || 0));
+    return out;
+  }
+
+  // ---------- Room registry (local list of rooms this device used) ----------
+  const ROOMS_KEY = "paperquill-collab-rooms-v1";
+  function readRoomList() {
+    try {
+      const raw = localStorage.getItem(ROOMS_KEY);
+      const o = raw ? JSON.parse(raw) : null;
+      return Array.isArray(o) ? o : (o && Array.isArray(o.rooms) ? o.rooms : []);
+    } catch (e) { return []; }
+  }
+  function writeRoomList(list) {
+    try { localStorage.setItem(ROOMS_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {}
+  }
+  function rememberRoom(entry) {
+    if (!entry || !entry.id) return;
+    const list = readRoomList().filter(r => r.id !== entry.id);
+    list.unshift({
+      id: entry.id,
+      title: entry.title || "Untitled room",
+      role: entry.role || "editor",
+      lastJoined: Date.now(),
+      ownerUid: entry.ownerUid || null
+    });
+    writeRoomList(list);
+  }
+  function forgetRoom(id) {
+    writeRoomList(readRoomList().filter(r => r.id !== id));
+  }
+
+  function pqContext() {
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.getContext === "function") {
+        return window.PaperQuill.getContext();
+      }
+    } catch (e) {}
+    return { paperId: null, title: "Untitled paper", style: "apa7" };
+  }
+  async function pqSaveLocal() {
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.saveNow === "function") {
+        return await window.PaperQuill.saveNow();
+      }
+    } catch (e) { console.warn(e); }
+  }
+  async function pqDriveSync() {
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.syncDrive === "function") {
+        return await window.PaperQuill.syncDrive();
+      }
+    } catch (e) { console.warn(e); }
+    return false;
+  }
+  function openPqModal(content) {
+    const bg = document.getElementById("pq-modal-bg");
+    const modal = document.getElementById("pq-modal");
+    if (!bg || !modal) return false;
+    modal.classList.remove("pq-slab-wide");
+    modal.innerHTML = content;
+    bg.classList.add("open");
+    return true;
+  }
+  function closePqModal() {
+    const bg = document.getElementById("pq-modal-bg");
+    const modal = document.getElementById("pq-modal");
+    if (bg) bg.classList.remove("open");
+    if (modal) { modal.innerHTML = ""; modal.classList.remove("pq-slab-wide"); }
+  }
+
+  // ---------- Room create / join / leave ----------
+  function makeRoomCode() {
+    const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+    let s = "pq-";
+    for (let i = 0; i < 8; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+    return s;
+  }
+
+  function packPaperPayload(paperState, paperId, name) {
+    // Compact snapshot for joiners (stored only while room is active)
+    const st = paperState || {};
+    const sections = (st.sections || []).map(s => ({
+      id: s.id, key: s.key, title: s.title, content: s.content || "",
+      order: s.order || 0, status: s.status || "draft", wordTarget: s.wordTarget || 0
+    }));
+    const sources = (st.sources || []).map(s => Object.assign({}, s));
+    return {
+      paperId: paperId || null,
+      name: name || st.paperTitle || "Shared paper",
+      paperTitle: st.paperTitle || name || "Shared paper",
+      authorName: st.authorName || "",
+      style: st.style || "apa7",
+      sections,
+      sources,
+      notes: (st.notes || "").slice(0, 20000),
+      annotations: (st.annotations || []).slice(0, 200),
+      updatedAt: Date.now()
+    };
+  }
+
+  async function createCollabRoom(paperId, title, style, paperState) {
+    const user = auth.currentUser || await collabSignIn();
+    if (!user) {
+      toastSafe("Sign in with Google to share");
+      return null;
+    }
+    const ctx = pqContext();
+    const localPaperId = paperId || ctx.paperId || null;
+    title = title || ctx.title || "Untitled paper";
+    style = style || ctx.style || "apa7";
+    const id = makeRoomCode();
+
+    // Prefer full paper state from bridge when sharing a selected paper
+    let payload = null;
+    try {
+      if (paperState) payload = packPaperPayload(paperState, localPaperId, title);
+      else if (window.PaperQuill && typeof window.PaperQuill.getPaperPayload === "function") {
+        payload = await window.PaperQuill.getPaperPayload(localPaperId);
+      } else {
+        payload = packPaperPayload(null, localPaperId, title);
+      }
+    } catch (e) {
+      console.warn(e);
+      payload = packPaperPayload(null, localPaperId, title);
+    }
+    if (payload) {
+      payload.paperTitle = title;
+      payload.style = style;
+      payload.name = title;
+    }
+
+    const meta = {
+      ownerUid: user.uid,
+      title,
+      style,
+      localPaperId: localPaperId || null,
+      createdAt: Date.now(),
+      maxCollaborators: 5,
+      activeUntil: Date.now() + 90 * 24 * 60 * 60 * 1000
+    };
+    try {
+      await set(ref(db, `collab/${id}/meta`), meta);
+      await set(ref(db, `collab/${id}/members/${user.uid}`), {
+        displayName: user.displayName || user.email || "Owner",
+        role: "owner",
+        color: "#3d4f5f",
+        lastSeen: Date.now()
+      });
+      // Always write a paper node (even minimal) so joiners can import something
+      const paperOut = payload || {
+        paperId: localPaperId || null,
+        name: title,
+        paperTitle: title,
+        authorName: "",
+        style: style || "apa7",
+        sections: [],
+        sources: [],
+        notes: "",
+        annotations: [],
+        updatedAt: Date.now()
+      };
+      await set(ref(db, `collab/${id}/paper`), paperOut);
+    } catch (e) {
+      console.error(e);
+      toastSafe("Could not create room: " + (e.code || e.message || "Firebase error"));
+      return null;
+    }
+
+    collabPaperId = id;
+    collabMeta = meta;
+    collabLocalPaperId = localPaperId || window._pendingSharePaperId || null;
+    window._lastCollabCode = id;
+    window._pendingSharePaperId = localPaperId || window._pendingSharePaperId || null;
+    rememberRoom({ id, title, role: "owner", ownerUid: user.uid });
+    rememberUserRoom(id, title, "owner");
+    try { startCollabListeners(id); } catch (e) { console.warn(e); }
+    try { startPresence(id); } catch (e) { console.warn(e); }
+    try { startLiveSync(id); } catch (e) { console.warn(e); }
+    try { await startYjs(id); } catch (e) { console.warn("Yjs start failed", e); }
+    try { await pushStructure(true); } catch (e) {}
+    try { updateCollabUI(); } catch (e) {}
+    try { await navigator.clipboard.writeText(id); } catch (e) {}
+    toastSafe("Room ready · " + id + " · share only with trusted co-authors");
+    return id;
+  }
+
+  async function joinCollabRoom(paperId) {
+    const id = (paperId || "").trim().toLowerCase();
+    if (!id) {
+      toastSafe("Enter a room code to join");
+      return null;
+    }
+    const user = auth.currentUser || await collabSignIn();
+    if (!user) {
+      toastSafe("Sign in with Google to join");
+      return null;
+    }
+    if (collabPaperId === id) {
+      toastSafe("Already in this room");
+      updateCollabUI();
+      try {
+        const dash = document.getElementById("pq-dash");
+        if (dash) dash.classList.remove("open");
+      } catch (e) {}
+      return id;
+    }
+    if (collabPaperId) {
+      try { await leaveCollabRoom({ silent: true }); } catch (e) { console.warn(e); }
+    }
+
+    // 1) Meta (any signed-in user)
+    let meta;
+    try {
+      const metaSnap = await get(ref(db, `collab/${id}/meta`));
+      if (!metaSnap.exists()) {
+        toastSafe("Room not found — check the code from the host");
+        return null;
+      }
+      meta = metaSnap.val();
+    } catch (e) {
+      console.error("meta", e);
+      toastSafe("Cannot read room: " + (e.code || e.message || "permission/network"));
+      return null;
+    }
+
+    // 2) Members list (needed for capacity; rules allow signed-in if meta exists)
+    let members = {};
+    try {
+      const membersSnap = await get(ref(db, `collab/${id}/members`));
+      members = membersSnap.val() || {};
+    } catch (e) {
+      console.warn("members read", e);
+      // Continue — we can still try to write our membership
+      members = {};
+    }
+
+    const count = Object.keys(members).length;
+    if (count >= (meta.maxCollaborators || 5) && !members[user.uid]) {
+      toastSafe("Room is full (max " + (meta.maxCollaborators || 5) + " people)");
+      return null;
+    }
+
+    // 3) Write membership FIRST (paper rules require member before read)
+    try {
+      await set(ref(db, `collab/${id}/members/${user.uid}`), {
+        displayName: user.displayName || user.email || "Collaborator",
+        role: members[user.uid] && members[user.uid].role
+          ? members[user.uid].role
+          : (meta.ownerUid === user.uid ? "owner" : "editor"),
+        color: (members[user.uid] && members[user.uid].color) || pickColor(user.uid),
+        lastSeen: Date.now()
+      });
+    } catch (e) {
+      console.error("member write", e);
+      toastSafe("Could not join room: " + (e.code || e.message || "permission error"));
+      return null;
+    }
+
+    // 4) Paper snapshot AFTER membership (so RTDB rules allow read)
+    let paperPayload = null;
+    try {
+      const paperSnap = await get(ref(db, `collab/${id}/paper`));
+      if (paperSnap.exists()) paperPayload = paperSnap.val();
+    } catch (e) {
+      console.warn("paper read", e);
+      // Don't abort join — still enter room; paper may be missing
+    }
+
+    // 5) Import into IndexedDB and open writing desk
+    let imported = false;
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.importSharedPaper === "function") {
+        const result = await window.PaperQuill.importSharedPaper(paperPayload, id, meta);
+        imported = !!result;
+      }
+    } catch (e) {
+      console.warn("import paper", e);
+      toastSafe("Joined, but could not load paper copy: " + (e.message || "error"));
+    }
+
+    if (!imported) {
+      // Still mark room active so collab bar works; open desk on current paper
+      toastSafe(paperPayload
+        ? "Joined room (paper import incomplete)"
+        : "Joined room — host paper snapshot not found yet");
+      try {
+        const dash = document.getElementById("pq-dash");
+        if (dash) dash.classList.remove("open");
+      } catch (e) {}
+    }
+
+    collabPaperId = id;
+    collabMeta = meta;
+    const role = meta.ownerUid === user.uid ? "owner" : "editor";
+    // Local paper id set by importSharedPaper via bridge callback if available
+    try {
+      const ctx = pqContext();
+      if (ctx.paperId) collabLocalPaperId = ctx.paperId;
+    } catch (e) {}
+    rememberRoom({ id, title: (meta && meta.title) || id, role, ownerUid: meta.ownerUid });
+    rememberUserRoom(id, (meta && meta.title) || id, role);
+    try { startCollabListeners(id); } catch (e) { console.warn(e); }
+    try { startPresence(id); } catch (e) { console.warn(e); }
+    try { startLiveSync(id); } catch (e) { console.warn(e); }
+    try { await startYjs(id); } catch (e) { console.warn(e); }
+    try { await catchUpRoom(id); } catch (e) { console.warn(e); }
+    try { updateCollabUI(); } catch (e) {}
+
+    toastSafe("Joined: " + ((meta && meta.title) || id) + " · caught up");
+    return id;
+  }
+
+  /**
+   * Leave current room.
+   * - Always sync local paper to IndexedDB (+ Drive if connected)
+   * - Remove only THIS user's presence/membership for THIS room
+   * - Delete the entire collab/{roomId} tree ONLY when the room is empty
+   *   (everyone has left / abandoned). Other rooms are never touched.
+   */
+  async function leaveCollabRoom(opts = {}) {
+    const roomId = collabPaperId;
+    if (!roomId) {
+      stopCollab();
+      updateCollabUI();
+      return;
+    }
+    const uid = auth.currentUser && auth.currentUser.uid;
+    const endForAll = !!opts.endForAll;
+
+    // Flush editor → state → IndexedDB, and refresh room paper snapshot
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.applyRemoteSectionHtml === "function") {
+        const ed = document.getElementById("pq-editor");
+        if (ed) window.PaperQuill.applyRemoteSectionHtml(ed.innerHTML || "");
+      }
+      if (window.PaperQuill && typeof window.PaperQuill.saveNow === "function") {
+        await window.PaperQuill.saveNow();
+      }
+    } catch (e) { console.warn(e); }
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.getPaperPayload === "function") {
+        const payload = await window.PaperQuill.getPaperPayload(null);
+        if (payload && auth.currentUser) {
+          payload.updatedAt = Date.now();
+          await set(ref(db, `collab/${roomId}/paper`), payload);
+        }
+      }
+    } catch (e) { console.warn(e); }
+
+    try { await pqSaveLocal(); } catch (e) { console.warn(e); }
+    try { await pqDriveSync(); } catch (e) {}
+
+    try {
+      if (uid) {
+        await remove(ref(db, `collab/${roomId}/presence/${uid}`));
+        await remove(ref(db, `collab/${roomId}/members/${uid}`));
+      }
+      let remaining = {};
+      try {
+        const snap = await get(ref(db, `collab/${roomId}/members`));
+        remaining = snap.val() || {};
+      } catch (e) {}
+      const left = Object.keys(remaining).length;
+      // Clean ONLY this room, and ONLY when abandoned (0 members) or owner ends for all
+      if (endForAll || left === 0) {
+        await remove(ref(db, `collab/${roomId}`));
+        forgetRoom(roomId);
+        try { await forgetUserRoom(roomId); } catch (e) {}
+        if (!opts.silent) toastSafe("Left · room cloud data cleared (local + Drive kept)");
+      } else {
+        try { await forgetUserRoom(roomId); } catch (e) {}
+        if (!opts.silent) toastSafe("Left · " + left + " still in room (cloud data kept for them)");
+      }
+    } catch (e) {
+      console.warn(e);
+      if (!opts.silent) toastSafe("Left (cloud cleanup may have failed)");
+    }
+
+    stopCollab();
+    updateCollabUI();
+  }
+
+  async function endRoomForEveryone() {
+    if (!collabPaperId) return;
+    await leaveCollabRoom({ endForAll: true });
+  }
+
+  // ---------- Presence ----------
+  function startPresence(paperId) {
+    stopPresence();
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+    const presenceRef = ref(db, `collab/${paperId}/presence/${uid}`);
+    const write = () => {
+      if (!auth.currentUser) return;
+      let sectionTitle = null, sectionId = null, sectionOrder = null;
+      let viewingShared = false;
+      try {
+        const ctx = pqContext();
+        sectionId = ctx.sectionId || null;
+        sectionTitle = ctx.sectionTitle || null;
+        sectionOrder = (ctx.sectionOrder != null) ? ctx.sectionOrder : null;
+        viewingShared = isOnSharedPaper();
+      } catch (e) {}
+      const status = viewingShared ? "active" : "away";
+      set(presenceRef, {
+        sectionId,
+        sectionTitle,
+        sectionOrder,
+        status,
+        viewingShared,
+        displayName: auth.currentUser.displayName || auth.currentUser.email || "User",
+        color: (membersCache[uid] && membersCache[uid].color) || "#3d4f5f",
+        updatedAt: Date.now()
+      }).catch(() => {});
+    };
+    write();
+    presenceTimer = setInterval(write, PRESENCE_INTERVAL);
+    onDisconnect(presenceRef).remove();
+    // Refresh presence when visibility changes
+    try {
+      document.removeEventListener("visibilitychange", window._pqPresVis);
+      window._pqPresVis = () => write();
+      document.addEventListener("visibilitychange", window._pqPresVis);
+    } catch (e) {}
+  }
+  function stopPresence() {
+    if (presenceTimer) clearInterval(presenceTimer);
+    presenceTimer = null;
+    try {
+      if (window._pqPresVis) document.removeEventListener("visibilitychange", window._pqPresVis);
+    } catch (e) {}
+  }
+
+  // ---------- Structure sync (add/rename/reorder sections) ----------
+  let structureApplying = false;
+  let structurePushTimer = null;
+
+  function packStructureFromLocal() {
+    try {
+      if (!window.PaperQuill || typeof window.PaperQuill.getStructure !== "function") return null;
+      return window.PaperQuill.getStructure();
+    } catch (e) { return null; }
+  }
+
+  async function pushStructure(force) {
+    if (!collabPaperId || !auth.currentUser) return;
+    if (!isOnSharedPaper() && !force) return;
+    if (structureApplying) return;
+    const structure = packStructureFromLocal();
+    if (!structure || !structure.sections) return;
+    try {
+      await set(ref(db, `collab/${collabPaperId}/structure`), {
+        sections: structure.sections,
+        updatedAt: Date.now(),
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || auth.currentUser.email || "User"
+      });
+    } catch (e) {
+      console.warn("structure push", e);
+    }
+  }
+
+  function schedulePushStructure() {
+    clearTimeout(structurePushTimer);
+    structurePushTimer = setTimeout(() => { pushStructure(false); }, 400);
+  }
+
+  // ---------- Full catch-up on rejoin ----------
+  async function catchUpRoom(roomId) {
+    if (!roomId || !auth.currentUser) return;
+    try {
+      // 1) paper snapshot
+      let paperPayload = null;
+      try {
+        const paperSnap = await get(ref(db, `collab/${roomId}/paper`));
+        if (paperSnap.exists()) paperPayload = paperSnap.val();
+      } catch (e) { console.warn(e); }
+      // 2) structure
+      let structure = null;
+      try {
+        const st = await get(ref(db, `collab/${roomId}/structure`));
+        if (st.exists()) structure = st.val();
+      } catch (e) { console.warn(e); }
+      // 3) all live section content
+      let live = null;
+      try {
+        const lv = await get(ref(db, `collab/${roomId}/live`));
+        if (lv.exists()) live = lv.val();
+      } catch (e) { console.warn(e); }
+
+      if (window.PaperQuill && typeof window.PaperQuill.mergeCatchUp === "function") {
+        await window.PaperQuill.mergeCatchUp(paperPayload, structure, live, roomId);
+      }
+    } catch (e) {
+      console.warn("catchUp", e);
+    }
+  }
+
+  // ---------- Listeners ----------
+  function startCollabListeners(paperId) {
+    stopCollabListeners();
+    const memRef = ref(db, `collab/${paperId}/members`);
+    collabUnsubs.push(onValue(memRef, (snap) => { membersCache = snap.val() || {}; renderPresenceUI(); }));
+
+    const annoRef = ref(db, `collab/${paperId}/annotations`);
+    collabUnsubs.push(onValue(annoRef, (snap) => {
+      window._remoteAnnotations = snap.val() || {};
+      mergeRemoteAnnotationsIntoPanel();
+      renderRemoteAnnotationsHint();
+    }));
+
+    const presRef = ref(db, `collab/${paperId}/presence`);
+    collabUnsubs.push(onValue(presRef, (snap) => {
+      window._remotePresence = snap.val() || {};
+      renderPresenceUI();
+    }));
+
+    const secRef = ref(db, `collab/${paperId}/sections`);
+    collabUnsubs.push(onValue(secRef, (snap) => {
+      window._remoteSectionStatus = snap.val() || {};
+      applyRemoteSectionStatuses();
+    }));
+
+    // Structure (outline) live updates
+    const structRef = ref(db, `collab/${paperId}/structure`);
+    collabUnsubs.push(onValue(structRef, (snap) => {
+      if (!snap.exists()) return;
+      if (!isOnSharedPaper()) return;
+      const val = snap.val();
+      if (!val || !val.sections) return;
+      if (auth.currentUser && val.uid === auth.currentUser.uid && val.updatedAt && (Date.now() - val.updatedAt) < 500) return;
+      structureApplying = true;
+      try {
+        if (window.PaperQuill && typeof window.PaperQuill.applyRemoteStructure === "function") {
+          window.PaperQuill.applyRemoteStructure(val.sections, val.name || "Partner");
+        }
+      } catch (e) { console.warn(e); }
+      setTimeout(() => { structureApplying = false; }, 50);
+    }));
+
+    const srcRef = ref(db, `collab/${paperId}/sources`);
+    collabUnsubs.push(onValue(srcRef, (snap) => {
+      if (!snap.exists() || !isOnSharedPaper()) return;
+      const val = snap.val();
+      if (!val || !Array.isArray(val.items)) return;
+      if (auth.currentUser && val.uid === auth.currentUser.uid && val.updatedAt && (Date.now() - val.updatedAt) < 600) return;
+      try {
+        if (window.PaperQuill && typeof window.PaperQuill.applyRemoteSources === "function") {
+          window.PaperQuill.applyRemoteSources(val.items, val.name || "Partner");
+        }
+      } catch (e) { console.warn(e); }
+    }));
+
+    const scafRef = ref(db, `collab/${paperId}/scaffold`);
+    collabUnsubs.push(onValue(scafRef, (snap) => {
+      if (!snap.exists() || !isOnSharedPaper()) return;
+      const val = snap.val();
+      if (!val || !val.data) return;
+      if (auth.currentUser && val.uid === auth.currentUser.uid && val.updatedAt && (Date.now() - val.updatedAt) < 600) return;
+      try {
+        if (window.PaperQuill && typeof window.PaperQuill.applyRemoteScaffold === "function") {
+          window.PaperQuill.applyRemoteScaffold(val.data, val.name || "Partner");
+        }
+      } catch (e) { console.warn(e); }
+    }));
+
+    const evRef = ref(db, `collab/${paperId}/events`);
+    window._collabEventsReadyAt = Date.now();
+    collabUnsubs.push(onValue(evRef, (snap) => {
+      const data = snap.val() || {};
+      Object.entries(data).forEach(([id, ev]) => {
+        if (!ev || !ev.at) return;
+        if (auth.currentUser && ev.fromUid === auth.currentUser.uid) return;
+        if (Date.now() - ev.at > 1000 * 60 * 60 * 48) return;
+        window._seenCollabEvents = window._seenCollabEvents || {};
+        if (window._seenCollabEvents[id]) return;
+        window._seenCollabEvents[id] = true;
+        if (ev.at < window._collabEventsReadyAt - 2000) return;
+        try { addNotif({
+          kind: ev.kind,
+          annoId: ev.annoId,
+          sectionId: ev.sectionId,
+          sectionTitle: ev.sectionTitle,
+          quote: ev.quote,
+          preview: ev.preview,
+          fromName: ev.fromName,
+          at: ev.at
+        }); } catch (e) {}
+        try {
+          if (ev.kind === "comment") toastSafe((ev.fromName || "Partner") + " commented");
+          else if (ev.kind === "reply") toastSafe((ev.fromName || "Partner") + " replied");
+          else if (ev.kind === "resolve") toastSafe((ev.fromName || "Partner") + " resolved a comment");
+          else if (ev.kind === "delete") toastSafe((ev.fromName || "Partner") + " deleted a comment");
+        } catch (e) {}
+      });
+    }));
+  }
+  function stopCollabListeners() {
+    collabUnsubs.forEach(u => u());
+    collabUnsubs = [];
+  }
+
+  // ---------- Yjs concurrent editing (WebRTC – free, peer-to-peer) ----------
+  // ---------- Firebase-only live section sync (fast + reliable) ----------
+  function startLiveSync(roomId) {
+    stopLiveSync();
+    if (!roomId) return;
+
+    const liveRef = ref(db, `collab/${roomId}/live`);
+    const unsub = onValue(liveRef, (snap) => {
+      if (!collabPaperId || collabPaperId !== roomId) return;
+      if (!isOnSharedPaper()) {
+        updateLiveBadge();
+        return;
+      }
+      if (liveApplying) return;
+      const data = snap.val() || {};
+      if (!data || typeof data !== "object") return;
+
+      // Persist ALL section live payloads into local paper state (not only the open section)
+      try {
+        if (window.PaperQuill && typeof window.PaperQuill.applyLiveSnapshot === "function") {
+          window.PaperQuill.applyLiveSnapshot(data, liveSectionKey());
+        }
+      } catch (e) { console.warn(e); }
+
+      const key = liveSectionKey();
+      const remote = data[key];
+      if (!remote || typeof remote.html !== "string") return;
+      // Skip echo from self within 200ms for editor paint only
+      if (auth.currentUser && remote.uid === auth.currentUser.uid && remote.at && (Date.now() - remote.at) < 200) return;
+
+      const ed = document.getElementById("pq-editor");
+      if (!ed) return;
+      if ((ed.innerHTML || "") === remote.html) return;
+
+      // If user is mid-keystroke, only apply if remote is clearly newer
+      if (document.activeElement === ed && remote.at && (Date.now() - remote.at) < 180) return;
+
+      liveApplying = true;
+      try {
+        ed.innerHTML = remote.html;
+        if (window.PaperQuill && typeof window.PaperQuill.applyRemoteSectionHtml === "function") {
+          window.PaperQuill.applyRemoteSectionHtml(remote.html);
+        }
+      } catch (e) { console.warn(e); }
+      setTimeout(() => { liveApplying = false; }, 20);
+    });
+    collabUnsubs.push(unsub);
+
+    const ed = document.getElementById("pq-editor");
+    if (ed) {
+      const schedulePush = () => {
+        if (!collabPaperId || !isOnSharedPaper()) return;
+        if (liveApplying) return;
+        clearTimeout(livePushTimer);
+        livePushTimer = setTimeout(() => { pushLiveSection(); }, 120);
+      };
+      const onInput = () => schedulePush();
+      const onBlur = () => {
+        clearTimeout(livePushTimer);
+        pushLiveSection();
+      };
+      ed.addEventListener("input", onInput);
+      ed.addEventListener("blur", onBlur);
+      window._liveInputHandler = onInput;
+      window._liveBlurHandler = onBlur;
+    }
+
+    // Initial push of current section so peers get content quickly
+    setTimeout(() => { try { pushLiveSection(); } catch (e) {} }, 250);
+    updateLiveBadge();
+  }
+
+  function stopLiveSync() {
+    clearTimeout(livePushTimer);
+    livePushTimer = null;
+    try {
+      const ed = document.getElementById("pq-editor");
+      if (ed && window._liveInputHandler) {
+        ed.removeEventListener("input", window._liveInputHandler);
+        window._liveInputHandler = null;
+      }
+      if (ed && window._liveBlurHandler) {
+        ed.removeEventListener("blur", window._liveBlurHandler);
+        window._liveBlurHandler = null;
+      }
+    } catch (e) {}
+  }
+
+  async function pushLiveSection() {
+    if (!collabPaperId || !auth.currentUser) return;
+    if (!isOnSharedPaper()) return;
+    const ed = document.getElementById("pq-editor");
+    if (!ed) return;
+    const key = liveSectionKey();
+    const htmlStr = ed.innerHTML || "";
+    // Always save local paper first so IndexedDB keeps live edits
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.saveNow === "function") {
+        // lightweight: saveCurrent + scheduleSave path
+      }
+      if (window.PaperQuill && typeof window.PaperQuill.applyRemoteSectionHtml === "function") {
+        // ensure active section content matches editor before push
+        window.PaperQuill.applyRemoteSectionHtml(htmlStr);
+      }
+    } catch (e) { console.warn(e); }
+    try {
+      await set(ref(db, `collab/${collabPaperId}/live/${key}`), {
+        html: htmlStr.slice(0, 180000),
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || auth.currentUser.email || "User",
+        at: Date.now()
+      });
+    } catch (e) {
+      console.warn("live push", e);
+    }
+    // Periodically refresh full paper snapshot in the room (for rejoin / other devices)
+    try {
+      clearTimeout(window._paperSnapTimer);
+      window._paperSnapTimer = setTimeout(() => { pushPaperSnapshot({ silent: true, toast: false }); }, 4000);
+    } catch (e) {}
+  }
+
+  async function pushPaperSnapshot(opts) {
+    opts = opts || {};
+    if (!collabPaperId || !auth.currentUser) return false;
+    if (!isOnSharedPaper() && !opts.force) return false;
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.saveNow === "function") {
+        await window.PaperQuill.saveNow();
+      }
+      if (window.PaperQuill && typeof window.PaperQuill.getPaperPayload === "function") {
+        const payload = await window.PaperQuill.getPaperPayload(null);
+        if (payload) {
+          payload.updatedAt = Date.now();
+          await set(ref(db, `collab/${collabPaperId}/paper`), payload);
+        }
+      }
+      try { await pushStructure(true); } catch (e) {}
+      if (opts.toast !== false && opts.silent !== true) {
+        toastSafe(opts.message || "Room paper updated for everyone");
+      }
+      return true;
+    } catch (e) {
+      console.warn("paper snapshot", e);
+      if (!opts.silent) toastSafe("Publish failed: " + (e.message || "error"));
+      return false;
+    }
+  }
+
+  async function publishRoomNow() {
+    if (!collabPaperId) return toastSafe("Not in a room");
+    if (!isOnSharedPaper()) return toastSafe("Open the shared paper first, then publish");
+    const ok = confirm(
+      "Publish your current paper to the room?\n\n" +
+      "Partners get your sections, sources, and text on catch-up.\n" +
+      "Their longer local section text still wins when they merge."
+    );
+    if (!ok) return;
+    await pushPaperSnapshot({ force: true, message: "Published to room" });
+  }
+
+  // Yjs disabled — stubs keep call sites working
+  async function startYjs(paperId) {
+    yjsActive = false;
+    updateLiveBadge();
+  }
+  function stopYjs() {
+    yjsActive = false;
+    updateLiveBadge();
+  }
+
+  function updateLiveBadge() {
+    const badge = document.getElementById("pq-yjs-badge");
+    if (!badge) return;
+    if (collabPaperId && isOnSharedPaper()) {
+      badge.classList.add("on");
+      badge.textContent = "Live sync";
+      badge.title = "Firebase live sync on this shared paper — type in the same section as your collaborator";
+    } else {
+      badge.classList.remove("on");
+      badge.textContent = "Live sync";
+      badge.title = collabPaperId
+        ? "Open the shared collaboration paper to enable live sync"
+        : "Live sync only on a shared collaboration paper";
+    }
+  }
+
+  function stopCollab() {
+    stopPresence(); stopCollabListeners(); stopYjs(); stopLiveSync();
+    collabPaperId = null; collabMeta = null; collabLocalPaperId = null; membersCache = {};
+    window._remoteAnnotations = {}; window._remotePresence = {};
+  }
+
+  // ---------- Write helpers ----------
+  function pushAnnotation(anno, notifKind) {
+    if (!collabPaperId || !auth.currentUser) return;
+    const id = anno.id || ("anno_" + Date.now());
+    const payload = {
+      type: anno.type || "comment",
+      sectionId: anno.sectionId || null,
+      sectionTitle: anno.sectionTitle || null,
+      quote: (anno.quote || anno.text || "").slice(0, 500),
+      body: (anno.body || anno.note || "").slice(0, 2000),
+      color: anno.color || "",
+      resolved: !!anno.resolved,
+      replies: Array.isArray(anno.replies) ? anno.replies.slice(-30) : [],
+      page: anno.page || null,
+      pdfId: anno.pdfId || null,
+      x: anno.x, y: anno.y, w: anno.w, h: anno.h,
+      authorUid: anno.authorUid || auth.currentUser.uid,
+      authorName: anno.authorName || auth.currentUser.displayName || auth.currentUser.email || "User",
+      createdAt: anno.createdAt || new Date().toISOString(),
+      updatedAt: Date.now()
+    };
+    set(ref(db, `collab/${collabPaperId}/annotations/${id}`), payload).catch(e => console.warn(e));
+    if (notifKind) {
+      pushCollabEvent({
+        kind: notifKind,
+        annoId: id,
+        sectionId: payload.sectionId,
+        sectionTitle: payload.sectionTitle,
+        quote: payload.quote,
+        preview: (payload.body || "").slice(0, 120),
+        fromUid: auth.currentUser.uid,
+        fromName: payload.authorName
+      });
+    }
+  }
+
+  function pushCollabEvent(ev) {
+    if (!collabPaperId || !auth.currentUser || !ev) return;
+    const id = "ev_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+    set(ref(db, `collab/${collabPaperId}/events/${id}`), {
+      kind: ev.kind || "comment",
+      annoId: ev.annoId || null,
+      sectionId: ev.sectionId || null,
+      sectionTitle: ev.sectionTitle || null,
+      quote: (ev.quote || "").slice(0, 200),
+      preview: (ev.preview || "").slice(0, 160),
+      fromUid: ev.fromUid || auth.currentUser.uid,
+      fromName: ev.fromName || auth.currentUser.displayName || "User",
+      at: Date.now()
+    }).catch(e => console.warn(e));
+  }
+
+  async function removeRemoteAnnotation(annoId) {
+    if (!collabPaperId || !annoId) return;
+    try { await remove(ref(db, `collab/${collabPaperId}/annotations/${annoId}`)); } catch (e) { console.warn(e); }
+  }
+
+  async function pushSourcesLive() {
+    if (!collabPaperId || !auth.currentUser || !isOnSharedPaper()) return;
+    try {
+      if (!window.PaperQuill || typeof window.PaperQuill.getSources !== "function") return;
+      const sources = window.PaperQuill.getSources();
+      await set(ref(db, `collab/${collabPaperId}/sources`), {
+        items: sources || [],
+        updatedAt: Date.now(),
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "User"
+      });
+    } catch (e) { console.warn(e); }
+  }
+
+  async function pushScaffoldLive() {
+    if (!collabPaperId || !auth.currentUser || !isOnSharedPaper()) return;
+    try {
+      if (!window.PaperQuill || typeof window.PaperQuill.getScaffold !== "function") return;
+      const sc = window.PaperQuill.getScaffold();
+      await set(ref(db, `collab/${collabPaperId}/scaffold`), {
+        data: sc || { boxes: [] },
+        updatedAt: Date.now(),
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "User"
+      });
+    } catch (e) { console.warn(e); }
+  }
+
+  let sourcesPushTimer = null, scaffoldPushTimer = null;
+  function schedulePushSources() {
+    clearTimeout(sourcesPushTimer);
+    sourcesPushTimer = setTimeout(() => { pushSourcesLive(); }, 500);
+  }
+  function schedulePushScaffold() {
+    clearTimeout(scaffoldPushTimer);
+    scaffoldPushTimer = setTimeout(() => { pushScaffoldLive(); }, 600);
+  }
+
+  // Local notification store
+  let notifList = [];
+  function loadNotifs() {
+    try { notifList = JSON.parse(localStorage.getItem("pq_collab_notifs") || "[]"); } catch (e) { notifList = []; }
+    if (!Array.isArray(notifList)) notifList = [];
+  }
+  function saveNotifs() {
+    try { localStorage.setItem("pq_collab_notifs", JSON.stringify(notifList.slice(0, 80))); } catch (e) {}
+  }
+  function addNotif(n) {
+    loadNotifs();
+    n = Object.assign({}, n);
+    n.roomId = n.roomId || collabPaperId || null;
+    if (notifList[0] && notifList[0].annoId === n.annoId && notifList[0].kind === n.kind && notifList[0].roomId === n.roomId && (Date.now() - (notifList[0].at || 0)) < 2000) return;
+    notifList.unshift(Object.assign({ id: "n_" + Date.now(), read: false, at: Date.now() }, n));
+    notifList = notifList.slice(0, 100);
+    saveNotifs();
+    renderNotifUI();
+  }
+  function roomNotifs() {
+    loadNotifs();
+    const rid = collabPaperId;
+    if (!rid) return [];
+    return notifList.filter(n => !n.roomId || n.roomId === rid);
+  }
+  function renderNotifUI() {
+    loadNotifs();
+    const badge = document.getElementById("pq-notif-badge");
+    const panel = document.getElementById("pq-notif-panel");
+    const list = roomNotifs();
+    const unread = list.filter(n => !n.read).length;
+    if (badge) {
+      badge.textContent = unread > 99 ? "99+" : String(unread);
+      badge.classList.toggle("on", unread > 0);
+    }
+    if (!panel) return;
+    if (!list.length) {
+      panel.innerHTML = '<p class="pq-help" style="padding:10px;margin:0">No notifications</p>';
+      return;
+    }
+    const esc = escapeHtmlLite;
+    panel.innerHTML = list.map(n => {
+      const kindLabel = ({
+        comment: "New comment",
+        reply: "Reply",
+        resolve: "Resolved",
+        reopen: "Reopened",
+        delete: "Comment deleted"
+      })[n.kind] || n.kind;
+      return '<div class="pq-notif-item' + (n.read ? "" : " unread") + '" data-nid="' + esc(n.id) + '">' +
+        '<button type="button" class="pq-notif-x" data-x="' + esc(n.id) + '" title="Dismiss">×</button>' +
+        '<button type="button" class="pq-notif-item" style="padding:0;margin:0;background:transparent" data-go="' + esc(n.id) + '">' +
+        "<strong>" + esc(kindLabel) + "</strong> · " + esc(n.fromName || "Partner") +
+        (n.sectionTitle ? (' <span class="meta">in ' + esc(n.sectionTitle) + "</span>") : "") +
+        (n.preview ? ('<div class="meta">' + esc(n.preview) + "</div>") : "") +
+        (n.quote ? ('<div class="meta">“' + esc(String(n.quote).slice(0, 80)) + '”</div>') : "") +
+        "</button></div>";
+    }).join("") + '<div style="padding:6px 8px"><button type="button" class="pq-btn" id="pq-notif-clear" style="width:100%">Clear this room</button></div>';
+    panel.querySelectorAll("[data-go]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-go");
+        const n = notifList.find(x => x.id === id);
+        if (!n) return;
+        n.read = true;
+        saveNotifs();
+        renderNotifUI();
+        jumpToCollabNotif(n);
+      };
+    });
+    panel.querySelectorAll("[data-x]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-x");
+        notifList = notifList.filter(x => x.id !== id);
+        saveNotifs();
+        renderNotifUI();
+      };
+    });
+    const clr = document.getElementById("pq-notif-clear");
+    if (clr) clr.onclick = () => {
+      const rid = collabPaperId;
+      notifList = notifList.filter(n => rid && n.roomId && n.roomId !== rid);
+      saveNotifs();
+      renderNotifUI();
+    };
+  }
+
+  function jumpToCollabNotif(n) {
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.jumpToAnnotation === "function") {
+        window.PaperQuill.jumpToAnnotation(n.annoId, n.sectionId);
+      }
+    } catch (e) { console.warn(e); }
+    const panel = document.getElementById("pq-notif-panel");
+    if (panel) panel.classList.remove("open");
+  }
+
+  function wireNotifBell() {
+    const btn = document.getElementById("pq-notif-btn");
+    const panel = document.getElementById("pq-notif-panel");
+    if (!btn || !panel) return;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) renderNotifUI();
+    };
+    document.addEventListener("click", (e) => {
+      const wrap = document.getElementById("pq-notif-wrap");
+      if (wrap && !wrap.contains(e.target)) panel.classList.remove("open");
+    });
+    loadNotifs();
+    renderNotifUI();
+  }
+  try { setTimeout(wireNotifBell, 0); } catch (e) {}
+  function updateSectionStatus(sectionId, status) {
+    if (!collabPaperId || !auth.currentUser) return;
+    update(ref(db, `collab/${collabPaperId}/sections/${sectionId}`), {
+      status, lastEditor: auth.currentUser.uid, updatedAt: Date.now()
+    });
+  }
+  function pickColor(uid) {
+    const colors = ["#3d4f5f","#3a5f6f","#3d6b4f","#8b4a3f","#b8860b","#6a9ecf","#8a6fc7","#c45c7a"];
+    let h = 0;
+    for (let i = 0; i < uid.length; i++) h = (h + uid.charCodeAt(i)) % colors.length;
+    return colors[h];
+  }
+
+  // ---------- Merge remote annotations into local panel ----------
+  function mergeRemoteAnnotationsIntoPanel() {
+    try {
+      if (window.PaperQuill && typeof window.PaperQuill.mergeRemoteAnnotations === "function") {
+        window.PaperQuill.mergeRemoteAnnotations(window._remoteAnnotations || {});
+      }
+    } catch (e) { console.warn(e); }
+  }
+
+  function applyRemoteSectionStatuses() {
+    if (typeof state === "undefined" || !state.sections) return;
+    const remote = window._remoteSectionStatus || {};
+    let changed = false;
+    state.sections.forEach(sec => {
+      if (remote[sec.id] && remote[sec.id].status && remote[sec.id].status !== sec.status) {
+        // only apply if remote is newer
+        if ((remote[sec.id].updatedAt || 0) > (sec.mod || 0)) {
+          sec.status = remote[sec.id].status;
+          changed = true;
+        }
+      }
+    });
+    if (changed) {
+      try {
+        if (typeof renderSections === "function") renderSections();
+        const st = document.getElementById("pq-sec-status");
+        const active = state.sections.find(s => s.id === state.activeSectionId);
+        if (st && active) st.value = active.status || "draft";
+      } catch (e) {}
+    }
+  }
+
+  // ---------- UI ----------
+  function updateCollabUI() {
+    const bar = document.getElementById("pq-collab-bar");
+    const label = document.getElementById("pq-collab-label");
+    const roomTitle = document.getElementById("pq-collab-room-title");
+    const status = document.getElementById("pq-collab-status");
+    const leaveBar = document.getElementById("pq-collab-leave-bar");
+    // Visible on the shared paper for the active room
+    let active = !!(collabPaperId && isOnSharedPaper());
+    if (!active && collabPaperId) {
+      try {
+        const ctx = pqContext();
+        if (ctx.paperId && (ctx.collabRoomId === collabPaperId || String(ctx.paperId).indexOf("collab_") === 0 || (collabLocalPaperId && ctx.paperId === collabLocalPaperId))) {
+          collabLocalPaperId = ctx.paperId;
+          active = true;
+        }
+      } catch (e) {}
+    }
+    try {
+      const root = document.getElementById("pq-root");
+      if (root) root.classList.toggle("pq-in-room", !!active);
+    } catch (e) {}
+    if (bar) bar.classList.toggle("show", active);
+    if (label) {
+      label.style.display = active ? "" : "none";
+      label.textContent = active ? ("Room: " + collabPaperId) : "";
+    }
+    if (roomTitle) roomTitle.textContent = active
+      ? (((collabMeta && collabMeta.title) || "Collaboration") + " · " + collabPaperId)
+      : "";
+    if (status) status.textContent = active ? ("code: " + collabPaperId) : "—";
+    if (leaveBar) leaveBar.style.display = active ? "" : "none";
+    try { updateLiveBadge(); } catch (e) {}
+    if (active) renderPresenceUI();
+  }
+
+  function renderPresenceUI() {
+    const el = document.getElementById("pq-collab-presence");
+    if (!el) return;
+    const presence = window._remotePresence || {};
+    const now = Date.now();
+    const active = Object.entries(presence).filter(([, p]) => p && (now - (p.updatedAt || 0) < 45000));
+    if (!active.length) {
+      el.innerHTML = '<span class="pq-collab-status">Only you here</span>';
+      return;
+    }
+    el.innerHTML = active.map(([uid, p]) => {
+      const name = (p.displayName || (membersCache[uid] && membersCache[uid].displayName) || "User").slice(0, 18);
+      const color = p.color || (membersCache[uid] && membersCache[uid].color) || "#3d4f5f";
+      const initials = name.split(/\s+/).map(w => w[0] || "").join("").slice(0, 2).toUpperCase() || "?";
+      const st = p.status === "away" || p.viewingShared === false ? "away" : "active";
+      const sec = p.sectionTitle ? (" · " + p.sectionTitle) : "";
+      const tip = name + " · " + st + sec;
+      const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+      const opacity = st === "away" ? "0.45" : "1";
+      return '<span class="pq-collab-avatar" style="background:' + color + ';opacity:' + opacity + '" title="' + esc(tip) + '">' + esc(initials) + "</span>";
+    }).join("") + '<span class="pq-collab-sec-hint">' + active.length + " in room</span>";
+  }
+
+  function renderRemoteAnnotationsHint() {
+    const remote = window._remoteAnnotations || {};
+    const count = Object.keys(remote).length;
+    const status = document.getElementById("pq-collab-status");
+    if (status && collabPaperId) {
+      status.textContent = count
+        ? ("code: " + collabPaperId + " · " + count + " shared note" + (count === 1 ? "" : "s"))
+        : ("code: " + collabPaperId);
+    }
+  }
+
+  function escapeHtmlLite(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  async function openCollaboratePanel(view) {
+    view = view || "home";
+    const user = auth.currentUser;
+    let rooms = [];
+    if (user && (!view || view === "home")) {
+      try { rooms = await fetchActiveRooms(); } catch (e) { console.warn(e); rooms = readRoomList(); }
+    } else {
+      rooms = readRoomList();
+    }
+    const activeId = collabPaperId;
+    const isOwner = !!(collabMeta && user && collabMeta.ownerUid === user.uid);
+
+    let accountHtml;
+    if (user) {
+      accountHtml =
+        '<div class="pq-src-card" style="margin-bottom:12px">' +
+        '<strong>Signed in</strong>' +
+        '<div class="pq-help" style="margin:4px 0 0">' + escapeHtmlLite(user.displayName || user.email || user.uid) + "</div>" +
+        '<div style="margin-top:8px"><button type="button" class="pq-btn" id="m-collab-signout">Sign out</button></div>' +
+        "</div>";
+    } else {
+      accountHtml =
+        '<div class="pq-src-card" style="margin-bottom:12px">' +
+        "<strong>Google account required</strong>" +
+        '<p class="pq-help" style="margin:6px 0 0">Each collaborator signs in with their own Google account. Paper text is copied to each device; cloud data for a room is removed only when that room is empty.</p>' +
+        '<div style="margin-top:10px"><button type="button" class="pq-btn pq-btn-primary" id="m-collab-signin">Sign in with Google</button></div>' +
+        "</div>";
+    }
+
+    let currentHtml = "";
+    if (activeId) {
+      currentHtml =
+        '<div class="pq-src-card" style="margin-bottom:12px;border-color:var(--ok)">' +
+        '<strong>In collaboration room</strong>' +
+        '<div class="pq-help" style="margin:4px 0">' + escapeHtmlLite((collabMeta && collabMeta.title) || "Untitled") + "</div>" +
+        '<div class="pq-help">Code: <code style="user-select:all;font-size:1rem">' + escapeHtmlLite(activeId) + "</code></div>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">' +
+        '<button type="button" class="pq-btn pq-btn-primary" id="m-collab-copy">Copy code</button>' +
+        '<button type="button" class="pq-btn" id="m-collab-leave">Leave room</button>' +
+        (isOwner ? '<button type="button" class="pq-btn" id="m-collab-end" style="color:var(--danger)">End room for everyone</button>' : "") +
+        "</div></div>";
+    }
+
+    // --- subviews ---
+    let body = "";
+    if (view === "share") {
+      let papers = [];
+      try {
+        if (window.PaperQuill && typeof window.PaperQuill.listPapers === "function") {
+          papers = await window.PaperQuill.listPapers();
+        }
+      } catch (e) { console.warn(e); }
+      const ctx = pqContext();
+      const options = papers.length
+        ? papers.map(p => {
+            const sel = (p.id === (ctx.paperId || "")) ? " selected" : "";
+            const label = (p.name || "Untitled") +
+              (p.wordCount != null ? (" · " + p.wordCount + " words") : "") +
+              (p.updatedAt ? (" · " + String(p.updatedAt).slice(0, 10)) : "");
+            return '<option value="' + escapeHtmlLite(p.id) + '"' + sel + '>' + escapeHtmlLite(label) + "</option>";
+          }).join("")
+        : "";
+      body =
+        "<h3>Share a paper</h3>" +
+        '<p class="pq-help">Select a paper, then create a room. A short code is generated — send it to collaborators. The paper is <em>not</em> switched until you choose to open it.</p>' +
+        accountHtml +
+        (user
+          ? (papers.length
+              ? ('<label class="pq-lbl">Paper to share</label>' +
+                 '<select class="pq-sel" id="m-share-paper" style="width:100%">' + options + "</select>" +
+                 '<p class="pq-help" id="m-share-status" style="margin-top:10px"></p>' +
+                 '<div class="pq-modal-actions">' +
+                 '<button type="button" class="pq-btn" id="m-back">Back</button>' +
+                 '<button type="button" class="pq-btn pq-btn-primary" id="m-share-create">Create room &amp; get code</button></div>')
+              : ('<p class="pq-help">No papers on this device yet. Create one from the dashboard first.</p>' +
+                 '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-back">Back</button><button type="button" class="pq-btn" id="m-cancel">Close</button></div>'))
+          : '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-back">Back</button><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    } else if (view === "code") {
+      const code = (window._lastCollabCode || collabPaperId || "").toString();
+      const title = (collabMeta && collabMeta.title) || "Shared paper";
+      body =
+        "<h3>Room ready</h3>" +
+        '<p class="pq-help">Share this code with collaborators. They use <strong>Collaborate → Join with code</strong>.</p>' +
+        '<div class="pq-src-card" style="text-align:center;margin:12px 0;padding:16px">' +
+        '<div class="pq-help" style="margin-bottom:6px">' + escapeHtmlLite(title) + "</div>" +
+        '<div style="font-size:1.45rem;font-weight:700;letter-spacing:.04em;user-select:all;font-family:ui-monospace,monospace">' +
+        escapeHtmlLite(code) + "</div></div>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:8px">' +
+        '<button type="button" class="pq-btn pq-btn-primary" id="m-collab-copy">Copy code</button>' +
+        '<button type="button" class="pq-btn" id="m-open-shared">Open paper &amp; stay in room</button>' +
+        "</div>" +
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Done</button></div>';
+    } else if (view === "join") {
+      body =
+        "<h3>Join a room</h3>" +
+        '<p class="pq-help">Paste the room code from the host. You will land on that paper; it is saved to this device (IndexedDB / optional Drive).</p>' +
+        accountHtml +
+        (user
+          ? ('<label class="pq-lbl">Room code</label>' +
+             '<input class="pq-inp" id="m-room-id" style="width:100%" placeholder="pq-……" autocomplete="off" autocapitalize="off">' +
+             '<div class="pq-modal-actions">' +
+             '<button type="button" class="pq-btn" id="m-back">Back</button>' +
+             '<button type="button" class="pq-btn pq-btn-primary" id="m-collab-join">Join room</button></div>')
+          : '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-back">Back</button><button type="button" class="pq-btn" id="m-cancel">Close</button></div>');
+    } else {
+      // home
+      const roomCards = rooms.length
+        ? rooms.map(r => {
+            const on = r.id === activeId;
+            return (
+              '<div class="pq-src-card" style="margin-bottom:8px' + (on ? ";border-color:var(--ok)" : "") + '">' +
+              "<strong>" + escapeHtmlLite(r.title || r.id) + "</strong>" +
+              (on ? ' <span class="pq-tag">in this session</span>' : ' <span class="pq-tag">active</span>') +
+              '<div class="pq-help">' + escapeHtmlLite(r.role || "member") + " · <code style=\"user-select:all\">" + escapeHtmlLite(r.id) + "</code></div>" +
+              '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' +
+              (on
+                ? '<button type="button" class="pq-btn" disabled>Current room</button>'
+                : '<button type="button" class="pq-btn pq-btn-primary m-collab-rejoin" data-id="' + escapeHtmlLite(r.id) + '">Open room &amp; paper</button>') +
+              '<button type="button" class="pq-btn m-collab-forget" data-id="' + escapeHtmlLite(r.id) + '">Leave list</button>' +
+              "</div></div>"
+            );
+          }).join("")
+        : '<p class="pq-help">No active rooms. Share a paper or join with a code.</p>';
+
+      body =
+        "<h3>Collaborate</h3>" +
+        '<p class="pq-help">Share a room code with co-authors. Each person gets the paper on their own device. Live editing syncs only on the shared paper. Cloud room data is removed when that room is empty.</p>' +
+        accountHtml +
+        currentHtml +
+        (user
+          ? ('<div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0">' +
+             '<button type="button" class="pq-btn pq-btn-primary" id="m-go-share">Share a paper</button>' +
+             '<button type="button" class="pq-btn pq-btn-primary" id="m-go-join">Join with code</button>' +
+             "</div>")
+          : "") +
+        '<p class="pq-help" style="margin-top:16px;margin-bottom:6px"><strong>Active rooms</strong></p>' +
+        roomCards +
+        '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="m-cancel">Close</button></div>';
+    }
+
+    if (!openPqModal(body)) {
+      toastSafe("Could not open dialog");
+      return;
+    }
+
+    const cancel = document.getElementById("m-cancel");
+    if (cancel) cancel.onclick = () => closePqModal();
+    const back = document.getElementById("m-back");
+    if (back) back.onclick = () => openCollaboratePanel("home");
+
+    const signIn = document.getElementById("m-collab-signin");
+    if (signIn) signIn.onclick = async () => {
+      const u = await collabSignIn();
+      if (u) { toastSafe("Signed in"); openCollaboratePanel(view); }
+    };
+    const signOutBtn = document.getElementById("m-collab-signout");
+    if (signOutBtn) signOutBtn.onclick = async () => {
+      if (collabPaperId) await leaveCollabRoom({ silent: true });
+      await collabSignOut();
+      toastSafe("Signed out");
+      openCollaboratePanel("home");
+    };
+
+    const goShare = document.getElementById("m-go-share");
+    if (goShare) goShare.onclick = () => openCollaboratePanel("share");
+    const goJoin = document.getElementById("m-go-join");
+    if (goJoin) goJoin.onclick = () => openCollaboratePanel("join");
+
+    // Share: dropdown + create room (do NOT open paper first — that was aborting room creation)
+    const shareCreate = document.getElementById("m-share-create");
+    if (shareCreate) {
+      shareCreate.onclick = async () => {
+        if (!auth.currentUser) {
+          const u = await collabSignIn();
+          if (!u) return;
+        }
+        const sel = document.getElementById("m-share-paper");
+        const pid = sel && sel.value;
+        if (!pid) return toastSafe("Select a paper first");
+        const statusEl = document.getElementById("m-share-status");
+        if (statusEl) statusEl.textContent = "Creating room…";
+        shareCreate.disabled = true;
+        let title = "Untitled paper", style = "apa7", paperState = null;
+        try {
+          if (window.PaperQuill && typeof window.PaperQuill.getPaperPayload === "function") {
+            const payload = await window.PaperQuill.getPaperPayload(pid);
+            if (payload) {
+              title = payload.paperTitle || payload.name || title;
+              style = payload.style || style;
+              paperState = payload;
+            }
+          }
+        } catch (e) {
+          console.warn(e);
+          if (statusEl) statusEl.textContent = "Could not read paper data.";
+          shareCreate.disabled = false;
+          return;
+        }
+        // Create room without switching paper (avoids dashboard/project races)
+        window._pendingSharePaperId = pid;
+        const code = await createCollabRoom(pid, title, style, paperState);
+        shareCreate.disabled = false;
+        if (code) {
+          window._lastCollabCode = code;
+          toastSafe("Room created: " + code);
+          openCollaboratePanel("code");
+        } else {
+          if (statusEl) statusEl.textContent = "Room creation failed. Check Google sign-in and Firebase rules.";
+        }
+      };
+    }
+
+    const openShared = document.getElementById("m-open-shared");
+    if (openShared) {
+      openShared.onclick = async () => {
+        const pid = window._pendingSharePaperId;
+        closePqModal();
+        if (pid && window.PaperQuill && typeof window.PaperQuill.openProject === "function") {
+          try { await window.PaperQuill.openProject(pid); } catch (e) { console.warn(e); }
+        }
+        if (pid) collabLocalPaperId = pid;
+        // Mark paper with collab room id for future opens
+        try {
+          if (window.PaperQuill && typeof window.PaperQuill.tagCollabRoom === "function") {
+            await window.PaperQuill.tagCollabRoom(collabPaperId);
+          }
+        } catch (e) {}
+        const dash = document.getElementById("pq-dash");
+        if (dash) dash.classList.remove("open");
+        updateCollabUI();
+        toastSafe("In room · code " + (collabPaperId || ""));
+      };
+    }
+
+    const join = document.getElementById("m-collab-join");
+    if (join) join.onclick = async () => {
+      const id = ((document.getElementById("m-room-id") && document.getElementById("m-room-id").value) || "").trim();
+      if (!id) return toastSafe("Paste a room code first");
+      if (!auth.currentUser) {
+        const u = await collabSignIn();
+        if (!u) return;
+      }
+      closePqModal();
+      const ok = await joinCollabRoom(id);
+      if (ok) {
+        // Close dashboard so user lands on the writing desk for that paper
+        const dash = document.getElementById("pq-dash");
+        if (dash) dash.classList.remove("open");
+        toastSafe("You're in the room · code " + ok);
+      } else {
+        openCollaboratePanel("join");
+      }
+    };
+
+    const copy = document.getElementById("m-collab-copy");
+    if (copy) copy.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(collabPaperId);
+        toastSafe("Code copied");
+      } catch (e) { toastSafe(collabPaperId); }
+    };
+
+    const leaveBtn = document.getElementById("m-collab-leave");
+    if (leaveBtn) leaveBtn.onclick = async () => {
+      const ok = confirm(
+        "Leave this collaboration room?\n\n" +
+        "• Your paper stays on this device (IndexedDB) and can sync to Drive.\n" +
+        "• Cloud data for THIS room is deleted only when everyone has left (room empty).\n" +
+        "• Other rooms and other users are not affected."
+      );
+      if (!ok) return;
+      closePqModal();
+      await leaveCollabRoom();
+    };
+
+    const endBtn = document.getElementById("m-collab-end");
+    if (endBtn) endBtn.onclick = async () => {
+      if (!confirm("End this room for everyone and delete cloud data for this room only? Local papers on each device are kept.")) return;
+      closePqModal();
+      await endRoomForEveryone();
+    };
+
+    document.querySelectorAll(".m-collab-rejoin").forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute("data-id");
+        if (!auth.currentUser) {
+          const u = await collabSignIn();
+          if (!u) return;
+        }
+        closePqModal();
+        const ok = await joinCollabRoom(id);
+        if (ok) {
+          const dash = document.getElementById("pq-dash");
+          if (dash) dash.classList.remove("open");
+        } else openCollaboratePanel("home");
+      };
+    });
+    document.querySelectorAll(".m-collab-forget").forEach(btn => {
+      btn.onclick = async () => {
+        const rid = btn.getAttribute("data-id");
+        forgetRoom(rid);
+        try { await forgetUserRoom(rid); } catch (e) {}
+        // If leaving the current room from list, leave collab session too
+        if (rid && rid === collabPaperId) {
+          try { await leaveCollabRoom({ silent: true }); } catch (e) {}
+        }
+        openCollaboratePanel("home");
+      };
+    });
+  }
+
+  function uiCollaborate() { openCollaboratePanel("home"); }
+  function uiShare() { openCollaboratePanel("share"); }
+  function uiJoin() { openCollaboratePanel("join"); }
+  async function uiLeave() {
+    if (!collabPaperId) return;
+    const ok = confirm(
+      "Leave this collaboration room?\n\n" +
+      "Your local paper is kept. Cloud room data is removed only when the room is empty."
+    );
+    if (!ok) return;
+    await leaveCollabRoom();
+  }
+
+  function wireCollabButtons() {
+    const map = [
+      ["pq-dash-collab", uiCollaborate],
+      ["pq-collab-leave-bar", uiLeave],
+      ["tool-collab", () => {
+        const menu = document.getElementById("pq-tools-menu");
+        if (menu) menu.classList.remove("open");
+        uiCollaborate();
+      }]
+    ];
+    map.forEach(([id, fn]) => {
+      const el = document.getElementById(id);
+      if (el) el.onclick = fn;
+    });
+  }
+  wireCollabButtons();
+  setTimeout(wireCollabButtons, 500);
+  setTimeout(wireCollabButtons, 1500);
+
+  window.PaperQuillCollab = {
+    signIn: collabSignIn,
+    signOut: collabSignOut,
+    createRoom: createCollabRoom,
+    joinRoom: joinCollabRoom,
+    leaveRoom: leaveCollabRoom,
+    endRoom: endRoomForEveryone,
+    stop: stopCollab,
+    pushAnnotation,
+    updateSectionStatus,
+    openPanel: openCollaboratePanel,
+    setLocalPaperId(id) { collabLocalPaperId = id || null; updateLiveBadge(); updateCollabUI(); },
+    refreshBadge() { updateLiveBadge(); updateCollabUI(); },
+    pushLive() { try { pushLiveSection(); } catch (e) {} },
+    pushStructure() { try { schedulePushStructure(); } catch (e) {} },
+    pushSources() { try { schedulePushSources(); } catch (e) {} },
+    pushScaffold() { try { schedulePushScaffold(); } catch (e) {} },
+    removeAnnotation(id) { try { removeRemoteAnnotation(id); } catch (e) {} },
+    pushEvent(ev) { try { pushCollabEvent(ev); } catch (e) {} },
+    publishRoom() { return publishRoomNow(); },
+    catchUp() { return collabPaperId ? catchUpRoom(collabPaperId) : null; },
+    onPaperOpened(localPaperId, roomId) { return onPaperOpened(localPaperId, roomId); },
+    activateRoom(roomId, localPaperId) { return activateRoomSession(roomId, localPaperId, null); },
+    get currentPaperId() { return collabPaperId; },
+    get localPaperId() { return collabLocalPaperId; },
+    get user() { return auth.currentUser; },
+    get isActive() { return !!collabPaperId; },
+    get yjsActive() { return yjsActive; },
+    uiShare, uiJoin, uiLeave, uiCollaborate
+  };
+  try { wireNotifBell(); } catch (e) {}
+
+  onAuthStateChanged(auth, (user) => {
+    console.log("PaperQuill Collab auth:", user ? user.email : "signed out");
+  });
+</script>
+
+
+
 <script type="module">
 (function(){
   const ROOT=document.getElementById('pq-root');
@@ -2120,6 +3941,11 @@
     sessionBase=state.goals.sessionBase||totalWords();
     renderAll();updateDiskStatus();
     $('#pq-dash').classList.remove('open');
+    try{
+      if(window.PaperQuillCollab && typeof window.PaperQuillCollab.onPaperOpened==='function'){
+        await window.PaperQuillCollab.onPaperOpened(currentProjectId, state.collabRoomId || null);
+      }
+    }catch(e){console.warn(e)}
     toast('Opened: '+(state.paperTitle||rec.name||'paper'));
   }
   async function createProject(){
@@ -2136,6 +3962,11 @@
     renderAll();
     await persist();
     $('#pq-dash').classList.remove('open');
+    try{
+      if(window.PaperQuillCollab&&typeof window.PaperQuillCollab.onPaperOpened==='function'){
+        await window.PaperQuillCollab.onPaperOpened(currentProjectId, null);
+      }
+    }catch(e){}
     toast('New paper created');
   }
   async function deleteProject(id){
@@ -3019,7 +4850,7 @@
       const src=await fetchByDOI(doi);
       if(!src){toast('Not found');return}
       src.id=uid();
-      state.sources.push(src);scheduleSave();closeModal();renderSources();
+      state.sources.push(src);scheduleSave();closeModal();renderSources();try{if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive)window.PaperQuillCollab.pushSources()}catch(e){}
       toast('Added: '+(src.title||'source').slice(0,40));
       editSource(src.id);
     };
@@ -3990,6 +5821,7 @@
       state.sections.forEach((s,i)=>{s.order=i});
       if(state.activeSectionId===btn.dataset.id){state.activeSectionId=state.sections[0].id;loadSection()}
       scheduleSave();renderSections();
+      try{if(window.PaperQuillCollab&&typeof window.PaperQuillCollab.pushStructure==='function')window.PaperQuillCollab.pushStructure()}catch(e){}
       toast('Section deleted');
     }});
   }
@@ -3999,10 +5831,17 @@
     list.innerHTML=state.sources.map(s=>'<div class="pq-src-card"><strong>'+escapeHtml(s.title||'Untitled')+'</strong><div class="pq-src-meta">'+escapeHtml((s.authors||'')+(s.year?' · '+s.year:''))+'</div><div class="pq-src-actions"><button type="button" class="pq-btn pq-cite-btn" data-id="'+s.id+'">Cite</button><button type="button" class="pq-btn pq-edit-src" data-id="'+s.id+'">Edit</button><button type="button" class="pq-btn pq-del-src" data-id="'+s.id+'">Del</button></div></div>').join('');
     list.querySelectorAll('.pq-cite-btn').forEach(b=>b.onclick=()=>insertCitation(b.dataset.id));
     list.querySelectorAll('.pq-edit-src').forEach(b=>b.onclick=()=>editSource(b.dataset.id));
-    list.querySelectorAll('.pq-del-src').forEach(b=>b.onclick=()=>{state.sources=state.sources.filter(s=>s.id!==b.dataset.id);scheduleSave();renderSources();reRenderAllCitations()});
+    list.querySelectorAll('.pq-del-src').forEach(b=>b.onclick=()=>{state.sources=state.sources.filter(s=>s.id!==b.dataset.id);scheduleSave();renderSources();reRenderAllCitations();try{if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive)window.PaperQuillCollab.pushSources()}catch(e){}});
   }
   function switchSection(id){
     saveCurrent();state.activeSectionId=id;loadSection();renderSections();scheduleSave();
+    try{
+      if(window.PaperQuillCollab){
+        if(typeof window.PaperQuillCollab.refreshBadge==='function')window.PaperQuillCollab.refreshBadge();
+        // Push this section to Firebase so collaborators see it when they open the same section
+        if(typeof window.PaperQuillCollab.pushLive==='function')window.PaperQuillCollab.pushLive();
+      }
+    }catch(e){}
     // Mobile: close sections drawer after picking a section so the editor stays usable
     if(window.matchMedia && window.matchMedia('(max-width:800px)').matches){
       ROOT.classList.add('pq-side-collapsed');
@@ -4092,8 +5931,30 @@
   function scafInsertText(text){
     if(!text)return;
     editor.focus();
-    try{document.execCommand('insertText',false,text+(/\s$/.test(text)?'':' '))}catch(e){editor.innerHTML+=text+' '}
-    saveCurrent();scheduleSave();
+    const t = String(text) + (/\s$/.test(String(text)) ? '' : ' ');
+    let ok = false;
+    try { ok = document.execCommand('insertText', false, t); } catch (e) { ok = false; }
+    if (!ok) {
+      try {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+          const range = sel.getRangeAt(0);
+          range.deleteContents();
+          const node = document.createTextNode(t);
+          range.insertNode(node);
+          range.setStartAfter(node);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          editor.appendChild(document.createTextNode(t));
+        }
+      } catch (e2) {
+        editor.appendChild(document.createTextNode(t));
+      }
+    }
+    saveCurrent();scheduleSave();updateWc();
+    try{if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive)window.PaperQuillCollab.pushLive()}catch(e){}
   }
   function newScafBox(passage){
     return {id:uid(),passage:passage||'',underpinnings:[],engagement:[],used:false,at:new Date().toISOString()};
@@ -4101,6 +5962,11 @@
   let scafDragId=null;
   function renumberScaffoldBoxes(){
     /* numbers are derived from array order in render */
+  }
+  let _scaffoldRemoteApplying=false;
+  function notifyScaffoldChanged(){
+    if(_scaffoldRemoteApplying)return;
+    try{if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive)window.PaperQuillCollab.pushScaffold()}catch(e){}
   }
   function renderScaffold(){
     const sc=ensureScaffold();
@@ -4191,7 +6057,7 @@
       const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
       const t=await styledPromptArea('Textual passage','Primary text, observation, or formal feature to develop.',box.passage||'');
       if(t===null)return;
-      box.passage=t.trim();scheduleSave();renderScaffold();
+      box.passage=t.trim();scheduleSave();renderScaffold();notifyScaffoldChanged();
     });
     list.querySelectorAll('.scaf-ins-p').forEach(b=>b.onclick=e=>{
       e.stopPropagation();
@@ -4204,7 +6070,7 @@
       const t=await styledPromptArea('Underpinning','Theoretical construct, warrant, or framework for this passage.','');
       if(t===null||!t.trim())return;
       box.underpinnings.push({id:uid(),text:t.trim()});
-      scheduleSave();renderScaffold();
+      scheduleSave();renderScaffold();notifyScaffoldChanged();
     });
     list.querySelectorAll('.scaf-add-e').forEach(b=>b.onclick=async e=>{
       e.stopPropagation();
@@ -4212,7 +6078,7 @@
       const t=await styledPromptArea('Academic engagement','How this passage sits with critics — agree, critique, extend, complicate.','');
       if(t===null||!t.trim())return;
       box.engagement.push({id:uid(),text:t.trim()});
-      scheduleSave();renderScaffold();
+      scheduleSave();renderScaffold();notifyScaffoldChanged();
     });
     list.querySelectorAll('.scaf-ins-u').forEach(b=>b.onclick=e=>{
       e.stopPropagation();
@@ -4231,14 +6097,14 @@
       const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
       if(!(await styledConfirm('Delete underpinning','Remove this underpinning?')))return;
       box.underpinnings=box.underpinnings.filter(x=>x.id!==b.dataset.uid);
-      scheduleSave();renderScaffold();
+      scheduleSave();renderScaffold();notifyScaffoldChanged();
     });
     list.querySelectorAll('.scaf-del-e').forEach(b=>b.onclick=async e=>{
       e.stopPropagation();
       const box=sc.boxes.find(x=>x.id===b.dataset.box);if(!box)return;
       if(!(await styledConfirm('Delete engagement','Remove this engagement note?')))return;
       box.engagement=box.engagement.filter(x=>x.id!==b.dataset.eid);
-      scheduleSave();renderScaffold();
+      scheduleSave();renderScaffold();notifyScaffoldChanged();
     });
     list.querySelectorAll('.scaf-ins-all').forEach(b=>b.onclick=e=>{
       e.stopPropagation();
@@ -4632,11 +6498,13 @@
     if(!wrapSelection(cls,id))return;
     saveCurrent();
     state.annotations=state.annotations||[];
-    state.annotations.unshift({
+    const annObj={
       id,type:'highlight',color,sectionId:state.activeSectionId,
       quote:q.text,author:researcherLabel(),createdAt:new Date().toISOString(),body:''
-    });
+    };
+    state.annotations.unshift(annObj);
     scheduleSave();wireAnnotationClicks();renderAnnPanel();toast('Highlighted');
+    try{if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive)window.PaperQuillCollab.pushAnnotation(annObj)}catch(e){}
   }
   function addComment(){
     const q=getSelectionQuote();
@@ -4662,12 +6530,21 @@
       if(sel&&!sel.isCollapsed)wrapped=wrapSelection('pq-ann-mark',id);
       saveCurrent();
       state.annotations=state.annotations||[];
-      state.annotations.unshift({
-        id,type:'comment',sectionId:state.activeSectionId,quote:q.text,body,
+      const sec=getActiveSection();
+      const annObj={
+        id,type:'comment',sectionId:state.activeSectionId,
+        sectionTitle:sec?sec.title:null,
+        quote:q.text,body,
         author:researcherLabel(),createdAt:new Date().toISOString(),resolved:false,replies:[]
-      });
+      };
+      state.annotations.unshift(annObj);
       scheduleSave();wireAnnotationClicks();renderAnnPanel();closeModal();
       toast(wrapped?'Comment added':'Comment saved (mark may need re-selection)');
+      try{
+        if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive){
+          window.PaperQuillCollab.pushAnnotation(annObj,'comment');
+        }
+      }catch(e){}
       layoutCm();
     };
   }
@@ -4691,8 +6568,31 @@
     gutter.innerHTML='';
     const wr=wrap.getBoundingClientRect(),er=editor.getBoundingClientRect(),lines=new Map();
     (state.annotations||[]).filter(a=>a.type==='comment'&&a.sectionId===state.activeSectionId).forEach(a=>{
-      const mk=editor.querySelector('[data-ann-id="'+a.id+'"]');if(!mk)return;
-      const rc=mk.getClientRects()[0];if(!rc)return;
+      let mk=editor.querySelector('[data-ann-id="'+a.id+'"]');
+      // Partner may have comment metadata without a mark — try to wrap quote once
+      if(!mk && a.quote && a.quote.length>8){
+        try{
+          const html0=editor.innerHTML||'';
+          if(html0.indexOf('data-ann-id="'+a.id+'"')<0){
+            const q=a.quote.slice(0,120);
+            const idx=html0.indexOf(q);
+            if(idx>=0){
+              editor.innerHTML=html0.slice(0,idx)+'<span class="pq-ann-mark" data-ann-id="'+a.id+'">'+q+'</span>'+html0.slice(idx+q.length);
+              mk=editor.querySelector('[data-ann-id="'+a.id+'"]');
+              saveCurrent();
+            }
+          }
+        }catch(e){}
+      }
+      if(!mk){
+        // Fallback: stack near top of editor so icon still appears
+        const y=8+((lines.get(8)||[]).length)*28;
+        (lines.get(y)||lines.set(y,[]).get(y)).push(a);
+        return;
+      }
+      const rc=mk.getClientRects()[0];if(!rc){
+        const y=8; (lines.get(y)||lines.set(y,[]).get(y)).push(a); return;
+      }
       const y=Math.round((rc.top-wr.top+wrap.scrollTop)/8)*8;
       (lines.get(y)||lines.set(y,[]).get(y)).push(a);
     });
@@ -4700,7 +6600,8 @@
       const b=document.createElement('button');b.type='button';
       b.className='pq-cm-ico'+(arr.every(a=>a.resolved)?' done':'');
       b.title=arr.length+' comment'+(arr.length>1?'s':'');
-      b.textContent=arr.length>1?arr.length:'💬';
+      b.innerHTML=arr.length>1?('<span style="font-size:.65rem;font-weight:700">'+arr.length+'</span>') :
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>';
       b.style.top=y+'px';
       b.style.left=Math.min(er.right-wr.left+6,wrap.clientWidth-30)+'px';
       b.onclick=e=>{e.stopPropagation();openCmPop(arr[0],arr,b)};
@@ -4789,8 +6690,10 @@
     }
     list.innerHTML=anns.map(a=>{
       const sec=state.sections.find(s=>s.id===a.sectionId);
-      return '<div class="pq-ann-card" data-id="'+a.id+'">'+
+      const isRemote=!!a.remote||(a.author&&String(a.author).includes('(shared)'));
+      return '<div class="pq-ann-card'+(isRemote?' remote':'')+'" data-id="'+a.id+'">'+
         '<div class="meta">'+escapeHtml(a.type)+(a.resolved?' · resolved':'')+' · '+escapeHtml(a.author||'')+
+        (isRemote?'<span class="shared-tag">shared</span>':'')+
         (sec?' · '+escapeHtml(sec.title):'')+'</div>'+
         (a.quote?'<div class="quote">'+escapeHtml(a.quote.slice(0,100))+'</div>':'')+
         (a.body?'<div>'+escapeHtml(a.body.slice(0,160))+'</div>':'')+
@@ -6663,7 +8566,7 @@
     const t=await styledPromptArea('Textual passage','Add the primary passage or formal observation for this discussion box.','');
     if(t===null)return;
     sc.boxes.push(newScafBox(t.trim()));
-    scheduleSave();renderScaffold();
+    scheduleSave();renderScaffold();notifyScaffoldChanged();
   };
   const scafFromSel=$('#scaf-box-from-sel');
   if(scafFromSel)scafFromSel.onclick=()=>{
@@ -6672,7 +8575,7 @@
     const sc=ensureScaffold();
     if(!sc.open)toggleScaffold(true);
     sc.boxes.push(newScafBox(t));
-    scheduleSave();renderScaffold();toast('Box created from selection');
+    scheduleSave();renderScaffold();notifyScaffoldChanged();toast('Box created from selection');
   };
   $('#cap-focus').onclick=()=>enterFocusMode();
   $('#pq-focus-exit').onclick=()=>exitFocusMode();
@@ -6749,7 +8652,8 @@
   };
 
   const secStatus=$('#pq-sec-status');
-  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Date.now();scheduleSave();renderSections()};
+  if(secStatus)secStatus.onchange=()=>{const sec=getActiveSection();if(!sec)return;sec.status=secStatus.value;sec.mod=Date.now();scheduleSave();renderSections();
+    try{if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive)window.PaperQuillCollab.updateSectionStatus(sec.id,sec.status)}catch(e){}};
 
   $('#pq-dash-new').onclick=()=>createProject();
   const sessReset=$('#pq-session-reset');
@@ -7244,7 +9148,14 @@
     closeTools();
     try{
       const token = await driveEnsureToken();
-      saveCurrent();
+      // Collab-safe: flush editor + live section state into `state`, then IndexedDB, then Drive
+      try { saveCurrent(); } catch (e) {}
+      try {
+        if (window.PaperQuillCollab && window.PaperQuillCollab.isActive && typeof window.PaperQuillCollab.pushLive === 'function') {
+          window.PaperQuillCollab.pushLive();
+        }
+      } catch (e) {}
+      try { await persist(); } catch (e) { console.warn(e); }
       // Conflict check: remote modified after our last sync?
       if(state.driveFileId && state.driveLastSync){
         try{
@@ -8597,6 +10508,15 @@
     const tab=$$('#ref-anno-panel .tabs button').find(b=>b&&b.dataset&&b.dataset.rpane==='highlights');
     if(tab)try{tab.click()}catch(e){}
     toast('Highlighted · p.'+hl.page+' — press H again after selecting more');
+    try{
+      if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive){
+        window.PaperQuillCollab.pushAnnotation({
+          id:hl.id, type:'pdf-highlight', pdfId:id, page:hl.page,
+          quote:hl.text, color:hl.color||'', x:hl.x, y:hl.y, w:hl.w, h:hl.h,
+          createdAt:hl.createdAt
+        });
+      }
+    }catch(e){}
   }
   async function refAddNote(){
     const id=refState.openItemId;if(!id)return;
@@ -8604,11 +10524,20 @@
     if(text===null||!String(text).trim())return;
     const item=await refMetaGet(id);if(!item)return;
     if(!item.annotations)item.annotations=[];
-    item.annotations.unshift({id:uid(), page:refState.page, text:String(text).trim(), createdAt:new Date().toISOString()});
+    const noteObj={id:uid(), page:refState.page, text:String(text).trim(), createdAt:new Date().toISOString()};
+    item.annotations.unshift(noteObj);
     item.updatedAt=new Date().toISOString();
     await refMetaPut(item);
     renderRefAnnoPanes(item);
     toast('Note added');
+    try{
+      if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive){
+        window.PaperQuillCollab.pushAnnotation({
+          id:noteObj.id, type:'pdf-note', pdfId:id, page:noteObj.page,
+          body:noteObj.text, createdAt:noteObj.createdAt
+        });
+      }
+    }catch(e){}
   }
   async function refSendToScaffold(passage, underpinnings, engagement){
     const projects=await idbAll();
@@ -9580,6 +11509,570 @@
 
   wireRefManager();
   wireHighTrafficFeatures();
+
+  // Bridge for collaboration module (separate ES module scope)
+  window.PaperQuill = {
+    getContext() {
+      let sectionTitle = null, sectionKey = null, sectionOrder = 0;
+      try {
+        if (state && state.activeSectionId) {
+          const sec = (state.sections || []).find(s => s.id === state.activeSectionId);
+          if (sec) {
+            sectionTitle = sec.title || null;
+            sectionKey = sec.key || null;
+            sectionOrder = sec.order || 0;
+          }
+        }
+      } catch (e) {}
+      return {
+        paperId: currentProjectId || null,
+        title: (state && state.paperTitle) || 'Untitled paper',
+        style: (state && state.style) || 'apa7',
+        sectionId: (state && state.activeSectionId) || null,
+        sectionTitle,
+        sectionKey,
+        sectionOrder,
+        collabRoomId: (state && state.collabRoomId) || null
+      };
+    },
+    async listPapers() {
+      try {
+        const list = await idbAll();
+        return (list || []).map(p => ({
+          id: p.id,
+          name: p.name || (p.state && p.state.paperTitle) || 'Untitled',
+          updatedAt: p.updatedAt || '',
+          wordCount: p.wordCount || 0
+        })).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      } catch (e) {
+        console.warn(e);
+        return [];
+      }
+    },
+    async getPaperPayload(paperId) {
+      try {
+        let st = state;
+        let id = paperId || currentProjectId;
+        let nameHint = (state && state.paperTitle) || 'Shared paper';
+        if (paperId) {
+          const rec = await idbGet(paperId);
+          if (rec && rec.state) {
+            st = rec.state;
+            id = rec.id;
+            nameHint = rec.name || st.paperTitle || nameHint;
+          } else if (paperId === currentProjectId) {
+            if (typeof saveCurrent === 'function') saveCurrent();
+            st = state;
+            id = currentProjectId;
+          } else {
+            console.warn('getPaperPayload: paper not found', paperId);
+            return null;
+          }
+        } else {
+          if (typeof saveCurrent === 'function') saveCurrent();
+        }
+        const title = st.paperTitle || nameHint || 'Shared paper';
+        return {
+          paperId: id,
+          name: title,
+          paperTitle: title,
+          authorName: st.authorName || '',
+          style: st.style || 'apa7',
+          sections: (st.sections || []).map(s => ({
+            id: s.id, key: s.key, title: s.title, content: s.content || '',
+            order: s.order || 0, status: s.status || 'draft', wordTarget: s.wordTarget || 0
+          })),
+          sources: (st.sources || []).map(s => Object.assign({}, s)),
+          notes: st.notes || '',
+          annotations: st.annotations || [],
+          updatedAt: Date.now()
+        };
+      } catch (e) {
+        console.warn(e);
+        return null;
+      }
+    },
+    async openProject(id) {
+      if (!id) return;
+      if (typeof switchProject === 'function') await switchProject(id);
+    },
+    async importSharedPaper(payload, roomId, meta) {
+      try { await persist(); } catch (e) { console.warn(e); }
+      const collabLocalId = 'collab_' + String(roomId || Date.now().toString(36)).replace(/[^a-zA-Z0-9_-]/g, '_');
+      let existing = null;
+      try { existing = await idbGet(collabLocalId); } catch (e) {}
+      const title = (payload && (payload.paperTitle || payload.name))
+        || (meta && meta.title)
+        || (existing && existing.name)
+        || 'Shared paper';
+      const newState = emptyState(title);
+      newState.paperTitle = title;
+      newState.authorName = (payload && payload.authorName) || (existing && existing.state && existing.state.authorName) || newState.authorName || '';
+      newState.style = (payload && payload.style) || (meta && meta.style) || (existing && existing.state && existing.state.style) || newState.style || 'apa7';
+      const remoteSecs = (payload && Array.isArray(payload.sections) && payload.sections.length)
+        ? payload.sections
+        : null;
+      const localSecs = (existing && existing.state && Array.isArray(existing.state.sections))
+        ? existing.state.sections
+        : null;
+      if (remoteSecs) {
+        newState.sections = remoteSecs.map((s, i) => {
+          const order = s.order != null ? s.order : i;
+          // Prefer local content if it is longer / was modified (live edits saved locally)
+          let content = s.content || '';
+          if (localSecs) {
+            const loc = localSecs.find(x => x && (
+              x.id === s.id ||
+              (x.order != null && x.order === order) ||
+              (x.key && s.key && x.key === s.key && x.key !== 'custom')
+            ));
+            if (loc && (loc.content || '').length > (content || '').length) {
+              content = loc.content;
+            } else if (loc && loc.mod && (!s.mod || loc.mod > s.mod) && (loc.content || '').length >= (content || '').length * 0.9) {
+              content = loc.content;
+            }
+          }
+          return {
+            id: s.id || (localSecs && localSecs[i] && localSecs[i].id) || uid(),
+            key: s.key || 'custom',
+            title: s.title || ('Section ' + (i + 1)),
+            content,
+            order,
+            status: s.status || 'draft',
+            wordTarget: s.wordTarget || 0,
+            snapshots: []
+          };
+        });
+      } else if (localSecs && localSecs.length) {
+        newState.sections = localSecs.map(s => Object.assign({}, s, { snapshots: s.snapshots || [] }));
+      } else {
+        newState.sections = makeDefaultSections();
+      }
+      newState.activeSectionId = newState.sections[0].id;
+      newState.sources = (payload && Array.isArray(payload.sources) && payload.sources.length)
+        ? payload.sources.map(s => Object.assign({}, s))
+        : ((existing && existing.state && existing.state.sources) || []);
+      newState.notes = (payload && payload.notes) || (existing && existing.state && existing.state.notes) || '';
+      newState.annotations = (payload && Array.isArray(payload.annotations) && payload.annotations.length)
+        ? payload.annotations.slice()
+        : ((existing && existing.state && existing.state.annotations) || []);
+      newState.collabRoomId = roomId || '';
+
+      currentProjectId = collabLocalId;
+      state = newState;
+      normalizeState();
+      const m = readMeta();
+      m.projectId = currentProjectId;
+      writeMeta(m);
+      fileHandle = null;
+      diskName = '';
+      try { sessionBase = totalWords(); } catch (e) { sessionBase = 0; }
+      await idbPut({
+        id: currentProjectId,
+        name: title + (roomId ? (' · ' + roomId) : ''),
+        updatedAt: new Date().toISOString(),
+        wordCount: totalWords(),
+        state,
+        collabRoomId: roomId || ''
+      });
+      try { renderAll(); } catch (e) { console.warn(e); }
+      try { updateDiskStatus(); } catch (e) {}
+      const dash = document.getElementById('pq-dash');
+      if (dash) dash.classList.remove('open');
+      try { closeModal(); } catch (e) {}
+      toast(payload && payload.sections
+        ? ('Opened shared paper: ' + title)
+        : ('In room · paper shell created for ' + title));
+      try {
+        if (window.PaperQuillCollab) {
+          if (typeof window.PaperQuillCollab.setLocalPaperId === 'function') {
+            window.PaperQuillCollab.setLocalPaperId(currentProjectId);
+          }
+          if (typeof window.PaperQuillCollab.onPaperOpened === 'function') {
+            await window.PaperQuillCollab.onPaperOpened(currentProjectId, roomId || state.collabRoomId || null);
+          } else if (typeof window.PaperQuillCollab.refreshBadge === 'function') {
+            window.PaperQuillCollab.refreshBadge();
+          }
+        }
+      } catch (e) { console.warn(e); }
+      return currentProjectId;
+    },
+    getStructure() {
+      try {
+        if (!state || !Array.isArray(state.sections)) return { sections: [] };
+        return {
+          sections: state.sections.map((s, i) => ({
+            id: s.id,
+            key: s.key || 'custom',
+            title: s.title || ('Section ' + (i + 1)),
+            order: s.order != null ? s.order : i,
+            status: s.status || 'draft'
+          }))
+        };
+      } catch (e) {
+        return { sections: [] };
+      }
+    },
+    applyRemoteStructure(remoteSections, fromName) {
+      try {
+        if (!Array.isArray(remoteSections) || !remoteSections.length) return;
+        if (!state) return;
+        saveCurrent();
+        const byId = {};
+        const byOrder = {};
+        (state.sections || []).forEach(s => {
+          byId[s.id] = s;
+          byOrder[s.order != null ? s.order : 0] = s;
+        });
+        const next = [];
+        let structuralChange = false;
+        remoteSections.forEach((rs, i) => {
+          const order = rs.order != null ? rs.order : i;
+          let local = (rs.id && byId[rs.id]) || byOrder[order];
+          if (local) {
+            if (local.title !== rs.title || local.order !== order || (rs.key && local.key !== rs.key)) {
+              structuralChange = true;
+            }
+            local.title = rs.title || local.title;
+            local.order = order;
+            if (rs.key) local.key = rs.key;
+            if (rs.status) local.status = rs.status;
+            next.push(local);
+          } else {
+            structuralChange = true;
+            next.push({
+              id: rs.id || uid(),
+              key: rs.key || 'custom',
+              title: rs.title || ('Section ' + (i + 1)),
+              content: '',
+              order,
+              status: rs.status || 'draft',
+              snapshots: [],
+              mod: Date.now()
+            });
+          }
+        });
+        // Keep local-only sections that partner hasn't removed if they have substantial content
+        const remoteIds = new Set(next.map(s => s.id));
+        (state.sections || []).forEach(s => {
+          if (!remoteIds.has(s.id) && (s.content || '').replace(/<[^>]+>/g, '').trim().length > 40) {
+            s.order = next.length;
+            next.push(s);
+            structuralChange = true;
+          }
+        });
+        if (!structuralChange && next.length === (state.sections || []).length) {
+          // still refresh titles
+        }
+        next.sort((a, b) => (a.order || 0) - (b.order || 0));
+        next.forEach((s, i) => { s.order = i; });
+        const prevActive = state.activeSectionId;
+        state.sections = next;
+        if (!next.find(s => s.id === prevActive)) {
+          state.activeSectionId = next[0] && next[0].id;
+        }
+        projectDirty = true;
+        scheduleSave();
+        renderSections();
+        if (state.activeSectionId !== prevActive) loadSection();
+        else renderSections();
+        if (structuralChange && fromName) {
+          try { toast('Outline updated from ' + fromName); } catch (e) {}
+        }
+      } catch (e) { console.warn(e); }
+    },
+    async mergeCatchUp(paperPayload, structure, live, roomId) {
+      try {
+        // Structure first
+        if (structure && Array.isArray(structure.sections)) {
+          this.applyRemoteStructure(structure.sections, structure.name || 'room');
+        }
+        // Paper snapshot sections/sources (merge, prefer longer local)
+        if (paperPayload && Array.isArray(paperPayload.sections) && paperPayload.sections.length) {
+          paperPayload.sections.forEach((ps, i) => {
+            const order = ps.order != null ? ps.order : i;
+            let sec = (state.sections || []).find(s => s.id === ps.id)
+              || (state.sections || []).find(s => s.order === order);
+            if (!sec) {
+              sec = {
+                id: ps.id || uid(),
+                key: ps.key || 'custom',
+                title: ps.title || ('Section ' + (i + 1)),
+                content: ps.content || '',
+                order,
+                status: ps.status || 'draft',
+                snapshots: [],
+                mod: Date.now()
+              };
+              state.sections.push(sec);
+            } else {
+              const remoteLen = (ps.content || '').length;
+              const localLen = (sec.content || '').length;
+              if (remoteLen > localLen * 1.05) {
+                sec.content = ps.content || sec.content;
+                sec.mod = Date.now();
+              } else if (localLen === 0 && remoteLen) {
+                sec.content = ps.content;
+              }
+              if (ps.title) sec.title = ps.title;
+            }
+          });
+          if (Array.isArray(paperPayload.sources) && paperPayload.sources.length) {
+            const have = new Set((state.sources || []).map(s => s.id));
+            paperPayload.sources.forEach(src => {
+              if (src && src.id && !have.has(src.id)) {
+                state.sources = state.sources || [];
+                state.sources.push(Object.assign({}, src));
+              }
+            });
+          }
+        }
+        // Live content map
+        if (live && typeof live === 'object') {
+          this.applyLiveSnapshot(live, null);
+        }
+        projectDirty = true;
+        if (roomId) state.collabRoomId = roomId;
+        scheduleSave();
+        if (typeof persist === 'function') await persist();
+        renderAll();
+        try { toast('Caught up with room'); } catch (e) {}
+      } catch (e) { console.warn(e); }
+    },
+    getSources() {
+      try { return (state.sources || []).map(s => Object.assign({}, s)); } catch (e) { return []; }
+    },
+    getScaffold() {
+      try {
+        if (!state.scaffold) return { open: false, wide: false, boxes: [] };
+        return JSON.parse(JSON.stringify(state.scaffold));
+      } catch (e) { return { boxes: [] }; }
+    },
+    applyRemoteSources(items, fromName) {
+      try {
+        if (!Array.isArray(items)) return;
+        state.sources = state.sources || [];
+        const have = new Set(state.sources.map(s => s.id));
+        let added = 0;
+        items.forEach(src => {
+          if (!src || !src.id) return;
+          if (have.has(src.id)) {
+            // update existing lightly
+            const i = state.sources.findIndex(s => s.id === src.id);
+            if (i >= 0) state.sources[i] = Object.assign({}, state.sources[i], src);
+          } else {
+            state.sources.push(Object.assign({}, src));
+            have.add(src.id);
+            added++;
+          }
+        });
+        if (added) {
+          projectDirty = true;
+          scheduleSave();
+          if (typeof renderSources === 'function') renderSources();
+          try { toast((fromName || 'Partner') + ' added ' + added + ' source' + (added > 1 ? 's' : '')); } catch (e) {}
+        }
+      } catch (e) { console.warn(e); }
+    },
+    applyRemoteScaffold(data, fromName) {
+      try {
+        if (!data || typeof data !== 'object') return;
+        const remoteBoxes = data.boxes || [];
+        _scaffoldRemoteApplying = true;
+        state.scaffold = state.scaffold || { open: false, wide: false, boxes: [] };
+        state.scaffold.boxes = Array.isArray(remoteBoxes) ? JSON.parse(JSON.stringify(remoteBoxes)) : (state.scaffold.boxes || []);
+        if (data.open != null) state.scaffold.open = data.open;
+        if (data.wide != null) state.scaffold.wide = data.wide;
+        projectDirty = true;
+        scheduleSave();
+        if (typeof renderScaffold === 'function') renderScaffold();
+        try { toast('Scaffold updated from ' + (fromName || 'partner')); } catch (e) {}
+      } catch (e) { console.warn(e); }
+      finally { _scaffoldRemoteApplying = false; }
+    },
+    mergeRemoteAnnotations(remote) {
+      try {
+        if (!remote || typeof remote !== 'object') return;
+        state.annotations = state.annotations || [];
+        let changed = false;
+        const byId = {};
+        state.annotations.forEach(a => { byId[a.id] = a; });
+        Object.entries(remote).forEach(([id, a]) => {
+          if (!a) return;
+          if (a.type === 'pdf-highlight' || a.type === 'pdf-note') return;
+          if (byId[id]) {
+            const loc = byId[id];
+            const remoteUpdated = a.updatedAt || 0;
+            const localUpdated = loc._remoteUpdated || 0;
+            const rr = Array.isArray(a.replies) ? a.replies : null;
+            if (remoteUpdated >= localUpdated || (rr && rr.length !== (loc.replies || []).length)) {
+              if (rr) loc.replies = rr;
+              if (!!a.resolved !== !!loc.resolved) loc.resolved = !!a.resolved;
+              if (a.body && a.body !== loc.body) loc.body = a.body;
+              loc._remoteUpdated = Math.max(remoteUpdated, Date.now());
+              changed = true;
+            }
+          } else {
+            state.annotations.unshift({
+              id,
+              type: a.type || 'comment',
+              color: a.color || '',
+              sectionId: a.sectionId || null,
+              sectionTitle: a.sectionTitle || null,
+              quote: a.quote || '',
+              body: a.body || '',
+              author: a.authorName || 'Collaborator',
+              authorUid: a.authorUid || null,
+              createdAt: a.createdAt || new Date().toISOString(),
+              resolved: !!a.resolved,
+              replies: Array.isArray(a.replies) ? a.replies : [],
+              remote: true,
+              _remoteUpdated: a.updatedAt || Date.now()
+            });
+            changed = true;
+          }
+        });
+        // remove local comments deleted remotely (only remote-origin or synced)
+        const remoteIds = new Set(Object.keys(remote));
+        const before = state.annotations.length;
+        state.annotations = state.annotations.filter(a => {
+          if (a.type !== 'comment') return true;
+          if (!a.remote && !remote[a.id]) return true; // pure local not yet pushed
+          if (remoteIds.has(a.id)) return true;
+          // if was known remote and gone, drop
+          if (a.remote) return false;
+          return true;
+        });
+        if (state.annotations.length !== before) changed = true;
+        if (changed) {
+          projectDirty = true;
+          scheduleSave();
+          if (typeof renderAnnPanel === 'function') renderAnnPanel();
+          if (typeof layoutCm === 'function') layoutCm();
+          if (typeof wireAnnotationClicks === 'function') wireAnnotationClicks();
+        }
+      } catch (e) { console.warn(e); }
+    },
+    jumpToAnnotation(annoId, sectionId) {
+      try {
+        if (sectionId && state.activeSectionId !== sectionId) {
+          switchSection(sectionId);
+        }
+        setTimeout(() => {
+          const mark = editor.querySelector('[data-ann-id="' + annoId + '"]');
+          if (mark) {
+            mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const ann = (state.annotations || []).find(a => a.id === annoId);
+            if (ann && typeof openCmPop === 'function') openCmPop(ann);
+          } else {
+            const ann = (state.annotations || []).find(a => a.id === annoId);
+            if (ann && typeof openCmPop === 'function') openCmPop(ann);
+            else toast('Comment location not in this section mark — open Notes on text');
+          }
+        }, 120);
+      } catch (e) { console.warn(e); }
+    },
+    applyRemoteSectionHtml(htmlStr) {
+      try {
+        const sec = (state.sections || []).find(s => s.id === state.activeSectionId);
+        if (sec) {
+          sec.content = htmlStr || '';
+          sec.mod = Date.now();
+          projectDirty = true;
+        }
+        if (typeof scheduleSave === 'function') scheduleSave();
+      } catch (e) { console.warn(e); }
+    },
+    /**
+     * Apply Firebase live/{sectionKey} map into local section contents and save.
+     * Keys use o{order} (stable across devices). Conflict toast if both edited.
+     */
+    applyLiveSnapshot(data, activeKey) {
+      try {
+        if (!data || !state || !Array.isArray(state.sections)) return;
+        let changed = false;
+        const byOrder = {};
+        state.sections.forEach(s => {
+          const ord = (s.order != null) ? s.order : 0;
+          byOrder['o' + ord] = s;
+          if (s.key) byOrder['k_' + s.key] = s;
+          if (s.id) byOrder['id_' + s.id] = s;
+        });
+        Object.keys(data).forEach(key => {
+          const remote = data[key];
+          if (!remote || typeof remote.html !== 'string') return;
+          const sec = byOrder[key];
+          if (!sec) return;
+          if ((sec.content || '') === remote.html) return;
+          const localMod = sec.mod || 0;
+          const remoteAt = remote.at || 0;
+          const localLen = (sec.content || '').length;
+          const remoteLen = remote.html.length;
+          // Conflict: local edited recently and both have substantial different content
+          if (
+            localMod && (Date.now() - localMod) < 120000 &&
+            localLen > 30 && remoteLen > 30 &&
+            Math.abs(localLen - remoteLen) > 20 &&
+            false
+          ) {
+            /* handled below via toast */
+          }
+          if (
+            localMod && (Date.now() - localMod) < 90000 &&
+            localLen > 40 &&
+            remote.uid &&
+            (sec.content || '') !== remote.html &&
+            key === activeKey
+          ) {
+            try {
+              toast('Partner updated "' + (sec.title || 'section') + '" — keeping their live text. Use Publish if you need to push yours.');
+            } catch (e) {}
+          }
+          sec.content = remote.html;
+          sec.mod = Date.now();
+          changed = true;
+        });
+        if (changed) {
+          projectDirty = true;
+          if (typeof scheduleSave === 'function') scheduleSave();
+        }
+      } catch (e) { console.warn(e); }
+    },
+    async saveNow() {
+      try {
+        if (typeof saveCurrent === 'function') saveCurrent();
+        if (typeof persist === 'function') {
+          await persist();
+        } else if (typeof scheduleSave === 'function') {
+          scheduleSave();
+          await new Promise(r => setTimeout(r, 500));
+        }
+      } catch (e) { console.warn(e); }
+    },
+    async syncDrive() {
+      try {
+        if (typeof saveCurrent === 'function') saveCurrent();
+        if (typeof persist === 'function') await persist();
+        if (typeof driveSavePaper === 'function') {
+          await driveSavePaper();
+          return true;
+        }
+      } catch (e) { console.warn(e); }
+      return false;
+    },
+    async tagCollabRoom(roomId) {
+      try {
+        if (!state) return;
+        state.collabRoomId = roomId || '';
+        if (typeof scheduleSave === 'function') scheduleSave();
+        else if (typeof persist === 'function') await persist();
+      } catch (e) { console.warn(e); }
+    },
+    openModal(h) { if (typeof openModal === 'function') openModal(h); },
+    closeModal() { if (typeof closeModal === 'function') closeModal(); }
+  };
+
+
   (async()=>{
     driveLoadCachedToken();
     const fromOAuth = await driveHandleOAuthReturn();
