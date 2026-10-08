@@ -4,7 +4,7 @@
  * Reference Manager, sharp PDF viewer, metadata/sources, linked disk save,
  * fullscreen highlights, and modal-in-fullscreen fixes.
  */
-const CACHE = 'paperquill-v11';
+const CACHE = 'paperquill-v12';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
