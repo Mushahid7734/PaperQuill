@@ -2191,10 +2191,11 @@
 
     const srcRef = ref(db, `collab/${paperId}/sources`);
     collabUnsubs.push(onValue(srcRef, (snap) => {
-      if (!snap.exists() || !isOnSharedPaper()) return;
+      if (!snap.exists()) return;
+      if (collabPaperId && collabPaperId !== paperId) return;
       const val = snap.val();
       if (!val || !Array.isArray(val.items)) return;
-      if (auth.currentUser && val.uid === auth.currentUser.uid && val.updatedAt && (Date.now() - val.updatedAt) < 600) return;
+      if (auth.currentUser && val.uid === auth.currentUser.uid && val.updatedAt && (Date.now() - val.updatedAt) < 400) return;
       try {
         if (window.PaperQuill && typeof window.PaperQuill.applyRemoteSources === "function") {
           window.PaperQuill.applyRemoteSources(val.items, val.name || "Partner");
@@ -2216,32 +2217,39 @@
     }));
 
     const evRef = ref(db, `collab/${paperId}/events`);
-    window._collabEventsReadyAt = Date.now();
+    // Ignore the first snapshot burst (history); only notify for events after this
+    window._collabEventsReadyAt = Date.now() + 1500;
     collabUnsubs.push(onValue(evRef, (snap) => {
       const data = snap.val() || {};
       Object.entries(data).forEach(([id, ev]) => {
         if (!ev || !ev.at) return;
         if (auth.currentUser && ev.fromUid === auth.currentUser.uid) return;
-        if (Date.now() - ev.at > 1000 * 60 * 60 * 48) return;
+        if (Date.now() - ev.at > 1000 * 60 * 60 * 72) return;
         window._seenCollabEvents = window._seenCollabEvents || {};
         if (window._seenCollabEvents[id]) return;
         window._seenCollabEvents[id] = true;
-        if (ev.at < window._collabEventsReadyAt - 2000) return;
-        try { addNotif({
-          kind: ev.kind,
-          annoId: ev.annoId,
-          sectionId: ev.sectionId,
-          sectionTitle: ev.sectionTitle,
-          quote: ev.quote,
-          preview: ev.preview,
-          fromName: ev.fromName,
-          at: ev.at
-        }); } catch (e) {}
+        // Skip historical events from before we joined this session
+        if (ev.at < window._collabEventsReadyAt - 3000) return;
+        try {
+          addNotif({
+            kind: ev.kind || "comment",
+            annoId: ev.annoId,
+            sectionId: ev.sectionId,
+            sectionTitle: ev.sectionTitle,
+            quote: ev.quote,
+            preview: ev.preview,
+            fromName: ev.fromName,
+            roomId: paperId,
+            at: ev.at
+          });
+        } catch (e) { console.warn(e); }
         try {
           if (ev.kind === "comment") toastSafe((ev.fromName || "Partner") + " commented");
           else if (ev.kind === "reply") toastSafe((ev.fromName || "Partner") + " replied");
           else if (ev.kind === "resolve") toastSafe((ev.fromName || "Partner") + " resolved a comment");
+          else if (ev.kind === "reopen") toastSafe((ev.fromName || "Partner") + " reopened a comment");
           else if (ev.kind === "delete") toastSafe((ev.fromName || "Partner") + " deleted a comment");
+          else if (ev.kind === "source") toastSafe((ev.fromName || "Partner") + " updated sources");
         } catch (e) {}
       });
     }));
@@ -2502,17 +2510,29 @@
   }
 
   async function pushSourcesLive() {
-    if (!collabPaperId || !auth.currentUser || !isOnSharedPaper()) return;
+    if (!collabPaperId || !auth.currentUser) return;
     try {
       if (!window.PaperQuill || typeof window.PaperQuill.getSources !== "function") return;
       const sources = window.PaperQuill.getSources();
+      const count = (sources || []).length;
       await set(ref(db, `collab/${collabPaperId}/sources`), {
         items: sources || [],
         updatedAt: Date.now(),
         uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName || "User"
+        name: auth.currentUser.displayName || auth.currentUser.email || "User"
       });
-    } catch (e) { console.warn(e); }
+      if (window._lastSourcePushCount !== count) {
+        window._lastSourcePushCount = count;
+        try {
+          pushCollabEvent({
+            kind: "source",
+            preview: count + " source" + (count === 1 ? "" : "s") + " in library",
+            fromUid: auth.currentUser.uid,
+            fromName: auth.currentUser.displayName || auth.currentUser.email || "User"
+          });
+        } catch (e) {}
+      }
+    } catch (e) { console.warn("sources push", e); }
   }
 
   async function pushScaffoldLive() {
@@ -2706,14 +2726,25 @@
     const roomTitle = document.getElementById("pq-collab-room-title");
     const status = document.getElementById("pq-collab-status");
     const leaveBar = document.getElementById("pq-collab-leave-bar");
-    // Visible on the shared paper for the active room
+    // Visible when in a room and viewing a paper bound to it (lenient match)
     let active = !!(collabPaperId && isOnSharedPaper());
     if (!active && collabPaperId) {
       try {
         const ctx = pqContext();
-        if (ctx.paperId && (ctx.collabRoomId === collabPaperId || String(ctx.paperId).indexOf("collab_") === 0 || (collabLocalPaperId && ctx.paperId === collabLocalPaperId))) {
-          collabLocalPaperId = ctx.paperId;
-          active = true;
+        if (ctx.paperId) {
+          if (ctx.collabRoomId === collabPaperId || String(ctx.paperId).indexOf("collab_") === 0 || (collabLocalPaperId && ctx.paperId === collabLocalPaperId) || window._pendingSharePaperId === ctx.paperId) {
+            collabLocalPaperId = ctx.paperId;
+            active = true;
+          } else if (!collabLocalPaperId) {
+            // First paper opened after joining — bind it
+            collabLocalPaperId = ctx.paperId;
+            active = true;
+            try {
+              if (window.PaperQuill && typeof window.PaperQuill.tagCollabRoom === 'function') {
+                window.PaperQuill.tagCollabRoom(collabPaperId);
+              }
+            } catch (e) {}
+          }
         }
       } catch (e) {}
     }
@@ -6627,23 +6658,51 @@
     cmPop.style.left=Math.max(8,Math.min(r.left-120,innerWidth-310))+'px';
     cmPop.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-300))+'px';
     cmPop.querySelector('[data-x]').onclick=()=>{closeCmPop();layoutCm()};
+    const syncComment=async(a,kind)=>{
+      try{
+        if(!(window.PaperQuillCollab&&window.PaperQuillCollab.isActive))return;
+        const sec=(state.sections||[]).find(s=>s.id===a.sectionId);
+        a.sectionTitle=sec?sec.title:(a.sectionTitle||null);
+        a.authorUid=a.authorUid||null;
+        a.authorName=a.author||a.authorName||researcherLabel();
+        if(typeof window.PaperQuillCollab.pushAnnotation==='function'){
+          window.PaperQuillCollab.pushAnnotation(a,kind);
+        }
+      }catch(err){console.warn(err)}
+    };
     cmPop.querySelectorAll('[data-reply]').forEach(i=>i.onkeydown=e=>{
       if(e.key!=='Enter')return;
       const a=group.find(x=>x.id===i.dataset.reply),v=i.value.trim();
-      if(!v)return;
+      if(!v||!a)return;
       (a.replies=a.replies||[]).push({id:uid(),author:researcherLabel(),body:v,createdAt:new Date().toISOString()});
-      scheduleSave();renderAnnPanel();openCmPop(ann,group,anchor);layoutCm();
+      scheduleSave();renderAnnPanel();
+      syncComment(a,'reply');
+      openCmPop(ann,group,anchor);layoutCm();
     });
     cmPop.querySelectorAll('[data-res]').forEach(b=>b.onclick=()=>{
-      const a=group.find(x=>x.id===b.dataset.res);a.resolved=!a.resolved;scheduleSave();renderAnnPanel();closeCmPop();layoutCm();
+      const a=group.find(x=>x.id===b.dataset.res);if(!a)return;
+      a.resolved=!a.resolved;scheduleSave();renderAnnPanel();
+      syncComment(a,a.resolved?'resolve':'reopen');
+      closeCmPop();layoutCm();
     });
     cmPop.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
       const a=group.find(x=>x.id===b.dataset.del);
+      if(!a)return;
       if(!(await styledConfirm('Delete comment','Delete this comment?')))return;
       closeCmPop();
       state.annotations=state.annotations.filter(x=>x.id!==a.id);
       $$('[data-ann-id="'+a.id+'"]',editor).forEach(el=>{while(el.firstChild)el.parentNode.insertBefore(el.firstChild,el);el.remove()});
       saveCurrent();scheduleSave();renderAnnPanel();layoutCm();
+      try{
+        if(window.PaperQuillCollab&&window.PaperQuillCollab.isActive){
+          const sec=(state.sections||[]).find(s=>s.id===a.sectionId);
+          window.PaperQuillCollab.pushEvent({
+            kind:'delete',annoId:a.id,sectionId:a.sectionId,
+            sectionTitle:sec?sec.title:null,quote:a.quote,preview:(a.body||'').slice(0,120)
+          });
+          window.PaperQuillCollab.removeAnnotation(a.id);
+        }
+      }catch(err){}
     });
   }
   editor.parentElement.addEventListener('scroll',()=>{closeCmPop()},{passive:true});
@@ -11866,11 +11925,15 @@
             added++;
           }
         });
-        if (added) {
+        if (added || items.length) {
           projectDirty = true;
           scheduleSave();
           if (typeof renderSources === 'function') renderSources();
-          try { toast((fromName || 'Partner') + ' added ' + added + ' source' + (added > 1 ? 's' : '')); } catch (e) {}
+          try { if (typeof rebuildWorksCited === 'function') rebuildWorksCited(); } catch (e) {}
+          try { if (typeof reRenderAllCitations === 'function') reRenderAllCitations(); } catch (e) {}
+          if (added) {
+            try { toast((fromName || 'Partner') + ' added ' + added + ' source' + (added > 1 ? 's' : '')); } catch (e) {}
+          }
         }
       } catch (e) { console.warn(e); }
     },
@@ -11950,6 +12013,16 @@
           if (typeof renderAnnPanel === 'function') renderAnnPanel();
           if (typeof layoutCm === 'function') layoutCm();
           if (typeof wireAnnotationClicks === 'function') wireAnnotationClicks();
+          // If comment popup is open, refresh it
+          try {
+            if (typeof closeCmPop === 'function' && typeof openCmPop === 'function') {
+              const openId = cmPop && cmPop.querySelector('[data-c]') && cmPop.querySelector('[data-c]').getAttribute('data-c');
+              if (openId) {
+                const a = (state.annotations || []).find(x => x.id === openId);
+                if (a) openCmPop(a);
+              }
+            }
+          } catch (e) {}
         }
       } catch (e) { console.warn(e); }
     },
