@@ -1,10 +1,4 @@
-/* PaperQuill service worker — offline-first app shell + IndexedDB helpers
- * Cache bump (v11) pushes citation insert-at-caret fix (@ cite / Cite button),
- * DOM bookmark + text-offset restore across locator modal, plus prior v10
- * Reference Manager, sharp PDF viewer, metadata/sources, linked disk save,
- * fullscreen highlights, and modal-in-fullscreen fixes.
- */
-const CACHE = 'paperquill-v12';
+const CACHE = 'paperquill-v13';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
