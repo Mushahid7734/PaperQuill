@@ -3004,6 +3004,7 @@ else boot();
 
   let saveTimer=null;
   let lastSaveAt=0;
+  let appReady=false,pendingSave=false;
   function setSaveStatus(kind,label){
     const el=$('#pq-save-status');
     if(!el)return;
@@ -3013,10 +3014,14 @@ else boot();
   }
   function scheduleSave(){
     clearTimeout(saveTimer);
+    pendingSave=true;
     setSaveStatus('saving','Saving…');
     saveTimer=setTimeout(persist,400);
   }
   async function persist(){
+    // Never save before load() has restored the stored paper (would overwrite it with the blank startup state)
+    if(!appReady){clearTimeout(saveTimer);saveTimer=setTimeout(persist,300);return}
+    pendingSave=false;
     saveCurrent();
     const meta=readMeta();
     if(!currentProjectId)currentProjectId=meta.projectId||uid();
@@ -3043,6 +3048,18 @@ else boot();
     logDailyWords();
     updateSessionLine();
   }
+  // Flush pending edits when the tab is hidden or closed (the 400ms debounce would otherwise lose them)
+  function flushSaveNow(){
+    try{
+      if(!appReady||!pendingSave)return;
+      clearTimeout(saveTimer);
+      saveCurrent();
+      try{localStorage.setItem('paperquill-fallback',JSON.stringify({id:currentProjectId,state,at:new Date().toISOString(),flush:true}))}catch(e){}
+      persist();
+    }catch(e){}
+  }
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)flushSaveNow()});
+  window.addEventListener('pagehide',flushSaveNow);
   // Keep "Saved · Xm ago" relatively fresh
   setInterval(()=>{
     if(!lastSaveAt)return;
@@ -3147,7 +3164,20 @@ else boot();
         if(rec&&rec.state){
           currentProjectId=rec.id;
           Object.assign(state,rec.state);
+          // A close-time flush may have reached localStorage before IndexedDB finished
+          try{
+            const f=JSON.parse(localStorage.getItem('paperquill-fallback')||'null');
+            if(f&&f.flush&&f.state&&f.id===rec.id&&Date.parse(f.at)>Date.parse(rec.updatedAt||0))Object.assign(state,f.state);
+          }catch(e){}
         }
+      }
+      if(!currentProjectId){
+        // Pointer in localStorage missing/stale: reopen the most recently saved paper instead of starting blank
+        try{
+          const all=(await idbAll()).filter(r=>r&&r.state);
+          all.sort((a,b)=>Date.parse(b.updatedAt||0)-Date.parse(a.updatedAt||0));
+          if(all.length){currentProjectId=all[0].id;Object.assign(state,all[0].state);meta.projectId=currentProjectId;writeMeta(meta)}
+        }catch(e){}
       }
       if(!currentProjectId){
         const fb=localStorage.getItem('paperquill-fallback');
@@ -3156,6 +3186,7 @@ else boot();
           if(d.state){Object.assign(state,d.state);currentProjectId=d.id||uid()}
         }
       }
+      appReady=true;
       if(!currentProjectId){
         currentProjectId=uid();
         state=emptyState('Untitled paper');
@@ -3164,9 +3195,11 @@ else boot();
         await persist();
       }
     }catch(e){
+      appReady=true;
       currentProjectId=uid();
       state=emptyState('Untitled paper');
     }
+    appReady=true;
     normalizeState();
     if(meta.researcher)state.authorName=meta.researcher;
     sessionBase=state.goals.sessionBase||totalWords();
