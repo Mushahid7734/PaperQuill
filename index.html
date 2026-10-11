@@ -2947,7 +2947,9 @@ else boot();
         if(!db.objectStoreNames.contains(IDB_REF_META))db.createObjectStore(IDB_REF_META,{keyPath:'id'});
         if(!db.objectStoreNames.contains(IDB_REF_BLOBS))db.createObjectStore(IDB_REF_BLOBS,{keyPath:'id'});
       };
-      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+      r.onsuccess=()=>{const db=r.result;db.onversionchange=()=>{try{db.close()}catch(e){}};res(db)};
+      r.onerror=()=>rej(r.error);
+      r.onblocked=()=>{try{toast('Saving is blocked by another PaperQuill tab or window — close the others and reload')}catch(e){}};
     });
   }
   async function idbPut(rec){
@@ -14196,6 +14198,7 @@ function ltxWireChrome(){
       try{await driveEnsureToken();updateDriveUI()}catch(e){/* stay quiet until user uses Drive */}
     }
     // Storage toast only if critically full and no Drive (rare)
+    try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
     try{await checkStorageHealth({allowToast:true})}catch(e){}
     try{setSaveStatus('ok','Saved')}catch(e){}
   })();
