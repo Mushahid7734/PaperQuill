@@ -1,4 +1,4 @@
-const CACHE = 'paperquill-v15';
+const CACHE = 'paperquill-v16';
 const IDB_NAME = 'paperquill-sw';
 const IDB_VERSION = 1;
 const IDB_STORE = 'meta';
