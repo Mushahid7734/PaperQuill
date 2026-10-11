@@ -1186,15 +1186,7 @@
     <button type="button" class="pq-btn" id="pq-search-src" title="Search OpenAlex, Crossref, Europe PMC, Semantic Scholar, DOAJ">Find sources</button>
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-hl-btn" title="Highlight selection">Highlight</button>
-    <button type="button" class="pq-btn pq-collab-only" id="pq-comment-btn" title="Comment on selection (room paper)">Comment</button>
     <button type="button" class="pq-btn pq-collab-only" id="pq-ann-panel-btn" title="Notes on text (room paper)">Notes on text</button>
-    <span class="pq-notif-wrap pq-collab-only" id="pq-notif-wrap" title="Collaboration notifications">
-      <button type="button" class="pq-btn pq-notif-btn" id="pq-notif-btn" aria-label="Notifications">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/><path d="M9 17a3 3 0 0 0 6 0"/></svg>
-        <span class="pq-notif-badge" id="pq-notif-badge">0</span>
-      </button>
-      <div class="pq-notif-panel" id="pq-notif-panel" role="menu"></div>
-    </span>
     <div class="pq-sep"></div>
     <button type="button" class="pq-btn" id="pq-disk-save" title="Save JSON to disk">Save disk</button>
     <button type="button" class="pq-btn" id="pq-disk-open">Open disk</button>
@@ -1352,7 +1344,7 @@
     </div>
     <div class="pq-ann-list" id="pq-ann-list"></div>
   </div>
-  <div class="pq-dash" id="pq-dash"><div class="pq-dash-inner">
+  <div class="pq-dash open" id="pq-dash"><div class="pq-dash-inner">
     <div class="pq-dash-hero">
       <div class="pq-dash-profile" id="pq-dash-profile" aria-live="polite">
         <div class="pq-dash-avatar placeholder" id="pq-dash-avatar" aria-hidden="true">?</div>
@@ -1370,6 +1362,12 @@
       <div class="pq-dash-hero-actions">
         <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-dash-install" title="Install PaperQuill on this device">Install app</button>
       </div>
+    </div>
+
+    <div class="pq-dash-card pq-bug-card">
+      <strong>🐞 Found a bug or have an idea?</strong>
+      <p class="pq-help">Tell us what went wrong or what you’d like to see — it helps make PaperQuill better for everyone.</p>
+      <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Report a bug · suggest an idea</a>
     </div>
 
     <h4 class="pq-dash-section">Your desks</h4>
@@ -1524,7 +1522,6 @@
         <strong>Author &amp; feedback</strong>
         <p class="pq-help">PaperQuill is written by Mason Carter. Found a bug or have an idea? Say so on the project page.</p>
         <div class="pq-legal-row">
-          <a class="pq-btn" href="https://www.authormasoncarter.com/p/books-series.html" target="_blank" rel="noopener noreferrer">Buy the books</a>
           <a class="pq-btn" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Project page · bugs &amp; ideas</a>
         </div>
       </div>
@@ -1990,6 +1987,28 @@ const Store = {
   clear(uid) { try { localStorage.removeItem(this.k(uid)); } catch (e) {} }
 };
 
+/* ---------- cloud (Realtime Database): users/$uid/license = { key, instanceId } ----------
+   Dynamic imports so the Pro module still loads and works offline. */
+const FB = "https://www.gstatic.com/firebasejs/12.19.0/";
+let _rtdb = null;
+async function rtdb() {
+  if (_rtdb) return _rtdb;
+  const [A, D] = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-database.js")]);
+  _rtdb = { db: D.getDatabase(A.getApp()), ref: D.ref, get: D.get, set: D.set, remove: D.remove };
+  return _rtdb;
+}
+async function authReady(uid) {
+  const a = window.PaperQuillAuth && window.PaperQuillAuth.auth;
+  if (!a) throw new Error("auth unavailable");
+  if (a.authStateReady) await a.authStateReady();
+  if (!a.currentUser || a.currentUser.uid !== uid) throw new Error("not signed in");
+}
+const Cloud = {
+  async load(uid) { await authReady(uid); const R = await rtdb(); const s = await R.get(R.ref(R.db, "users/" + uid + "/license")); return s.exists() ? s.val() : null; },
+  async save(uid, key, instanceId) { await authReady(uid); const R = await rtdb(); await R.set(R.ref(R.db, "users/" + uid + "/license"), { key: String(key), instanceId: String(instanceId) }); },
+  async clear(uid) { await authReady(uid); const R = await rtdb(); await R.remove(R.ref(R.db, "users/" + uid + "/license")); }
+};
+
 /* ---------- entitlement ---------- */
 function isPro() {
   const uid = currentUid();
@@ -2046,7 +2065,79 @@ async function activate(rawKey) {
     email: (d.meta && d.meta.customer_email) || ""
   });
   notify();
+  // Bind the key to the Google account so other devices pick it up (best effort; retried on next sync).
+  try { if (d.instance && d.instance.id) await Cloud.save(uid, key, d.instance.id); } catch (e) {}
   return { ok: true };
+}
+
+/* Pull the key stored against this Google account, validate it, switch Pro on.
+   Also migrates a key that exists only on this device up to the account. */
+let _syncing = null;
+function cloudSync() {
+  if (_syncing) return _syncing;
+  _syncing = cloudSyncInner().catch(() => ({ state: "offline" })).finally(() => { _syncing = null; });
+  return _syncing;
+}
+async function cloudSyncInner() {
+  const uid = currentUid();
+  if (!uid) return { state: "nouser" };
+  const local = Store.load(uid);
+  let cloud;
+  try { cloud = await Cloud.load(uid); } catch (e) { return { state: "offline" }; }
+  const hasCloud = !!(cloud && cloud.key && cloud.instanceId);
+  if (local && local.ok) {
+    if (local.key && local.instanceId && (!hasCloud || cloud.key !== local.key || cloud.instanceId !== local.instanceId)) {
+      try { await Cloud.save(uid, local.key, local.instanceId); } catch (e) {}
+      return { state: "pushed" };
+    }
+    return { state: "active" };
+  }
+  if (!hasCloud) return { state: local && local.key ? "inactive" : "none" };
+  let d;
+  try { d = await lsCall("validate", { license_key: cloud.key, instance_id: cloud.instanceId }); }
+  catch (e) { return { state: "offline" }; }
+  const ok = d.valid === true && belongsToUs(d.meta);
+  Store.save(uid, {
+    key: cloud.key,
+    instanceId: cloud.instanceId,
+    ok,
+    at: ok ? Date.now() : ((local && local.at) || 0),
+    checkedAt: Date.now(),
+    status: (d.license_key && d.license_key.status) || "",
+    email: (d.meta && d.meta.customer_email) || (local && local.email) || ""
+  });
+  notify();
+  return { state: ok ? "validated" : "inactive" };
+}
+function cloudMessage(r) {
+  switch (r.state) {
+    case "active": case "pushed": case "validated": return "Pro is active on this account.";
+    case "none": return "No Pro key is stored against this Google account yet. Subscribe, or enter your license key.";
+    case "inactive": return "The key on this account is no longer active (subscription ended or key disabled).";
+    case "offline": return "Couldn’t reach the server. Check your connection and try again.";
+    default: return "Sign in with Google first.";
+  }
+}
+async function checkStatus() {
+  const r = await cloudSync();
+  if (r.state === "active" || r.state === "pushed" || r.state === "validated") {
+    const rv = await revalidate(true).catch(() => ({}));
+    if (rv && rv.checked && !rv.ok) return { state: "inactive", message: cloudMessage({ state: "inactive" }) };
+  }
+  return { state: r.state, message: cloudMessage(r), pro: isPro() };
+}
+async function checkStatusFromCard(btn) {
+  if (!currentUid()) { openDialog("Sign in with Google to check your Pro status."); return; }
+  const label = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "Checking…"; }
+  const r = await checkStatus();
+  if (btn) { btn.disabled = false; btn.textContent = label; }
+  say(r.message);
+  if (r.state === "inactive" || r.state === "none") openDialog(r.message);
+}
+function autoCloudSync() {
+  if (navigator.onLine === false) return;
+  cloudSync().then((r) => { if (r && r.state !== "offline" && r.state !== "nouser") revalidate(false); }).catch(() => {});
 }
 
 async function revalidate(force) {
@@ -2072,8 +2163,14 @@ async function deactivate() {
   const uid = currentUid();
   const rec = uid && Store.load(uid);
   if (!rec) return { ok: true };
+  // Clear the account copy first so another device can't switch Pro back on from it.
+  try { await Cloud.clear(uid); }
+  catch (e) { return { ok: false, error: "Couldn’t reach your account. Try again when you’re online." }; }
   try { await lsCall("deactivate", { license_key: rec.key, instance_id: rec.instanceId }); }
-  catch (e) { return { ok: false, error: "Couldn’t reach the license server. Try again when you’re online." }; }
+  catch (e) {
+    try { if (rec.key && rec.instanceId) await Cloud.save(uid, rec.key, rec.instanceId); } catch (e2) {}
+    return { ok: false, error: "Couldn’t reach the license server. Try again when you’re online." };
+  }
   Store.clear(uid);
   notify();
   return { ok: true };
@@ -2150,7 +2247,9 @@ function openDialog(reason) {
         '<a class="pq-btn pq-btn-primary" id="pro-buy" href="' + esc(checkoutUrl()) + '" target="_blank" rel="noopener">Subscribe — ' + esc(CFG.PRICE_LABEL) + "</a></div>" +
         '<div class="pq-src-card"><strong>3. Enter your license key</strong>' +
         '<input class="pq-inp" id="pro-key" style="width:100%;margin:6px 0" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" autocomplete="off" spellcheck="false">' +
-        '<button type="button" class="pq-btn pq-btn-primary" id="pro-activate">Activate Pro</button></div>' +
+        '<button type="button" class="pq-btn pq-btn-primary" id="pro-activate">Activate Pro</button> ' +
+        '<button type="button" class="pq-btn" id="pro-check">Check status</button>' +
+        '<div class="pq-help">Already subscribed on another device? “Check status” finds the key saved on your Google account.</div></div>' +
         '<p class="pq-help" id="pro-msg" aria-live="polite"></p>' +
         '<div class="pq-modal-actions"><button type="button" class="pq-btn" id="pro-close">Close</button></div>';
     }
@@ -2169,6 +2268,13 @@ function openDialog(reason) {
     btn.disabled = false;
     if (r.ok) { say("PaperQuill Pro activated — thank you!"); openDialog(""); }
     else msg(r.error);
+  };
+  if ($id("pro-check")) $id("pro-check").onclick = async () => {
+    const btn = $id("pro-check"); btn.disabled = true; msg("Checking your account…");
+    const r = await checkStatus();
+    btn.disabled = false;
+    if (r.pro) { say("PaperQuill Pro is active on this account."); openDialog(""); }
+    else msg(r.message);
   };
   if ($id("pro-key")) $id("pro-key").onkeydown = (e) => { if (e.key === "Enter") $id("pro-activate").click(); };
   if ($id("pro-recheck")) $id("pro-recheck").onclick = async () => {
@@ -2207,12 +2313,15 @@ function renderCard() {
       "<li><strong>Focus &amp; progress</strong>: timer, streaks, achievements, word-log analytics, longer snapshot history</li></ul>" +
       '<div class="pq-free-actions">' +
       '<button type="button" class="pq-btn pq-btn-primary" id="pq-pro-open">Upgrade — ' + esc(CFG.PRICE_LABEL) + "</button>" +
+      '<button type="button" class="pq-btn" id="pq-pro-check" title="Look up the Pro key saved on your Google account">Check status</button>' +
       '<button type="button" class="pq-btn" id="pq-pro-key">I have a license key</button></div>';
   }
   const b = document.getElementById("pq-pro-open");
   if (b) b.onclick = () => openDialog("");
   const k = document.getElementById("pq-pro-key");
   if (k) k.onclick = () => openDialog("");
+  const c = document.getElementById("pq-pro-check");
+  if (c) c.onclick = () => checkStatusFromCard(c);
 }
 function notify() {
   document.documentElement.classList.toggle("pq-is-free", !isPro());
@@ -2238,19 +2347,22 @@ window.PQPro = {
   open: () => openDialog(""),
   activate,
   deactivate,
-  revalidate
+  revalidate,
+  checkStatus,
+  sync: cloudSync
 };
 
 /* boot */
 function boot() {
   notify();
   revalidate(false);
+  autoCloudSync();
   try {
     const a = window.PaperQuillAuth && window.PaperQuillAuth.auth;
-    if (a) onAuthStateChanged(a, () => { notify(); revalidate(false); });
+    if (a) onAuthStateChanged(a, () => { notify(); revalidate(false); autoCloudSync(); });
   } catch (e) {}
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) revalidate(false); });
-  window.addEventListener("online", () => revalidate(false));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { revalidate(false); autoCloudSync(); } });
+  window.addEventListener("online", () => { revalidate(false); autoCloudSync(); });
 }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
 else boot();
@@ -7573,7 +7685,6 @@ else boot();
     $$('#pq-modal [data-id]').forEach(b=>b.onclick=()=>{closeModal();insertCitation(b.dataset.id)});
   };
   $('#pq-hl-btn').onclick=()=>openHighlightMenu();
-  $('#pq-comment-btn').onclick=()=>addComment();
   $('#pq-ann-panel-btn').onclick=()=>openAnnPanel();
   $('#pq-ann-close').onclick=()=>closeAnnPanel();
   $('#pq-ann-filter-all').onclick=()=>{annFilter='all';renderAnnPanel()};
@@ -14042,20 +14153,11 @@ function ltxWireChrome(){
     const m=readMeta();
     await refreshDashboard();
     try{await handlePopoutOnLoad()}catch(e){}
-    // Open dashboard when no Google profile / author name yet
+    // Always land on the homepage (never straight into the writing desk); popout reader windows excepted.
     try{
-      const gp=JSON.parse(localStorage.getItem('pq-google-profile')||'null');
-      const hasGoogle=!!(gp&&(gp.name||gp.email));
-      if(!hasGoogle && !m.researcher && !(state.authorName||'').trim()){
-        const params=new URLSearchParams(location.search||'');
-        if(params.get('pqPopout')!=='1')$('#pq-dash').classList.add('open');
-      }
-    }catch(e){
-      if(!m.researcher && !(state.authorName||'').trim()){
-        const params=new URLSearchParams(location.search||'');
-        if(params.get('pqPopout')!=='1')$('#pq-dash').classList.add('open');
-      }
-    }
+      const params=new URLSearchParams(location.search||'');
+      if(params.get('pqPopout')!=='1'){const d=$('#pq-dash');if(d)d.classList.add('open')}
+    }catch(e){const d=$('#pq-dash');if(d)d.classList.add('open')}
     // silent token refresh if session exists
     if(!fromOAuth && driveReadSession()){
       try{await driveEnsureToken();updateDriveUI()}catch(e){/* stay quiet until user uses Drive */}
