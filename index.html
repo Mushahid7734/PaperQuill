@@ -1160,6 +1160,72 @@
       .ltx-page{padding:34px 22px!important}.ltx-ce,.ltx-tpls{grid-template-columns:1fr}
       .ltx-tools{top:-18px}.ltx-ttl{display:none}
     }
+
+    /* ===== Home redesign (responsive app layout; palette unchanged) ===== */
+    .pq-dash{padding:clamp(14px,3vw,32px) clamp(14px,3vw,36px) 110px}
+    .pq-dash-inner{max-width:1240px}
+    .pq-dash-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;margin:0 0 clamp(16px,2.5vw,26px);padding:clamp(8px,2vw,20px) 0 0}
+    .pq-hero-title{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.05;margin:0;color:var(--accent);letter-spacing:-.01em}
+    .pq-hero-tag{margin:6px 0 0;font-size:.78rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+    .pq-hero-intro{margin:12px auto 0;max-width:62ch;font-size:clamp(.92rem,1.6vw,1.02rem);line-height:1.6;color:var(--ink)}
+    .pq-hero-welcome{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .pq-dash-hero .pq-hero-welcome h2{font-size:clamp(1.25rem,3vw,1.6rem);margin:0}
+    .pq-dash-hero .pq-dash-motto{display:inline-block;margin:0;padding:7px 16px;border-radius:999px;background:var(--panel);border:1px solid var(--border);font-size:.86rem;font-style:normal;color:var(--muted);line-height:1.4;max-width:100%}
+    .pq-dash-hero-actions{margin-top:4px}
+    .pq-dash-hero-actions:empty{display:none}
+    .pq-dash-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(12px,2vw,22px);align-items:start}
+    .pq-dash-aside,.pq-dash-main{min-width:0}
+    .pq-profile-card{background:var(--paper);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 4px 18px color-mix(in srgb,var(--accent) 8%,transparent);display:flex;flex-direction:column;gap:14px}
+    .pq-profile-card .pq-dash-profile{margin:0;padding:0;background:transparent;border:0;border-radius:0;justify-content:flex-start}
+    .pq-profile-card .pq-dash-profile-actions{width:100%}
+    .pq-profile-card .pq-dash-level-card{display:block;margin:0}
+    .pq-profile-card .pq-dash-level-main{background:var(--panel);border-radius:12px;border:1px solid var(--border);padding:12px 14px}
+    .pq-recent-label{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 2px 6px}
+    .pq-profile-card .pq-dash-recent-ach{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+    .pq-profile-card .pq-mini-ach{min-height:0;padding:8px 6px;align-items:center;text-align:center;gap:2px;border-radius:10px;background:var(--bg)}
+    .pq-profile-card .pq-mini-ach span{display:none}
+    .pq-profile-card .pq-mini-ach strong{font-size:.7rem;overflow-wrap:anywhere}
+    .pq-profile-card .pq-mini-ach.empty{min-height:56px;font-size:.68rem;padding:6px}
+    .pq-profile-card .pq-mini-ach.empty:only-child{grid-column:1/-1}
+    .pq-profile-card .pq-dash-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0}
+    .pq-profile-card .pq-metric{padding:9px 8px;border-radius:10px;background:var(--bg)}
+    .pq-profile-card .pq-metric .lab{font-size:.6rem}
+    .pq-profile-card .pq-metric .val{font-size:.98rem}
+    .pq-profile-card .pq-metric .sub{font-size:.62rem}
+    .pq-dash-main .pq-dash-section{font-size:.74rem;margin:4px 2px 10px}
+    .pq-dash-main>.pq-dash-section:not(:first-child),.pq-dash-main .pq-dash-section.pq-sec-gap{margin-top:22px}
+    .pq-dash-main .pq-desks{grid-template-columns:minmax(0,1fr);gap:10px;margin:0 0 16px}
+    .pq-dash-main .pq-desk{border-radius:16px;transition:transform .15s,border-color .15s,box-shadow .15s}
+    .pq-dash-main .pq-desk:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 12%,transparent)}
+    .pq-dash-main .pq-free-card{margin:0 0 4px}
+    .pq-papers-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:6px}
+    .pq-papers-card{margin:0;border-radius:16px;min-width:0}
+    .pq-papers-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .pq-papers-card .ltx-home-head{flex-direction:column;align-items:stretch}
+    .pq-papers-card .ltx-home-head>div:first-child .pq-help{display:none}
+    .pq-papers-card #pq-proj-grid,.pq-papers-card #ltx-grid{max-height:460px;overflow:auto;padding-right:2px}
+    .pq-dash-main .pq-dash-tabs{margin:22px 0 14px}
+    .pq-dash-extras{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+    .pq-dash-extras .pq-dash-card{margin:0;border-radius:16px}
+    @media(min-width:640px){
+      .pq-dash-main .pq-desks{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pq-dash-extras{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pq-papers-split{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(min-width:980px){
+      .pq-dash-layout{grid-template-columns:340px minmax(0,1fr)}
+      .pq-dash-aside{position:sticky;top:0;align-self:start}
+      .pq-dash-hero{flex-direction:row;justify-content:space-between;text-align:left;align-items:center;gap:32px;padding:6px 2px 0}
+      .pq-hero-text{flex:1 1 auto;min-width:0}
+      .pq-hero-intro{margin-left:0}
+      .pq-hero-welcome{align-items:flex-end;text-align:right;flex:0 0 auto;max-width:360px}
+    }
+    @media(min-width:1180px){
+      .pq-dash-main .pq-desks{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    @media(max-width:420px){
+      .pq-profile-card .pq-dash-profile-actions .pq-btn{flex:1 1 auto}
+    }
 </style>
 </head>
 <body>
@@ -1345,33 +1411,73 @@
     <div class="pq-ann-list" id="pq-ann-list"></div>
   </div>
   <div class="pq-dash open" id="pq-dash"><div class="pq-dash-inner">
-    <div class="pq-dash-hero">
-      <div class="pq-dash-profile" id="pq-dash-profile" aria-live="polite">
-        <div class="pq-dash-avatar placeholder" id="pq-dash-avatar" aria-hidden="true">?</div>
-        <div class="pq-dash-profile-meta">
-          <div class="name" id="pq-dash-profile-name">Guest</div>
-          <div class="email" id="pq-dash-profile-email">Sign in with Google to show your profile here. Local drafts still work offline without an account.</div>
-        </div>
-        <div class="pq-dash-profile-actions">
-          <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-google-signin">Sign in with Google</button>
-          <button type="button" class="pq-btn" id="pq-dash-google-signout" style="display:none">Sign out</button>
+    <header class="pq-dash-hero">
+      <div class="pq-hero-text">
+        <h1 class="pq-hero-title">PaperQuill</h1>
+        <p class="pq-hero-tag">Research writing studio &middot; private &amp; offline-first</p>
+        <p class="pq-hero-intro">Write your research the way you think &mdash; calmly, privately, on your own device. PaperQuill handles MLA, APA, Chicago, Harvard, IEEE and Vancouver citations, thesis templates and Word export, so you can stay with your argument.</p>
+      </div>
+      <div class="pq-hero-welcome">
+        <h2 id="pq-dash-hello">Welcome</h2>
+        <p class="pq-dash-motto" id="pq-dash-motto">Your private research desk — offline-first.</p>
+        <div class="pq-dash-hero-actions">
+          <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-dash-install" title="Install PaperQuill on this device">Install app</button>
         </div>
       </div>
-      <h2 id="pq-dash-hello">Welcome</h2>
-      <p class="pq-dash-motto" id="pq-dash-motto">Your private research desk — offline-first.</p>
-      <div class="pq-dash-hero-actions">
-        <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-dash-install" title="Install PaperQuill on this device">Install app</button>
-      </div>
-    </div>
+    </header>
 
-    <div class="pq-dash-card pq-bug-card">
-      <strong>🐞 Found a bug or have an idea?</strong>
-      <p class="pq-help">Tell us what went wrong or what you’d like to see — it helps make PaperQuill better for everyone.</p>
-      <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Report a bug · suggest an idea</a>
-    </div>
+    <div class="pq-dash-layout">
+      <aside class="pq-dash-aside" aria-label="Your profile">
+        <div class="pq-profile-card">
+          <div class="pq-dash-profile" id="pq-dash-profile" aria-live="polite">
+            <div class="pq-dash-avatar placeholder" id="pq-dash-avatar" aria-hidden="true">?</div>
+            <div class="pq-dash-profile-meta">
+              <div class="name" id="pq-dash-profile-name">Guest</div>
+              <div class="email" id="pq-dash-profile-email">Sign in with Google to show your profile here. Local drafts still work offline without an account.</div>
+            </div>
+            <div class="pq-dash-profile-actions">
+              <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-google-signin">Sign in with Google</button>
+              <button type="button" class="pq-btn" id="pq-dash-google-signout" style="display:none">Sign out</button>
+            </div>
+          </div>
 
-    <h4 class="pq-dash-section">Your desks</h4>
-    <div class="pq-desks">
+          <div class="pq-dash-level-card">
+            <div class="pq-dash-level-main">
+              <div class="lv">Level <span id="pq-dash-level-num">1</span></div>
+              <div class="lv-name" id="pq-dash-level-name">Apprentice scribe</div>
+              <div class="lv-congrats" id="pq-dash-congrats">Start writing to unlock your first badges.</div>
+            </div>
+            <div class="pq-recent-label">Latest achievements</div>
+            <div class="pq-dash-recent-ach" id="pq-dash-recent-ach">
+              <div class="pq-mini-ach empty">No badges yet</div>
+              <div class="pq-mini-ach empty">Keep going</div>
+              <div class="pq-mini-ach empty">They appear here</div>
+            </div>
+          </div>
+
+          <div class="pq-dash-metrics">
+            <div class="pq-metric">
+              <div class="lab">Daily target</div>
+              <div class="val" id="pq-metric-daily">0/500</div>
+              <div class="bar"><i id="pq-metric-daily-bar" style="width:0%"></i></div>
+            </div>
+            <div class="pq-metric">
+              <div class="lab">Session</div>
+              <div class="val" id="pq-metric-session">0/500</div>
+              <div class="bar"><i id="pq-metric-session-bar" style="width:0%"></i></div>
+            </div>
+            <div class="pq-metric">
+              <div class="lab">Total words</div>
+              <div class="val" id="pq-metric-total">0</div>
+              <div class="sub" id="pq-metric-streak">Streak: 0 days</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="pq-dash-main">
+        <h3 class="pq-dash-section">Your desks</h3>
+        <div class="pq-desks">
       <section class="pq-desk" id="pq-desk-write" aria-labelledby="pq-desk-write-h">
         <div class="pq-desk-head"><div class="pq-desk-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><h3 id="pq-desk-write-h">Writing Desk</h3></div>
         <p>Draft essays, theses and dissertations with automatic citations (MLA, APA, Chicago, Harvard, IEEE, Vancouver), dissertation templates, argument scaffolds and Word export.</p>
@@ -1397,42 +1503,18 @@
       </section>
     </div>
 
-    <div class="pq-free-card" id="pq-pro-card" aria-label="PaperQuill Pro"></div>
+        <div class="pq-free-card" id="pq-pro-card" aria-label="PaperQuill Pro"></div>
 
-    <h4 class="pq-dash-section">Your progress</h4>
-    <div class="pq-dash-level-card">
-      <div class="pq-dash-level-main">
-        <div class="lv">Level <span id="pq-dash-level-num">1</span></div>
-        <div class="lv-name" id="pq-dash-level-name">Apprentice scribe</div>
-        <div class="lv-congrats" id="pq-dash-congrats">Start writing to unlock your first badges.</div>
-      </div>
-      <div class="pq-dash-recent-ach" id="pq-dash-recent-ach">
-        <div class="pq-mini-ach empty">No badges yet</div>
-        <div class="pq-mini-ach empty">Keep going</div>
-        <div class="pq-mini-ach empty">They appear here</div>
-      </div>
-    </div>
-
-    <div class="pq-dash-metrics">
-      <div class="pq-metric">
-        <div class="lab">Daily target</div>
-        <div class="val" id="pq-metric-daily">0/500</div>
-        <div class="bar"><i id="pq-metric-daily-bar" style="width:0%"></i></div>
-      </div>
-      <div class="pq-metric">
-        <div class="lab">Session</div>
-        <div class="val" id="pq-metric-session">0/500</div>
-        <div class="bar"><i id="pq-metric-session-bar" style="width:0%"></i></div>
-      </div>
-      <div class="pq-metric">
-        <div class="lab">Total words</div>
-        <div class="val" id="pq-metric-total">0</div>
-        <div class="sub" id="pq-metric-streak">Streak: 0 days</div>
-      </div>
-    </div>
-
-    <h4 class="pq-dash-section">Your papers</h4>
-    <div class="pq-dash-card" id="ltx-home-card">
+        <h3 class="pq-dash-section">Your papers</h3>
+        <div class="pq-papers-split">
+          <div class="pq-dash-card pq-papers-card">
+            <div class="pq-papers-head">
+              <strong>Writing Desk papers</strong>
+              <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-new">+ New paper</button>
+            </div>
+            <div id="pq-proj-grid"></div>
+          </div>
+          <div class="pq-dash-card pq-papers-card" id="ltx-home-card">
       <div class="ltx-home-head">
         <div>
           <strong>LaTeX Desk papers</strong><span class="ltx-badge">STEM</span>
@@ -1447,25 +1529,15 @@
       </div>
       <div id="ltx-grid"></div>
     </div>
-
-    <div class="pq-dash-tabs" id="pq-dash-tabs">
-      <button type="button" class="active" data-pane="papers">Papers</button>
-      <button type="button" data-pane="progress">Progress</button>
-      <button type="button" data-pane="achievements">Achievements</button>
-      <button type="button" data-pane="about">About</button>
-    </div>
-
-    <div class="pq-dash-pane active" id="pane-papers">
-      <div class="pq-dash-card">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <strong>Writing Desk papers</strong>
-          <button type="button" class="pq-btn pq-btn-primary" id="pq-dash-new">+ New paper</button>
         </div>
-        <div id="pq-proj-grid"></div>
-      </div>
-    </div>
 
-    <div class="pq-dash-pane" id="pane-progress" hidden>
+        <div class="pq-dash-tabs" id="pq-dash-tabs">
+          <button type="button" class="active" data-pane="progress">Progress</button>
+          <button type="button" data-pane="achievements">Achievements</button>
+          <button type="button" data-pane="about">About</button>
+        </div>
+
+        <div class="pq-dash-pane active" id="pane-progress">
       <div class="pq-dash-card">
         <strong>Detailed progress</strong>
         <div class="pq-progress-detail" id="pq-progress-detail">
@@ -1536,8 +1608,10 @@
       </div>
     </div>
 
-    <h4 class="pq-dash-section">Sync &amp; install</h4>
-    <div class="pq-dash-card" id="pq-dash-drive-card">
+    
+        <h3 class="pq-dash-section">Sync &amp; more</h3>
+        <div class="pq-dash-extras">
+          <div class="pq-dash-card" id="pq-dash-drive-card">
       <strong>Google Drive</strong>
       <div id="pq-dash-drive-badge" class="pq-drive-badge off">Not connected</div>
       <p class="pq-help" id="pq-dash-drive-status">Connect to sync papers to your Drive.</p>
@@ -1549,8 +1623,13 @@
         <button type="button" class="pq-btn" id="pq-dash-drive-disconnect">Disconnect</button>
       </div>
     </div>
-
-    <div class="pq-install-card" id="pq-install-card" role="region" aria-label="Install PaperQuill">
+          <div class="pq-dash-card pq-bug-card">
+            <strong>🐞 Found a bug or have an idea?</strong>
+            <p class="pq-help">Tell us what went wrong or what you’d like to see — it helps make PaperQuill better for everyone.</p>
+            <a class="pq-btn pq-btn-primary" href="https://www.authormasoncarter.com/2026/10/paperquill-academic-research-writing.html" target="_blank" rel="noopener noreferrer">Report a bug · suggest an idea</a>
+          </div>
+        </div>
+        <div class="pq-install-card" id="pq-install-card" role="region" aria-label="Install PaperQuill">
       <div class="row">
         <div>
           <strong>Install PaperQuill</strong>
@@ -1559,7 +1638,8 @@
         <button type="button" class="pq-btn pq-btn-primary pq-install-btn" id="pq-install-card-btn">Install</button>
       </div>
     </div>
-
+      </main>
+    </div>
   </div></div>
   <div class="pq-ac" id="pq-ac"></div>
   <div class="pq-dict" id="pq-dict"></div>
@@ -7783,6 +7863,7 @@ else boot();
   });
   function switchDashTab(paneId){
     if(!paneId)return;
+    if(paneId==='papers')paneId='progress';
     const dash=$('#pq-dash');
     const tabs=$('#pq-dash-tabs');
     if(tabs){
